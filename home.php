@@ -1,8 +1,18 @@
 <?php
 session_start();
+include_once('functions.php');
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
+}
+if (!isset($_SESSION['user_id']) || !isDeviceIDExists()) {
+    header("Location: login.php");
+    exit();
+
+}
+if (isDeviceIDExists()) {
+    $storedDeviceID = getStoredDeviceID();
+    echo "Stored Device ID: " . $storedDeviceID;
 }
 ?>
 <!DOCTYPE html>
@@ -13,55 +23,73 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 <body>
     <h1>Welcome to the Attendance System</h1>
-    <button onclick="getLocation()">Enable Camera</button>
-    <div id="camera" style="width: 500px; height: 400px;"></div>
+    <label>
+        <input type="radio" name="attendance_mode" value="office" checked> In Office
+    </label>
+    <label>
+        <input type="radio" name="attendance_mode" value="outdoor"> Outdoor
+    </label>
+    <button onclick="enableAttendance()">Enable Attendance</button>
+    <div id="camera" style="width: 500px; height: 400px; display: none;"></div>
+    <div id="istClock" style="font-size: 24px;"></div>
 
     <script>
-        function getLocation() {
+        function enableAttendance() {
+            var mode = document.querySelector('input[name="attendance_mode"]:checked').value;
+            if (mode === "office") {
+                getLocationForOffice();
+            } else if (mode === "outdoor") {
+                getLocationForOutdoor();
+            }
+        }
+
+        function getLocationForOffice() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
+                navigator.geolocation.getCurrentPosition(showPositionForOffice, showError);
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
         }
 
-        function showPosition(position) {
+        function showPositionForOffice(position) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
-        //     var parisLat = 19.07454352059129;
-        //     var parisLon = 72.88698322125363;
-        //     var distance = getDistanceFromLatLonInKm(lat, lon, parisLat, parisLon);
-        //     if (distance < 10) { // 10 km radius
-        //         startCamera();
-        //     } else {
-        //         alert("You are not in MESCO");
-        //     }
-        // }
-        var locations = [
-                { name: "MESCO", lat: 19.134100, lon:  72.896900 },
-                { name: "RC Mahim", lat: 19.07554352059129, lon: 72.88798322125363 },
-                { name: "Mumbra", lat: 19.07654352059129, lon: 72.88898322125363 }
+
+            // Define office locations and their radius
+            var officeLocations = [
+                { name: "Office 1", lat: 19.134100, lon: 72.896900, radius: 0.1 }, // Example office location 1
+                { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.1 } // Example office location 2
+                // Add more office locations as needed
             ];
 
-            // Check distance from each location
             var withinRange = false;
-            locations.forEach(location => {
+            officeLocations.forEach(location => {
                 var distance = getDistanceFromLatLonInKm(lat, lon, location.lat, location.lon);
-                var radius = 0.1; // 100 meters in kilometers
-
-                if (distance < radius) {
+                if (distance < location.radius) {
                     alert(`You are near ${location.name}`);
                     withinRange = true;
+                    startCamera();
                 }
             });
 
-            if (withinRange) {
-                startCamera();
-            } else {
-                alert("You are not near any of the specified locations.");
+            if (!withinRange) {
+                alert("You are not in any of the specified office locations.");
             }
         }
 
+        function getLocationForOutdoor() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPositionForOutdoor, showError);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function showPositionForOutdoor(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            logAttendance('Outdoor', lat, lon);
+        }
 
         function showError(error) {
             switch (error.code) {
@@ -98,6 +126,7 @@ if (!isset($_SESSION['user_id'])) {
         }
 
         function startCamera() {
+            document.getElementById("camera").style.display = "block";
             const html5QrCode = new Html5Qrcode("camera");
             html5QrCode.start(
                 { facingMode: "environment" },
@@ -107,9 +136,8 @@ if (!isset($_SESSION['user_id'])) {
                 },
                 qrCodeMessage => {
                     alert(`QR Code detected: ${qrCodeMessage}`);
-                    logAttendance(qrCodeMessage);
+                    logAttendance('Office', qrCodeMessage);
                     html5QrCode.stop().then(ignore => {
-                        
                         // QR Code scanning is stopped.
                     }).catch(err => {
                         console.log("Unable to stop scanning.");
@@ -123,7 +151,7 @@ if (!isset($_SESSION['user_id'])) {
             });
         }
 
-        function logAttendance(qrCodeMessage) {
+        function logAttendance(mode, data1, data2 = null) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "log_attendance.php", true);
             xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -132,9 +160,31 @@ if (!isset($_SESSION['user_id'])) {
                     console.log(xhr.responseText);
                 }
             };
-            xhr.send("qr_code=" + qrCodeMessage);
+            var params = "mode=" + mode + "&data1=" + data1;
+            if (data2 !== null) {
+                params += "&data2=" + data2;
+            }
+            xhr.send(params);
         }
+
+         function displayISTClock() {
+            setInterval(() => {
+                var now = new Date();
+                var options = {
+                    timeZone: 'Asia/Kolkata',
+                    hour12: false,
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric'
+                };
+                var istTime = now.toLocaleString('en-US', options);
+                document.getElementById('istClock').textContent = 'IST: ' + istTime;
+            }, 1000); // Update every second
+        }
+
+        // Call the function to start displaying IST clock
+        displayISTClock();
     </script>
-     <button onclick="document.location='logout.php'">Logout</button>
+    <button onclick="document.location='logout.php'">Logout</button>
 </body>
 </html>
