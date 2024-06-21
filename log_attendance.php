@@ -15,6 +15,7 @@ if ($conn->connect_error) {
 
 $user_id = $_SESSION['user_id'];
 $mode = $_POST['mode'];
+
 $timestamp = date('Y-m-d H:i:s'); // IST timezone timestamp
 $selfie = null;
 
@@ -29,8 +30,9 @@ if ($mode === 'Office') {
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("issss", $user_id, $mode, $data1, $timestamp, $selfie);
 } else if ($mode === 'Outdoor') {
-    $latitude = $_POST['data1'];
-    $longitude = $_POST['data2'];
+    $coords = explode(',', $_POST['data1']);
+    $latitude = $coords[0];
+    $longitude = $coords[1];
     $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, timestamp, selfie) VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("isddss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie);

@@ -49,7 +49,7 @@ session_start();
 
             // office locations
             var officeLocations = [
-                { name: "Office 1", lat: 19.035626377699412, lon:  72.84758504874834, radius: 0.1 }, // MESCO
+                { name: "Office 1", lat: 19.03910841930131, lon:  72.85139849999997, radius: 0.1 }, // MESCO
                 { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.1 } // MUMBRA
             ];
 
@@ -79,7 +79,7 @@ session_start();
         function showPositionForOutdoor(position) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
-            captureSelfieAndLogAttendance('Outdoor', lat + ',' + lon);
+            startCameraForOutdoor(lat, lon);
         }
 
         function showError(error) {
@@ -143,6 +143,27 @@ session_start();
             });
         }
 
+        function startCameraForOutdoor(lat, lon) {
+            document.getElementById('cameraSelfie').style.display = 'block';
+            const video = document.getElementById('video');
+            const constraints = { video: true };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        document.querySelector('button[onclick="captureSelfie()"]').onclick = () => {
+                            const selfie = captureSelfie();
+                            logAttendance('Outdoor', `${lat},${lon}`, null, selfie);
+                            stream.getTracks().forEach(track => track.stop()); // Stop video stream
+                        };
+                    };
+                })
+                .catch(err => {
+                    console.log("Error accessing webcam: " + err);
+                });
+        }
+
         function captureSelfie() {
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
@@ -182,9 +203,9 @@ session_start();
                     console.log(xhr.responseText);
                 }
             };
-            var params = "mode=" + mode + "&data1=" + data1;
+            var params = "mode=" + mode + "&data1=" + encodeURIComponent(data1);
             if (data2 !== null) {
-                params += "&data2=" + data2;
+                params += "&data2=" + encodeURIComponent(data2);
             }
             if (selfie !== null) {
                 params += "&selfie=" + encodeURIComponent(selfie);

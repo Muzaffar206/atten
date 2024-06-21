@@ -79,8 +79,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
             echo "The file " . basename($_FILES["passport_size_photo"]["name"]) . " has been uploaded.";
             $passport_size_photo = $target_file; // Store the file path in the database
-            $deviceID = generateDeviceID();
-            storeDeviceID($deviceID);
             $conn = new mysqli('localhost', 'root', '', 'attendance_system');
             if ($conn->connect_error) {
                 die("Connection failed: " . $conn->connect_error);
