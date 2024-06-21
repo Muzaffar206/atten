@@ -2,6 +2,16 @@
 session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    $conn = new mysqli('localhost', 'root', '', 'attendance_system');
+
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
     if (isDeviceIDExists()) {
         $storedDeviceID = getStoredDeviceID();
         $currentDeviceID = generateDeviceID();
@@ -11,6 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             exit();
         }
     }
+   
     else {
         // Store current device ID in session
         $currentDeviceID = generateDeviceID();
