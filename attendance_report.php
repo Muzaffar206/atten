@@ -10,13 +10,21 @@ if ($_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
+
 $conn = new mysqli('localhost', 'root', '', 'attendance_system');
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$sql = "SELECT users.id AS user_id, users.username, attendance.scan_time 
+$sql = "SELECT 
+            users.id AS user_id, 
+            users.username, 
+            attendance.scan_time, 
+            attendance.mode, 
+            attendance.latitude, 
+            attendance.longitude, 
+            attendance.selfie 
         FROM attendance 
         JOIN users ON attendance.user_id = users.id
         ORDER BY attendance.scan_time DESC";
@@ -43,6 +51,11 @@ $result = $conn->query($sql);
         th {
             background-color: #f2f2f2;
         }
+        img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -52,6 +65,10 @@ $result = $conn->query($sql);
             <th>User ID</th>
             <th>Username</th>
             <th>Scan Time</th>
+            <th>Mode</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Selfie</th>
         </tr>
         <?php
         if ($result->num_rows > 0) {
@@ -60,14 +77,13 @@ $result = $conn->query($sql);
                         <td>" . $row['user_id'] . "</td>
                         <td>" . $row['username'] . "</td>
                         <td>" . $row['scan_time'] . "</td>
+                        <td>" . $row['mode'] . "</td>
+                        <td>" . ($row['latitude'] ?? 'N/A') . "</td>
+                        <td>" . ($row['longitude'] ?? 'N/A') . "</td>
+                        <td>" . (!empty($row['selfie']) ? '<img src="data:image/jpeg;base64,' . base64_encode($row['selfie']) . '" alt="Selfie">' : 'N/A') . "</td>
                       </tr>";
             }
         } else {
-            echo "<tr><td colspan='3'>No records found</td></tr>";
+            echo "<tr><td colspan='7'>No records found</td></tr>";
         }
-        $conn->close();
-        ?>
-    </table>
-    <button onclick="document.location='logout.php'">Logout</button>
-</body>
-</html>
+        

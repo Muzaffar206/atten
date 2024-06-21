@@ -1,8 +1,22 @@
 <?php
 session_start();
-include_once('functions.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isDeviceIDExists()) {
+        $storedDeviceID = getStoredDeviceID();
+        $currentDeviceID = generateDeviceID();
+
+        if ($storedDeviceID !== $currentDeviceID) {
+            echo "You cannot log in with another person's ID on this device.";
+            exit();
+        }
+    }
+    else {
+        // Store current device ID in session
+        $currentDeviceID = generateDeviceID();
+        storeDeviceID($currentDeviceID);
+    }
+
     
     $username = $_POST['username'];
     $password = $_POST['password'];
@@ -13,22 +27,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    if (isDeviceIDExists()) {
-        $storedDeviceID = getStoredDeviceID();
-        $currentDeviceID = generateDeviceID();
-
-        if ($storedDeviceID !== $currentDeviceID) {
-            echo "You cannot log in with another person's ID on this device.";
-            exit();
-        }
-    }
+<<<<<<< HEAD
+    
    
-    else {
-        // Store current device ID in session
-        $currentDeviceID = generateDeviceID();
-        storeDeviceID($currentDeviceID);
-    }
-
+   
+=======
+>>>>>>> 4c8284e7294b48bf9ceb916f10e4d27a2864c664
     $sql = "SELECT * FROM users WHERE username='$username'";
     $result = $conn->query($sql);
 
