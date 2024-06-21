@@ -55,11 +55,11 @@ if (isDeviceIDExists()) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
 
-            // Define office locations and their radius
+            // Define office locations
             var officeLocations = [
-                { name: "Office 1", lat: 19.134100, lon: 72.896900, radius: 0.1 }, // Example office location 1
-                { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.1 } // Example office location 2
-                // Add more office locations as needed
+                { name: "Office 1", lat: 19.134100, lon: 72.896900, radius: 0.1 }, // MESCO
+                { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.1 } // MUMBRA
+                
             ];
 
             var withinRange = false;
