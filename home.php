@@ -1,19 +1,6 @@
 <?php
 session_start();
-include_once('functions.php');
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-if (!isset($_SESSION['user_id']) || !isDeviceIDExists()) {
-    header("Location: login.php");
-    exit();
 
-}
-if (isDeviceIDExists()) {
-    $storedDeviceID = getStoredDeviceID();
-    echo "Stored Device ID: " . $storedDeviceID;
-}
 ?>
 <!DOCTYPE html>
 <html>
@@ -31,8 +18,13 @@ if (isDeviceIDExists()) {
     </label>
     <button onclick="enableAttendance()">Enable Attendance</button>
     <div id="camera" style="width: 500px; height: 400px; display: none;"></div>
+    <div id="cameraSelfie" style="width: 500px; height: 400px; display: none;">
+        <video id="video" width="500" height="400" autoplay></video>
+        <button onclick="captureSelfie()">Capture Selfie</button>
+        <canvas id="canvas" width="500" height="400" style="display: none;"></canvas>
+    </div>
     <div id="istClock" style="font-size: 24px;"></div>
-
+    
     <script>
         function enableAttendance() {
             var mode = document.querySelector('input[name="attendance_mode"]:checked').value;
@@ -55,11 +47,10 @@ if (isDeviceIDExists()) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
 
-            // Define office locations
+            // office locations
             var officeLocations = [
-                { name: "Office 1", lat: 19.134100, lon: 72.896900, radius: 0.1 }, // MESCO
+                { name: "Office 1", lat: 19.035626377699412, lon:  72.84758504874834, radius: 0.1 }, // MESCO
                 { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.1 } // MUMBRA
-                
             ];
 
             var withinRange = false;
@@ -88,7 +79,7 @@ if (isDeviceIDExists()) {
         function showPositionForOutdoor(position) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
-            logAttendance('Outdoor', lat, lon);
+            captureSelfieAndLogAttendance('Outdoor', lat + ',' + lon);
         }
 
         function showError(error) {
@@ -136,9 +127,10 @@ if (isDeviceIDExists()) {
                 },
                 qrCodeMessage => {
                     alert(`QR Code detected: ${qrCodeMessage}`);
-                    logAttendance('Office', qrCodeMessage);
+                    document.getElementById("camera").style.display = "none";
                     html5QrCode.stop().then(ignore => {
                         // QR Code scanning is stopped.
+                        captureSelfieAndLogAttendance('Office', qrCodeMessage);
                     }).catch(err => {
                         console.log("Unable to stop scanning.");
                     });
@@ -151,7 +143,37 @@ if (isDeviceIDExists()) {
             });
         }
 
-        function logAttendance(mode, data1, data2 = null) {
+        function captureSelfie() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const selfie = canvas.toDataURL('image/png');
+            return selfie;
+        }
+
+        function captureSelfieAndLogAttendance(mode, data1) {
+            const video = document.getElementById('video');
+            const constraints = { video: true };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        document.getElementById('cameraSelfie').style.display = 'block';
+                        document.querySelector('button[onclick="captureSelfie()"]').onclick = () => {
+                            const selfie = captureSelfie();
+                            logAttendance(mode, data1, null, selfie);
+                            stream.getTracks().forEach(track => track.stop()); // Stop video stream
+                        };
+                    };
+                })
+                .catch(err => {
+                    console.log("Error accessing webcam: " + err);
+                });
+        }
+
+        function logAttendance(mode, data1, data2 = null, selfie = null) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "log_attendance.php", true);
             xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -164,26 +186,13 @@ if (isDeviceIDExists()) {
             if (data2 !== null) {
                 params += "&data2=" + data2;
             }
+            if (selfie !== null) {
+                params += "&selfie=" + encodeURIComponent(selfie);
+            }
             xhr.send(params);
         }
 
-         function displayISTClock() {
-            setInterval(() => {
-                var now = new Date();
-                var options = {
-                    timeZone: 'Asia/Kolkata',
-                    hour12: false,
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    second: 'numeric'
-                };
-                var istTime = now.toLocaleString('en-US', options);
-                document.getElementById('istClock').textContent = 'IST: ' + istTime;
-            }, 1000); // Update every second
-        }
-
-        // Call the function to start displaying IST clock
-        displayISTClock();
+        
     </script>
     <button onclick="document.location='logout.php'">Logout</button>
 </body>

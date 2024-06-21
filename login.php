@@ -1,6 +1,5 @@
 <?php
 session_start();
-include_once('functions.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
@@ -11,22 +10,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
-    }
-
-    if (isDeviceIDExists()) {
-        $storedDeviceID = getStoredDeviceID();
-        $currentDeviceID = generateDeviceID();
-
-        if ($storedDeviceID !== $currentDeviceID) {
-            echo "You cannot log in with another person's ID on this device.";
-            exit();
-        }
-    }
-   
-    else {
-        // Store current device ID in session
-        $currentDeviceID = generateDeviceID();
-        storeDeviceID($currentDeviceID);
     }
 
     $sql = "SELECT * FROM users WHERE username='$username'";
