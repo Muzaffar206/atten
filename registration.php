@@ -115,19 +115,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="assest/css/style.css">
     <link rel="stylesheet" href="assest/css/bootstrap.min.css">
 </head>
-<body>
+<body id=bodyreg>
 
 <div id= "main">
 <form method="post" action="" enctype="multipart/form-data">
-    Username: <input type="text" name="username" required><br><br>
-    Password: <input type="password" name="password" required><br><br>
-    Employer ID: <input type="text" name="employer_id"><br><br>
-    Full Name: <input type="text" name="full_name"><br><br>
-    Email: <input type="email" name="email"><br><br>
-    Phone Number: <input type="text" name="phone_number"><br><br>
-    Passport Size Photo: <input type="file" name="passport_size_photo" accept="image/*" required><br>
-    Address: <textarea name="address"></textarea><br><br>
-    <input type="submit" value="Register">
+    <p id=reg >Registration Form</p>
+    Username: <br> <input ID=US type="text" name="username" required><br><br>
+    Password: <br><input type="password" name="password" required><br><br>
+    Employer ID: <br><input type="text" name="employer_id"><br><br>
+    Full Name:<br> <input type="text" name="full_name"><br><br>
+    Email: <br><input type="email" name="email"><br><br>
+    Phone Number: <br><input type="text" name="phone_number"><br><br>
+    Passport Size Photo: <input type="file" name="passport_size_photo" accept="image/*" required><br><br>
+    Address : <br><textarea name="address"> Add Your Address Here </textarea><br><br>
+    <button id=but type = submit >Register</button>
 </form>
 </div>
     <script src="assest/js/bootstrap.bundle.min.js"></script>
