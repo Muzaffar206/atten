@@ -119,14 +119,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <div id= "main">
 <form method="post" action="" enctype="multipart/form-data">
-    Username: <input type="text" name="username" required><br>
-    Password: <input type="password" name="password" required><br>
-    Employer ID: <input type="text" name="employer_id"><br>
-    Full Name: <input type="text" name="full_name"><br>
-    Email: <input type="email" name="email"><br>
-    Phone Number: <input type="text" name="phone_number"><br>
+    Username: <input type="text" name="username" required><br><br>
+    Password: <input type="password" name="password" required><br><br>
+    Employer ID: <input type="text" name="employer_id"><br><br>
+    Full Name: <input type="text" name="full_name"><br><br>
+    Email: <input type="email" name="email"><br><br>
+    Phone Number: <input type="text" name="phone_number"><br><br>
     Passport Size Photo: <input type="file" name="passport_size_photo" accept="image/*" required><br>
-    Address: <textarea name="address"></textarea><br>
+    Address: <textarea name="address"></textarea><br><br>
     <input type="submit" value="Register">
 </form>
 </div>
