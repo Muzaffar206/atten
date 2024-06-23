@@ -7,6 +7,7 @@ session_start();
 <head>
     <title>Home</title>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <link rel="stylesheet" href="assest/css/style.css">
 </head>
 <body>
     <h1>Welcome to the Attendance System</h1>
@@ -98,6 +99,7 @@ session_start();
                     break;
             }
         }
+        
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371; // Radius of the earth in km
