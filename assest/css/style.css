@@ -1,9 +1,16 @@
 /* design here */
+body{
+}
 #main{
-    background-color: blueviolet;
-    color: blue;
-    opacity: 0.5;
-    height: 600px;
-    width: 400px;
-    margin: 20px,50px,20px,50px;
+    background-color:rosybrown;
+    color:black;
+    height: 500px;
+    width: 500px;
+    margin-left: 500px;
+    margin-top: 100px;
+    padding-left: 15px;
+}
+
+input{
+    
 }
