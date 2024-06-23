@@ -105,6 +105,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MESCO | Registration</title>
+    <link rel="stylesheet" href="assest/css/style.css">
+    <link rel="stylesheet" href="assest/css/bootstrap.min.css">
+</head>
+<body>
+
+<div id= "main">
 <form method="post" action="" enctype="multipart/form-data">
     Username: <input type="text" name="username" required><br>
     Password: <input type="password" name="password" required><br>
@@ -116,3 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     Address: <textarea name="address"></textarea><br>
     <input type="submit" value="Register">
 </form>
+</div>
+    <script src="assest/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
