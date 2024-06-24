@@ -1,10 +1,28 @@
 <?php
 session_start();
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+$conn = new mysqli('localhost', 'root', '', 'attendance_system');
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+$user_id = $_SESSION['user_id'];
+$sql = "SELECT username FROM users WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$stmt->bind_result($username);
+$stmt->fetch();
+$stmt->close();
+$conn->close();
+
+
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,6 +32,12 @@ if (!isset($_SESSION['user_id'])) {
 </head>
 <body>
     <h1>Welcome to the Attendance System</h1>
+    <h2>Hii : <?php echo htmlspecialchars($username); ?></h2><br>
+    <select name="scheme" id="type" required>
+        <option value="">Select any one</option>
+        <option value="In">In</option>
+        <option value="Out">Out</option>
+    </select>
     <label>
         <input type="radio" name="attendance_mode" value="office" checked> In Office
     </label>
@@ -28,42 +52,53 @@ if (!isset($_SESSION['user_id'])) {
         <canvas id="canvas" width="500" height="400" style="display: none;"></canvas>
     </div>
     <div id="istClock" style="font-size: 24px;"></div>
-    
+    <button onclick="document.location='logout.php'">Logout</button>
+
     <script>
         function enableAttendance() {
             var mode = document.querySelector('input[name="attendance_mode"]:checked').value;
+            var type = document.getElementById('type').value;
+            if (type === "") {
+                alert("Please select In or Out.");
+                return;
+            }
             if (mode === "office") {
-                getLocationForOffice();
+                getLocationForOffice(type);
             } else if (mode === "outdoor") {
-                getLocationForOutdoor();
+                getLocationForOutdoor(type);
             }
         }
 
-        function getLocationForOffice() {
+        function getLocationForOffice(scanType) {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPositionForOffice, showError);
+                navigator.geolocation.getCurrentPosition(
+                    position => showPositionForOffice(position, scanType),
+                    showError,
+                    { enableHighAccuracy: true }
+                );
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
         }
 
-        function showPositionForOffice(position) {
+        function showPositionForOffice(position, scanType) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
+            console.log(`Current Position: Lat=${lat}, Lon=${lon}`);
 
-            // office locations
             var officeLocations = [
-                { name: "Office 1", lat: 19.03910841930131, lon:  72.85139849999997, radius: 0.1 }, // MESCO
-                { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.1 } // MUMBRA
+                { name: "Office 1", lat: 19.0748, lon: 72.8856, radius: 0.2 }, // Adjusted radius for MESCO
+                { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.2 } // Adjusted radius for MUMBRA
             ];
 
             var withinRange = false;
             officeLocations.forEach(location => {
                 var distance = getDistanceFromLatLonInKm(lat, lon, location.lat, location.lon);
+                console.log(`Distance to ${location.name}: ${distance} km`);
                 if (distance < location.radius) {
                     alert(`You are near ${location.name}`);
                     withinRange = true;
-                    startCamera();
+                    startCamera(scanType);
                 }
             });
 
@@ -72,18 +107,18 @@ if (!isset($_SESSION['user_id'])) {
             }
         }
 
-        function getLocationForOutdoor() {
+        function getLocationForOutdoor(scanType) {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPositionForOutdoor, showError);
+                navigator.geolocation.getCurrentPosition(position => showPositionForOutdoor(position, scanType), showError);
             } else {
                 alert("Geolocation is not supported by this browser.");
             }
         }
 
-        function showPositionForOutdoor(position) {
+        function showPositionForOutdoor(position, scanType) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
-            startCameraForOutdoor(lat, lon);
+            startCameraForOutdoor(scanType, lat, lon);
         }
 
         function showError(error) {
@@ -102,15 +137,14 @@ if (!isset($_SESSION['user_id'])) {
                     break;
             }
         }
-        
 
         function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
             var R = 6371; // Radius of the earth in km
             var dLat = deg2rad(lat2 - lat1);
             var dLon = deg2rad(lon2 - lon1);
-            var a =
+            var a = 
                 Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             var d = R * c; // Distance in km
@@ -121,7 +155,7 @@ if (!isset($_SESSION['user_id'])) {
             return deg * (Math.PI / 180);
         }
 
-        function startCamera() {
+        function startCamera(scanType) {
             document.getElementById("camera").style.display = "block";
             const html5QrCode = new Html5Qrcode("camera");
             html5QrCode.start(
@@ -134,8 +168,7 @@ if (!isset($_SESSION['user_id'])) {
                     alert(`QR Code detected: ${qrCodeMessage}`);
                     document.getElementById("camera").style.display = "none";
                     html5QrCode.stop().then(ignore => {
-                        // QR Code scanning is stopped.
-                        captureSelfieAndLogAttendance('Office', qrCodeMessage);
+                        captureSelfieAndLogAttendance('Office', qrCodeMessage, scanType);
                     }).catch(err => {
                         console.log("Unable to stop scanning.");
                     });
@@ -148,7 +181,7 @@ if (!isset($_SESSION['user_id'])) {
             });
         }
 
-        function startCameraForOutdoor(lat, lon) {
+        function startCameraForOutdoor(scanType, lat, lon) {
             document.getElementById('cameraSelfie').style.display = 'block';
             const video = document.getElementById('video');
             const constraints = { video: true };
@@ -159,7 +192,7 @@ if (!isset($_SESSION['user_id'])) {
                         video.play();
                         document.querySelector('button[onclick="captureSelfie()"]').onclick = () => {
                             const selfie = captureSelfie();
-                            logAttendance('Outdoor', `${lat},${lon}`, null, selfie);
+                            logAttendance('Outdoor', `${lat},${lon}`, null, selfie, scanType);
                             stream.getTracks().forEach(track => track.stop()); // Stop video stream
                         };
                     };
@@ -178,7 +211,7 @@ if (!isset($_SESSION['user_id'])) {
             return selfie;
         }
 
-        function captureSelfieAndLogAttendance(mode, data1) {
+        function captureSelfieAndLogAttendance(mode, data1, scanType) {
             const video = document.getElementById('video');
             const constraints = { video: true };
             navigator.mediaDevices.getUserMedia(constraints)
@@ -189,8 +222,9 @@ if (!isset($_SESSION['user_id'])) {
                         document.getElementById('cameraSelfie').style.display = 'block';
                         document.querySelector('button[onclick="captureSelfie()"]').onclick = () => {
                             const selfie = captureSelfie();
-                            logAttendance(mode, data1, null, selfie);
+                            logAttendance(mode, data1, null, selfie, scanType);
                             stream.getTracks().forEach(track => track.stop()); // Stop video stream
+                            document.getElementById('cameraSelfie').style.display = 'none';
                         };
                     };
                 })
@@ -199,16 +233,17 @@ if (!isset($_SESSION['user_id'])) {
                 });
         }
 
-        function logAttendance(mode, data1, data2 = null, selfie = null) {
+        function logAttendance(mode, data1, data2, selfie, scanType) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "log_attendance.php", true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
+                if (xhr.readyState == 4 && xhr.status == 200) {
                     console.log(xhr.responseText);
+                    alert("Attendance logged successfully.");
                 }
             };
-            var params = "mode=" + mode + "&data1=" + encodeURIComponent(data1);
+            var params = "mode=" + mode + "&data1=" + encodeURIComponent(data1) + "&scanType=" + scanType;
             if (data2 !== null) {
                 params += "&data2=" + encodeURIComponent(data2);
             }
@@ -218,8 +253,19 @@ if (!isset($_SESSION['user_id'])) {
             xhr.send(params);
         }
 
-        
+        // IST Clock
+        // function updateISTClock() {
+        //     const istOffset = 5.5 * 60 * 60 * 1000;
+        //     const now = new Date();
+        //     const utcNow = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+        //     const istNow = new Date(utcNow + istOffset);
+        //     const hours = istNow.getHours().toString().padStart(2, '0');
+        //     const minutes = istNow.getMinutes().toString().padStart(2, '0');
+        //     const seconds = istNow.getSeconds().toString().padStart(2, '0');
+        //     document.getElementById('istClock').innerText = `IST: ${hours}:${minutes}:${seconds}`;
+        // }
+
+        // setInterval(updateISTClock, 1000);
     </script>
-    <button onclick="document.location='logout.php'">Logout</button>
 </body>
 </html>
