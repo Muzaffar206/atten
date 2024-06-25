@@ -58,7 +58,9 @@ $conn->close();
 
 <!-- <div class="mainbody">
     <h1>Welcome to the Attendance System</h1>
-    <h2>Hii : <?php echo htmlspecialchars($username); ?></h2><br>
+    <h2>Hii : 
+       
+    </h2><br>
     <select name="scheme" id="type" required>
         <option value="">Select any one</option>
         <option value="In">In</option>
