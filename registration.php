@@ -112,12 +112,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Registration</title>
-    <link rel="stylesheet" href="assest/css/style.css">
+<!--===============================================================================================-->	
+	<link rel="icon" type="image/png" href="assest/images/icons/favicon.ico"/>
+<!--===============================================================================================-->	
     <link rel="stylesheet" href="assest/css/bootstrap.min.css">
+<!--===============================================================================================-->	
+    <link rel="stylesheet" type="text/css" href="assest/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/fonts/iconic/css/material-design-iconic-font.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/vendor/animate/animate.css">
+<!--===============================================================================================-->	
+	<link rel="stylesheet" type="text/css" href="assest/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/vendor/animsition/css/animsition.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/vendor/select2/select2.min.css">
+<!--===============================================================================================-->	
+	<link rel="stylesheet" type="text/css" href="assest/vendor/daterangepicker/daterangepicker.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/css/util.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/css/main.css">
+<!--===============================================================================================-->
 </head>
-<body id=bodyreg>
+<body>
 
-<div id= "main">
+
 <form method="post" action="" enctype="multipart/form-data">
     <p id=reg >Registration Form</p>
     Username: <br> <input ID=US type="text" name="username" required><br><br>
@@ -130,7 +151,84 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     Address : <br><textarea name="address"> Add Your Address Here </textarea><br><br>
     <button id=but type = submit >Register</button>
 </form>
-</div>
-    <script src="assest/js/bootstrap.bundle.min.js"></script>
+<div id="dropDownSelect1"></div>
+	
+
+
+
+<div class="limiter">
+		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
+			<div class="wrap-login100">
+				<form method="post" action="" enctype="multipart/form-data" class="login100-form validate-form">
+					<span class="login100-form-logo">
+						<i class="zmdi zmdi-landscape"></i>
+					</span>
+
+					<span class="login100-form-title p-b-34 p-t-27">
+						Register
+					</span>
+
+					<div class="wrap-input100 validate-input" data-validate = "Enter username">
+						<input class="input100"  ID=US type="text" name="username" placeholder="Username"required>
+						<span class="focus-input100" data-placeholder="&#xf207;"></span>
+					</div>
+
+					<div class="wrap-input100 validate-input" data-validate="Enter password">
+						<input class="input100" type="password" name="password" placeholder="Password" required>
+						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+					</div>
+
+					<div class="wrap-input100 validate-input" data-validate="Employer ID">
+						<input class="input100" type="text" name="employer_id" placeholder="Employer ID" required>
+						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+					</div>
+
+                    <div class="wrap-input100 validate-input" data-validate="Full Name">
+						<input class="input100" type="text" name="full_name" placeholder="Full Name" required>
+						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+					</div>
+
+                    <div class="wrap-input100 validate-input" data-validate="Email">
+						<input class="input100" type="email" name="email" placeholder="Email" required>
+						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+					</div>
+
+                    <div class="wrap-input100 validate-input" data-validate="Phone Number">
+						<input class="input100" type="text" name="phone_number" placeholder="Phone Number" required>
+						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+					</div>
+
+					<div class="container-login100-form-btn">
+						<button type="submit" value="Login" class="login100-form-btn">
+							Login
+						</button>
+					</div>
+
+				</form>
+			</div>
+		</div>
+	</div>
+	
+
+
+
+
+
+<!--===============================================================================================-->
+	<script src="assest/vendor/jquery/jquery-3.2.1.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/animsition/js/animsition.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/bootstrap/js/popper.js"></script>
+	<script src="assest/vendor/bootstrap/js/bootstrap.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/select2/select2.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/daterangepicker/moment.min.js"></script>
+	<script src="assest/vendor/daterangepicker/daterangepicker.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/countdowntime/countdowntime.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/js/main.js"></script>
 </body>
 </html>
