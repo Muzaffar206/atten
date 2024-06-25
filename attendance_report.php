@@ -64,7 +64,7 @@ $result = $conn->query($sql);
 </head>
 <body>
     <h1>Attendance Report</h1>
-    <table>
+    <table class="table table-success table-striped-columns">
         <tr>
             <th>User ID</th>
             <th>Emp id</th>

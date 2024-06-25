@@ -2,38 +2,78 @@
 session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
     $username = $_POST['username'];
     $password = $_POST['password'];
+    $rememberMe = isset($_POST['remember_me']); // Check if "Remember Me" is selected
 
     $conn = new mysqli('localhost', 'root', '', 'attendance_system');
 
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
-   
-    
-   
-   
-    $sql = "SELECT * FROM users WHERE username='$username'";
-    $result = $conn->query($sql);
+
+    $sql = "SELECT * FROM users WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         if (password_verify($password, $row['password'])) {
             $_SESSION['user_id'] = $row['id'];
             $_SESSION['username'] = $row['username'];
-            $_SESSION['role'] = $row['role']; // Set role in session
+            $_SESSION['role'] = $row['role'];
+
+            if ($rememberMe) {
+                // Set a cookie with a hashed value of username and password
+                $cookie_value = base64_encode(json_encode([
+                    'username' => $username,
+                    'token' => bin2hex(random_bytes(16)), // Token for additional security
+                ]));
+                setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/"); // 30 days
+            }
+
             header("Location: home.php");
             exit();
         } else {
-            echo "Invalid password.";
+            echo 'Wrong email id or Password';
         }
     } else {
         echo "No user found.";
     }
 
     $conn->close();
+} elseif (isset($_COOKIE['remember_me'])) {
+    $cookie_value = json_decode(base64_decode($_COOKIE['remember_me']), true);
+
+    if ($cookie_value) {
+        $username = $cookie_value['username'];
+
+        $conn = new mysqli('localhost', 'root', '', 'attendance_system');
+
+        if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+        }
+
+        $sql = "SELECT * FROM users WHERE username=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['role'] = $row['role'];
+
+            header("Location: home.php");
+            exit();
+        }
+
+        $conn->close();
+    }
 }
 ?>
 
@@ -68,7 +108,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!--===============================================================================================-->
 </head>
 <body>
-    
+	<div class="preloader">
+<div class="lava-lamp">
+  <div class="bubble"></div>
+  <div class="bubble1"></div>
+  <div class="bubble2"></div>
+  <div class="bubble3"></div>
+</div>
+</div>
+
 <!-- <form method="post" action="">
     Username: <input type="text" name="username" required><br>
     Password: <input type="password" name="password" required><br>
@@ -79,7 +127,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			<div class="wrap-login100">
 				<form method="post" action="" class="login100-form validate-form">
 					<span class="login100-form-logo">
-						<i class="zmdi zmdi-landscape"></i>
+						<img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
 					</span>
 
 					<span class="login100-form-title p-b-34 p-t-27">
@@ -97,8 +145,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 					</div>
 
 					<div class="contact100-form-checkbox">
-						<input class="input-checkbox100" id="ckb1" type="checkbox" name="remember-me">
-						<label class="label-checkbox100" for="ckb1">
+						<input class="input-checkbox100" type="checkbox" id="remember_me" name="remember_me">
+						<label class="label-checkbox100" for="remember_me">
 							Remember me
 						</label>
 					</div>
@@ -120,7 +168,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	</div>
 	
 
-	<div id="dropDownSelect1"></div>
 	
 <!--===============================================================================================-->
 	<script src="assest/vendor/jquery/jquery-3.2.1.min.js"></script>
@@ -139,7 +186,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!--===============================================================================================-->
 	<script src="assest/js/main.js"></script>
 
+<script>
 
+window.onload = function(){
+        //hide the preloader
+        document.querySelector(".preloader").style.display = "none";
+    }
+</script>
 <!-- </form> -->
 </body>
 </html>

@@ -138,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
 
-
+<!-- 
 <form method="post" action="" enctype="multipart/form-data">
     <p id=reg >Registration Form</p>
     Username: <br> <input ID=US type="text" name="username" required><br><br>
@@ -151,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     Address : <br><textarea name="address"> Add Your Address Here </textarea><br><br>
     <button id=but type = submit >Register</button>
 </form>
-<div id="dropDownSelect1"></div>
+<div id="dropDownSelect1"></div> -->
 	
 
 
@@ -161,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 			<div class="wrap-login100">
 				<form method="post" action="" enctype="multipart/form-data" class="login100-form validate-form">
 					<span class="login100-form-logo">
-						<i class="zmdi zmdi-landscape"></i>
+                    <img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
 					</span>
 
 					<span class="login100-form-title p-b-34 p-t-27">
@@ -185,22 +185,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <div class="wrap-input100 validate-input" data-validate="Full Name">
 						<input class="input100" type="text" name="full_name" placeholder="Full Name" required>
-						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+						<span class="focus-input100" data-placeholder="&#xf207;"></span>
 					</div>
 
                     <div class="wrap-input100 validate-input" data-validate="Email">
 						<input class="input100" type="email" name="email" placeholder="Email" required>
-						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+						<span class="focus-input100" data-placeholder="&#xf10e;"></span>
 					</div>
 
                     <div class="wrap-input100 validate-input" data-validate="Phone Number">
 						<input class="input100" type="text" name="phone_number" placeholder="Phone Number" required>
-						<span class="focus-input100" data-placeholder="&#xf191;"></span>
+						<span class="focus-input100" data-placeholder="&#xf2b9;"></span>
 					</div>
 
+                    <div class="wrap-input100 validate-input" data-validate="Passport Size Photo">
+						<input class="input100" type="file" name="passport_size_photo" accept="image/*" placeholder="Passport Size Photo" required>
+						<span class="focus-input100" data-placeholder="&#xf10e;"></span>
+					</div>
+
+                    <div class="wrap-input100 form-floating">
+                         <textarea class="form-control" name="address" placeholder="Address" id="floatingTextarea"></textarea>
+                         <label for="floatingTextarea">Address</label>
+                    </div>
+
 					<div class="container-login100-form-btn">
-						<button type="submit" value="Login" class="login100-form-btn">
-							Login
+						<button id=but type = submit class="login100-form-btn">
+							Register
 						</button>
 					</div>
 

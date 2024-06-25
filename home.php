@@ -24,13 +24,39 @@ $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Home</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MESCO | Attendance</title>
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
-    <link rel="stylesheet" href="assest/css/style.css">
+<!--===============================================================================================-->	
+	<link rel="icon" type="image/png" href="assest/images/icons/favicon.ico"/>
+<!--===============================================================================================-->	
+    <link rel="stylesheet" href="assest/css/bootstrap.min.css">
+<!--===============================================================================================-->	
+    <link rel="stylesheet" type="text/css" href="assest/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/fonts/iconic/css/material-design-iconic-font.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/vendor/animate/animate.css">
+<!--===============================================================================================-->	
+	<link rel="stylesheet" type="text/css" href="assest/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/vendor/animsition/css/animsition.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/vendor/select2/select2.min.css">
+<!--===============================================================================================-->	
+	<link rel="stylesheet" type="text/css" href="assest/vendor/daterangepicker/daterangepicker.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/css/util.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="assest/css/main.css">
+<!--===============================================================================================-->
 </head>
 <body>
+
+<!-- <div class="mainbody">
     <h1>Welcome to the Attendance System</h1>
     <h2>Hii : <?php echo htmlspecialchars($username); ?></h2><br>
     <select name="scheme" id="type" required>
@@ -53,8 +79,69 @@ $conn->close();
     </div>
     <div id="istClock" style="font-size: 24px;"></div>
     <button onclick="document.location='logout.php'">Logout</button>
+    </div>   -->
 
-    <script>
+    <div class="limiter">
+		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
+			<div class="wrap-login100">
+					<span class="login100-form-logo">
+						<img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
+					</span>
+
+					<span class="login100-form-title p-b-34 p-t-27">
+                    Welcome <?php echo htmlspecialchars($username); ?>
+					</span>
+
+					<div class="wrap-input100">
+                        <Label class="custom-selector">
+                            Select the option 
+                        <select name="scheme" id="type" required>
+                              <option  value="">Select any one</option>
+                              <option value="In">In</option>
+                              <option value="Out">Out</option>
+                        </select>
+                        </Label>
+					</div>
+
+					<div class="wrap-input100">
+                    <div class="radio-inputs">
+                    <label class="radio">
+                     <input type="radio" name="attendance_mode" value="office"checked="">
+                        <span class="name">Office</span>
+                     </label>
+                     <label class="radio">
+                      <input type="radio" name="attendance_mode" value="outdoor">
+                          <span class="name">Outdoor</span>
+                     </label>
+                    </div>
+					</div>
+                   
+                    
+
+					<div class="container-login100-form-btn">
+						<button onclick="enableAttendance()" class="login100-form-btn">
+							Give attendance
+						</button>
+                    
+					</div>
+                    <div id="camera" style="width: 400px; height: 500px; display: none;"></div>
+    <div id="cameraSelfie" style="width: 400px; height: 500px; display: none;">
+        <video id="video" width="500" height="400" autoplay></video>
+        <canvas id="canvas" width="500" height="400" style="display: none;"></canvas>
+        <button class="button123" onclick="captureSelfie()">Capture Selfie</button>
+    </div>
+
+                    <div class="container-login100-form-btn">
+                    <button class="button123" onclick="document.location='logout.php'"><span>Logout!</span></button></div>
+
+				
+			</div>
+		</div>
+	</div>
+
+
+    
+ <script>
         function enableAttendance() {
             var mode = document.querySelector('input[name="attendance_mode"]:checked').value;
             var type = document.getElementById('type').value;
@@ -267,5 +354,22 @@ $conn->close();
 
         // setInterval(updateISTClock, 1000);
     </script>
+
+    <!--===============================================================================================-->
+	<script src="assest/vendor/jquery/jquery-3.2.1.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/animsition/js/animsition.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/bootstrap/js/popper.js"></script>
+	<script src="assest/vendor/bootstrap/js/bootstrap.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/select2/select2.min.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/daterangepicker/moment.min.js"></script>
+	<script src="assest/vendor/daterangepicker/daterangepicker.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/vendor/countdowntime/countdowntime.js"></script>
+<!--===============================================================================================-->
+	<script src="assest/js/main.js"></script>
 </body>
 </html>
