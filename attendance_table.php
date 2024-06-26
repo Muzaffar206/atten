@@ -1,5 +1,6 @@
 <?php
 session_start();
+include("assest/connection/config.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -8,11 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
-}
-$conn = new mysqli('localhost', 'root', '', 'attendance_system');
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
 }
 
 // Fetch all users

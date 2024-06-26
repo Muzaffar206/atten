@@ -1,5 +1,6 @@
 <?php
 session_start();
+include("assest/connection/config.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -8,12 +9,6 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
-}
-
-$conn = new mysqli('localhost', 'root', '', 'attendance_system');
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
 }
 
 // Fetch all users for the filter dropdown
@@ -29,11 +24,12 @@ if ($userResult->num_rows > 0) {
 
 // Handle filter form submission
 $filterUser = isset($_GET['user']) ? intval($_GET['user']) : 0;
+$department = isset($_GET['department']) ? $_GET['department'] : '';
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-$filterSql = "SELECT users.id AS user_id, users.username, DATE(attendance.scan_time) as date, 
-                COUNT(attendance.id) as scan_count 
+$filterSql = "SELECT users.id AS user_id, users.username, DATE(attendance.in_time) as date, 
+                attendance.in_time, attendance.out_time, users.department 
                 FROM attendance 
                 JOIN users ON attendance.user_id = users.id 
                 WHERE 1=1";
@@ -42,12 +38,17 @@ if ($filterUser > 0) {
     $filterSql .= " AND users.id = $filterUser";
 }
 
-if (!empty($startDate) && !empty($endDate)) {
-    $filterSql .= " AND DATE(attendance.scan_time) BETWEEN '$startDate' AND '$endDate'";
+if (!empty($department)) {
+    $filterSql .= " AND users.department = '$department'";
 }
 
-$filterSql .= " GROUP BY users.id, users.username, DATE(attendance.scan_time)
-                ORDER BY DATE(attendance.scan_time) DESC";
+if (!empty($startDate) && !empty($endDate)) {
+    $filterSql .= " AND DATE(attendance.in_time) BETWEEN '$startDate' AND '$endDate'";
+} elseif (!empty($startDate)) {
+    $filterSql .= " AND DATE(attendance.in_time) = '$startDate'";
+}
+
+$filterSql .= " ORDER BY DATE(attendance.in_time) DESC";
 
 $filterResult = $conn->query($filterSql);
 
@@ -67,7 +68,7 @@ if (isset($_GET['export_csv'])) {
     $output = fopen('php://output', 'w');
 
     // Write CSV headers
-    fputcsv($output, ['User ID', 'Username', 'Date', 'Scan Count']);
+    fputcsv($output, ['User ID', 'Username', 'Department', 'Date', 'In Time', 'Out Time']);
 
     // Write CSV rows
     if ($filterResult->num_rows > 0) {
@@ -75,8 +76,10 @@ if (isset($_GET['export_csv'])) {
             fputcsv($output, [
                 $row['user_id'],
                 $row['username'],
+                $row['department'],
                 $row['date'],
-                $row['scan_count']
+                $row['in_time'],
+                $row['out_time']
             ]);
         }
     }
@@ -123,6 +126,14 @@ $conn->close();
             <?php endforeach; ?>
         </select>
 
+        <label for="department">Department:</label>
+        <select name="department" id="department">
+            <option value="">All Departments</option>
+            <option value="ROP" <?php echo ($department == 'ROP') ? 'selected' : ''; ?>>ROP</option>
+            <option value="Admin" <?php echo ($department == 'Admin') ? 'selected' : ''; ?>>Admin</option>
+            <option value="Clinics" <?php echo ($department == 'Clinics') ? 'selected' : ''; ?>>Clinics</option>
+        </select>
+
         <label for="start_date">Start Date:</label>
         <input type="date" name="start_date" id="start_date" value="<?php echo $startDate; ?>">
 
@@ -130,7 +141,6 @@ $conn->close();
         <input type="date" name="end_date" id="end_date" value="<?php echo $endDate; ?>">
 
         <button type="submit">Filter</button>
-
         <button type="submit" name="export_csv" value="1">Export CSV</button>
     </form>
 
@@ -138,8 +148,10 @@ $conn->close();
         <tr>
             <th>User ID</th>
             <th>Username</th>
+            <th>Department</th>
             <th>Date</th>
-            <th>Scan Count</th>
+            <th>In Time</th>
+            <th>Out Time</th>
         </tr>
         <?php
         if ($filterResult->num_rows > 0) {
@@ -147,12 +159,14 @@ $conn->close();
                 echo "<tr>
                         <td>" . $row['user_id'] . "</td>
                         <td>" . $row['username'] . "</td>
+                        <td>" . $row['department'] . "</td>
                         <td>" . $row['date'] . "</td>
-                        <td>" . $row['scan_count'] . "</td>
+                        <td>" . $row['in_time'] . "</td>
+                        <td>" . $row['out_time'] . "</td>
                       </tr>";
             }
         } else {
-            echo "<tr><td colspan='4'>No records found</td></tr>";
+            echo "<tr><td colspan='6'>No records found</td></tr>";
         }
         ?>
     </table>

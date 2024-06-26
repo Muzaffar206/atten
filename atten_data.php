@@ -1,5 +1,6 @@
 <?php
 session_start();
+include("assest/connection/config.php");
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -18,10 +19,6 @@ if (!isset($_SESSION['user_id'])) {
     <h2>Attendance Records</h2>
     <div id="attendanceData">
         <?php
-        $conn = new mysqli('localhost', 'root', '', 'attendance_system');
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
 
         $sql = "SELECT * FROM attendance";
         $result = $conn->query($sql);

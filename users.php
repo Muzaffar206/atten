@@ -1,5 +1,6 @@
 <?php
 session_start();
+include("assest/connection/config.php");
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -7,10 +8,6 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
-}
-$conn = new mysqli('localhost', 'root', '', 'attendance_system');
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
 }
 
 $sql = "SELECT * FROM users";
@@ -36,8 +33,9 @@ $conn->close();
             <th>Phone Number</th>
             <th>Passport Size Photo</th>
             <th>Address</th>
-            <th>Actions</th>
             <th>Role</th>
+            <th>Department<th>
+            <th>Actions</th>
         </tr>
         <?php if ($result->num_rows > 0): ?>
             <?php while($row = $result->fetch_assoc()): ?>
@@ -51,6 +49,7 @@ $conn->close();
                     <td><img src="<?php echo $row['passport_size_photo']; ?>" width="50" height="50"></td>
                     <td><?php echo $row['address']; ?></td>
                     <td><?php echo $row['role']; ?></td>
+                    <td><?php echo $row['department']; ?></td>
                     <td>
                         <a href="edit_user.php?id=<?php echo $row['id']; ?>">Edit</a>
                         <a href="delete_user.php?id=<?php echo $row['id']; ?>">Delete</a>

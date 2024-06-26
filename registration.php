@@ -27,8 +27,12 @@
 
 <?php
 session_start();
+include("assest/connection/config.php");
 
-
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: login.php");
+    exit();
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
@@ -38,6 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $phone_number = $_POST['phone_number'];
     $address = $_POST['address'];
+    $department = $_POST['department'];
 
     // File upload
     $target_dir = "uploads/";
@@ -45,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $uploadOk = 1;
     $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-    // Check if image file is an actual image or fake image
+    // Check image file is an actual image or fake image
     $check = getimagesize($_FILES["passport_size_photo"]["tmp_name"]);
     if ($check !== false) {
         $uploadOk = 1;
@@ -54,19 +59,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $uploadOk = 0;
     }
 
-    // Check if file already exists
+    // If already exists
     if (file_exists($target_file)) {
         echo "Sorry, file already exists.";
         $uploadOk = 0;
     }
 
-    // Check file size (limit to 5MB)
+    // Size (limit to 5MB)
     if ($_FILES["passport_size_photo"]["size"] > 5000000) {
         echo "Sorry, your file is too large.";
         $uploadOk = 0;
     }
 
-    // Allow certain file formats
+    // file formats
     if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
         echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
         $uploadOk = 0;
@@ -79,15 +84,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
             echo "The file " . basename($_FILES["passport_size_photo"]["name"]) . " has been uploaded.";
             $passport_size_photo = $target_file; // Store the file path in the database
-            $conn = new mysqli('localhost', 'root', '', 'attendance_system');
-            if ($conn->connect_error) {
-                die("Connection failed: " . $conn->connect_error);
-            }
-            
+        
 
-            $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, device_id) 
+            $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, department) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $sql->bind_param("ssissssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $deviceID);
+            $sql->bind_param("ssissssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department);
 
             if ($sql->execute() === TRUE) {
                 echo "New user created successfully";
@@ -207,6 +208,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                          <textarea class="form-control" name="address" placeholder="Address" id="floatingTextarea"></textarea>
                          <label for="floatingTextarea">Address</label>
                     </div>
+
+                    <div class="wrap-input100">
+                        <Label class="custom-selector">
+                            Select the Department 
+                        <select name="department" id="department" required>
+                              <option  value="">Select department</option>
+                              <option value="Education">Education</option>
+                              <option value="Medical">Medical</option>
+                              <option value="ROP">ROP</option>
+                              <option value="Admin">Admin</option>
+                              <option value="Clinics">Clinics</option>
+                        </select>
+                        </Label>
+					</div>
 
 					<div class="container-login100-form-btn">
 						<button id=but type = submit class="login100-form-btn">

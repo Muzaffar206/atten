@@ -1,5 +1,6 @@
 <?php
 session_start();
+include("assest/connection/config.php");
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -7,10 +8,6 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
-}
-$conn = new mysqli('localhost', 'root', '', 'attendance_system');
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -21,6 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $phone_number = $_POST['phone_number'];
     $address = $_POST['address'];
+    $department = $_POST['department'];
 
     if (!empty($_FILES["passport_size_photo"]["name"])) {
         $target_dir = "uploads/";
@@ -28,13 +26,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file);
         $passport_size_photo = $target_file;
 
-        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, passport_size_photo=?, address=? WHERE id=?";
+        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, passport_size_photo=?, address=?, department=? WHERE id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sisssssi", $username, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $id);
+        $stmt->bind_param("sisssssis", $username, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address,$department, $id);
     } else {
-        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, address=? WHERE id=?";
+        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, address=?, department=? WHERE id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sissssi", $username, $employer_id, $full_name, $email, $phone_number, $address, $id);
+        $stmt->bind_param("sissssis", $username, $employer_id, $full_name, $email, $phone_number, $address, $department, $id);
     }
 
     if ($stmt->execute()) {
@@ -75,6 +73,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         Phone Number: <input type="text" name="phone_number" value="<?php echo $user['phone_number']; ?>"><br>
         Passport Size Photo: <input type="file" name="passport_size_photo" accept="image/*"><br>
         Address: <textarea name="address"><?php echo $user['address']; ?></textarea><br>
+        
+                            Select the Department 
+                        <select name="department" id="department" required>
+                              <option value="<?php echo $user['department']; ?>" >Select department</option>
+                              <option value="Education">Education</option>
+                              <option value="Medical">Medical</option>
+                              <option value="ROP">ROP</option>
+                              <option value="Admin">Admin</option>
+                              <option value="Clinics">Clinics</option>
+                        </select>
+                        
         <input type="submit" value="Update">
     </form>
 </body>

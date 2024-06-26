@@ -1,17 +1,17 @@
 <?php
 session_start();
+include("assest/connection/config.php");
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: login.php");
+    exit();
+}
 
 date_default_timezone_set('Asia/Kolkata'); // Set default timezone to IST
-
-$conn = new mysqli('localhost', 'root', '', 'attendance_system');
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
 
 $user_id = $_SESSION['user_id'];
 $mode = $_POST['mode'];
@@ -66,13 +66,22 @@ if ($mode === 'Office') {
     $conn->close();
     exit();
 }
-
 if ($stmt->execute()) {
+    $attendance_id = $stmt->insert_id;
+
+    $is_present = ($scanType === 'In') ? 1 : 0;
+    $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
+    $updateUserStmt = $conn->prepare($updateUserSql);
+    $updateUserStmt->bind_param("ii", $is_present, $attendance_id); 
+    $updateUserStmt->execute();
+    
     echo "Attendance logged successfully.";
 } else {
     echo "Error logging attendance: " . $stmt->error;
 }
 
+
 $stmt->close();
+$updateUserStmt->close();
 $conn->close();
 ?>

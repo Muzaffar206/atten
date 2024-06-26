@@ -1,14 +1,9 @@
 <?php
 session_start();
-
+include("assest/connection/config.php");
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
-}
-$conn = new mysqli('localhost', 'root', '', 'attendance_system');
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
 }
 $user_id = $_SESSION['user_id'];
 $sql = "SELECT username FROM users WHERE id = ?";
