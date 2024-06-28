@@ -90,20 +90,22 @@ $conn->close();
 					</span>
 
 					<div class="wrap-input100">
-                        <Label class="custom-selector">
-                            Select the option 
-                        <select name="scheme" id="type" required>
-                              <option  value="">Select any one</option>
-                              <option value="In">In</option>
-                              <option value="Out">Out</option>
-                        </select>
-                        </Label>
-					</div>
+    <div class="radio-inputs">
+        <label class="radio">
+            <input type="radio" name="scheme" id="type" value="In" checked="" required>
+            <span class="name">In</span>
+        </label>
+        <label class="radio">
+            <input type="radio" name="scheme" id="type" value="Out" required>
+            <span class="name">Out</span>
+        </label>
+    </div>
+</div>
 
 					<div class="wrap-input100">
                     <div class="radio-inputs">
                     <label class="radio">
-                     <input type="radio" name="attendance_mode" value="office"checked="">
+                     <input type="radio" name="attendance_mode" value="office" checked="">
                         <span class="name">Office</span>
                      </label>
                      <label class="radio">
@@ -141,7 +143,7 @@ $conn->close();
  <script>
         function enableAttendance() {
             var mode = document.querySelector('input[name="attendance_mode"]:checked').value;
-            var type = document.getElementById('type').value;
+            var type = document.querySelector('input[name="scheme"]:checked').value;
             if (type === "") {
                 alert("Please select In or Out.");
                 return;
