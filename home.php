@@ -24,59 +24,7 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Attendance</title>
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
-<!--===============================================================================================-->	
-	<link rel="icon" type="image/png" href="assest/images/icons/favicon.ico"/>
-<!--===============================================================================================-->	
-    <link rel="stylesheet" href="assest/css/bootstrap.min.css">
-<!--===============================================================================================-->	
-    <link rel="stylesheet" type="text/css" href="assest/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/fonts/iconic/css/material-design-iconic-font.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/vendor/animate/animate.css">
-<!--===============================================================================================-->	
-	<link rel="stylesheet" type="text/css" href="assest/vendor/css-hamburgers/hamburgers.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/vendor/animsition/css/animsition.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/vendor/select2/select2.min.css">
-<!--===============================================================================================-->	
-	<link rel="stylesheet" type="text/css" href="assest/vendor/daterangepicker/daterangepicker.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/css/util.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/css/main.css">
-<!--===============================================================================================-->
-</head>
-<body>
-
-<!-- <div class="mainbody">
-    <h1>Welcome to the Attendance System</h1>
-    <h2>Hii : 
-       
-    </h2><br>
-    <select name="scheme" id="type" required>
-        <option value="">Select any one</option>
-        <option value="In">In</option>
-        <option value="Out">Out</option>
-    </select>
-    <label>
-        <input type="radio" name="attendance_mode" value="office" checked> In Office
-    </label>
-    <label>
-        <input type="radio" name="attendance_mode" value="outdoor"> Outdoor
-    </label>
-    <button onclick="enableAttendance()">Enable Attendance</button>
-    <div id="camera" style="width: 500px; height: 400px; display: none;"></div>
-    <div id="cameraSelfie" style="width: 500px; height: 400px; display: none;">
-        <video id="video" width="500" height="400" autoplay></video>
-        <button onclick="captureSelfie()">Capture Selfie</button>
-        <canvas id="canvas" width="500" height="400" style="display: none;"></canvas>
-    </div>
-    <div id="istClock" style="font-size: 24px;"></div>
-    <button onclick="document.location='logout.php'">Logout</button>
-    </div>   -->
+    <?php include("include/header.php");?>
 
     <div class="limiter">
 		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
@@ -354,21 +302,6 @@ $conn->close();
         // setInterval(updateISTClock, 1000);
     </script>
 
-    <!--===============================================================================================-->
-	<script src="assest/vendor/jquery/jquery-3.2.1.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/animsition/js/animsition.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/bootstrap/js/popper.js"></script>
-	<script src="assest/vendor/bootstrap/js/bootstrap.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/select2/select2.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/daterangepicker/moment.min.js"></script>
-	<script src="assest/vendor/daterangepicker/daterangepicker.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/countdowntime/countdowntime.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/js/main.js"></script>
+<?php include("include/footer.php");?>
 </body>
 </html>

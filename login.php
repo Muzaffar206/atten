@@ -14,6 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
+    $alert = '';
 
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
@@ -31,13 +32,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/"); // 30 days
             }
 
-            header("Location: home.php");
+            if ($row['role'] === 'admin') {
+                header("Location: admin/index.php");
+            } else {
+                header("Location: user/home.php");
+            }
             exit();
         } else {
-            echo 'Wrong email id or Password';
+            $alert .= '<div class="alert alert-danger" role="alert">Wrong email id or password</div>';
         }
     } else {
-        echo "No user found.";
+        $alert .= '<div class="alert alert-danger" role="alert">No users found</div>';
     }
 
     $conn->close();
@@ -74,48 +79,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Login</title>
-<!--===============================================================================================-->	
-	<link rel="icon" type="image/png" href="assest/images/icons/favicon.ico"/>
-<!--===============================================================================================-->	
-    <link rel="stylesheet" href="assest/css/bootstrap.min.css">
-<!--===============================================================================================-->	
-    <link rel="stylesheet" type="text/css" href="assest/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/fonts/iconic/css/material-design-iconic-font.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/vendor/animate/animate.css">
-<!--===============================================================================================-->	
-	<link rel="stylesheet" type="text/css" href="assest/vendor/css-hamburgers/hamburgers.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/vendor/animsition/css/animsition.min.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/vendor/select2/select2.min.css">
-<!--===============================================================================================-->	
-	<link rel="stylesheet" type="text/css" href="assest/vendor/daterangepicker/daterangepicker.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/css/util.css">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="assest/css/main.css">
-<!--===============================================================================================-->
-</head>
-<body>
-	<div class="preloader">
-<div class="lava-lamp">
-  <div class="bubble"></div>
-  <div class="bubble1"></div>
-  <div class="bubble2"></div>
-  <div class="bubble3"></div>
-</div>
-</div>
-
-<!-- <form method="post" action="">
-    Username: <input type="text" name="username" required><br>
-    Password: <input type="password" name="password" required><br>
-    <input type="submit" value="Login"> -->
+    <?php include("include/header.php");?>
 
 	<div class="limiter">
 		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
 			<div class="wrap-login100">
+            <?php if(!empty($alert)) echo $alert; ?>
 				<form method="post" action="" class="login100-form validate-form">
 					<span class="login100-form-logo">
 						<img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
@@ -147,12 +116,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 							Login
 						</button>
 					</div>
-
-					<div class="text-center p-t-90">
-						<a class="txt1" href="#">
-							Forgot Password?
-						</a>
-					</div>
 				</form>
 			</div>
 		</div>
@@ -160,30 +123,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	
 
 	
-<!--===============================================================================================-->
-	<script src="assest/vendor/jquery/jquery-3.2.1.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/animsition/js/animsition.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/bootstrap/js/popper.js"></script>
-	<script src="assest/vendor/bootstrap/js/bootstrap.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/select2/select2.min.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/daterangepicker/moment.min.js"></script>
-	<script src="assest/vendor/daterangepicker/daterangepicker.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/vendor/countdowntime/countdowntime.js"></script>
-<!--===============================================================================================-->
-	<script src="assest/js/main.js"></script>
+    <?php include("include/footer.php");?>
 
-<script>
 
-window.onload = function(){
-        //hide the preloader
-        document.querySelector(".preloader").style.display = "none";
-    }
-</script>
-<!-- </form> -->
 </body>
 </html>
