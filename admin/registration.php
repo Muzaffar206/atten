@@ -5,8 +5,12 @@ include("include/header.php");
 include("include/topbar.php");
 include("include/sidebar.php");
 
+if (!isset($_SESSION['user_id'])) {
+  header("Location: ../login.php");
+  exit();
+}
 if ($_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit();
 }
 
@@ -105,7 +109,6 @@ $sql_check->close();
 $conn->close();
 }
 ?>
- <!-- Content Wrapper. Contains page content -->
  <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <section class="content-header">
@@ -113,6 +116,12 @@ $conn->close();
         <div class="row mb-2">
           <div class="col-sm-6">
             <h1>Create New User</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+              <li class="breadcrumb-item active">new user</li>
+            </ol>
           </div>
         </div>
       </div><!-- /.container-fluid -->
@@ -126,7 +135,7 @@ $conn->close();
             <!-- general form elements -->
             <div class="card card-primary">
               <div class="card-header">
-                <h3 class="card-title">Quick Example</h3>
+                <h3 class="card-title">New user</h3>
               </div>
               <!-- /.card-header -->
               <!-- form start -->
@@ -192,6 +201,7 @@ $conn->close();
                 </div>
               </form>
             </div>
+            </section>
             <!-- /.card --> 
          <?php # if(!empty($alert)) echo $alert; ?>
 
@@ -200,5 +210,3 @@ $conn->close();
 
 
 <?php    include("include/footer.php"); ?>
-</body>
-</html>

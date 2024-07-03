@@ -1,7 +1,19 @@
 <?php
+session_start();
+include("../assest/connection/config.php");
 include("include/header.php");
 include("include/topbar.php");
 include("include/sidebar.php");
+
+
+if (!isset($_SESSION['user_id'])) {
+  header("Location: ../login.php");
+  exit();
+}
+if ($_SESSION['role'] !== 'admin') {
+  header("Location: ../login.php");
+  exit();
+}
 ?>
 
   <!-- Content Wrapper. Contains page content -->
@@ -15,8 +27,8 @@ include("include/sidebar.php");
           </div><!-- /.col -->
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">Dashboard v1</li>
+              <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+              <li class="breadcrumb-item active">Dashboard</li>
             </ol>
           </div><!-- /.col -->
         </div><!-- /.row -->
