@@ -6,6 +6,60 @@ namespace Composer\Autoload;
 
 class ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3
 {
+    public static $prefixLengthsPsr4 = array (
+        'Z' => 
+        array (
+            'ZipStream\\' => 10,
+        ),
+        'P' => 
+        array (
+            'Psr\\SimpleCache\\' => 16,
+            'Psr\\Http\\Message\\' => 17,
+            'Psr\\Http\\Client\\' => 16,
+            'PhpOffice\\PhpSpreadsheet\\' => 25,
+        ),
+        'M' => 
+        array (
+            'Matrix\\' => 7,
+        ),
+        'C' => 
+        array (
+            'Complex\\' => 8,
+        ),
+    );
+
+    public static $prefixDirsPsr4 = array (
+        'ZipStream\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
+        ),
+        'Psr\\SimpleCache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/simple-cache/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-message/src',
+            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+        ),
+        'Psr\\Http\\Client\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-client/src',
+        ),
+        'PhpOffice\\PhpSpreadsheet\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
+        ),
+        'Matrix\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
+        ),
+        'Complex\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
+        ),
+    );
+
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Shuchkin\\SimpleXLS' => __DIR__ . '/..' . '/shuchkin/simplexls/src/SimpleXLS.php',
@@ -14,6 +68,8 @@ class ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
+            $loader->prefixLengthsPsr4 = ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3::$prefixDirsPsr4;
             $loader->classMap = ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3::$classMap;
 
         }, null, ClassLoader::class);

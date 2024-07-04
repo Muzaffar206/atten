@@ -1,5 +1,8 @@
 {
     "require": {
-        "shuchkin/simplexls": "^0.10.4"
+        "shuchkin/simplexls": "^0.10.4",
+        "ext-gd": "*",
+        "ext-fileinfo": "*",
+        "phpoffice/phpspreadsheet": "^2.1"
     }
 }

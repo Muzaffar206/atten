@@ -2,31 +2,26 @@
 session_start();
 include("assest/connection/config.php");
 
-// Check if the user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
 
-
-// Get form inputs for department and date range
 $department = isset($_POST['department']) ? $_POST['department'] : 'All';
-$from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01'); // Default to the first day of the current month
-$to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d'); // Default to today
+$from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
+$to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
 
-// Fetch users based on department selection
-if ($department === 'All') {
-    $users_query = "SELECT id, employer_id, full_name, department FROM users";
-    $stmt_users = $conn->prepare($users_query);
-} else {
-    $users_query = "SELECT id, employer_id, full_name, department FROM users WHERE department = ?";
-    $stmt_users = $conn->prepare($users_query);
+$users_query = ($department === 'All') ? 
+    "SELECT id, employer_id, full_name, department FROM users" : 
+    "SELECT id, employer_id, full_name, department FROM users WHERE department = ?";
+
+$stmt_users = $conn->prepare($users_query);
+if ($department !== 'All') {
     $stmt_users->bind_param("s", $department);
 }
 $stmt_users->execute();
 $users_result = $stmt_users->get_result();
 
-// Prepare dates array based on selected date range
 $dates = [];
 $current_date = strtotime($from_date);
 $end_date = strtotime($to_date);
@@ -71,18 +66,22 @@ $stmt_users->close();
             <option value="ROP">ROP</option>
             <option value="Admin">Admin</option>
             <option value="Clinics">Clinics</option>
-            <!-- Add more options based on your departments -->
         </select>
         <label for="from_date">From Date:</label>
         <input type="date" id="from_date" name="from_date" value="<?php echo $from_date; ?>">
         <label for="to_date">To Date:</label>
         <input type="date" id="to_date" name="to_date" value="<?php echo $to_date; ?>">
         <input type="submit" value="Show Data">
-        <input type="submit" name="download_csv" value="Download CSV">
     </form>
     <br>
 
     <?php if ($users_result->num_rows > 0): ?>
+        <form method="post" action="download_xls.php">
+            <input type="hidden" name="department" value="<?php echo $department; ?>">
+            <input type="hidden" name="from_date" value="<?php echo $from_date; ?>">
+            <input type="hidden" name="to_date" value="<?php echo $to_date; ?>">
+            <button type="submit">Download XLS</button>
+        </form>
         <table>
             <tr>
                 <th>Department</th>
@@ -125,8 +124,6 @@ $stmt_users->close();
     <?php else: ?>
         <p>No users found for the selected department.</p>
     <?php endif; ?>
-
-    
 
 </body>
 </html>
