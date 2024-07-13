@@ -1,7 +1,7 @@
 <?php
 session_start();
-include("assest/connection/config.php");
-require 'vendor/autoload.php';
+include("../assest/connection/config.php");
+require '../vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;

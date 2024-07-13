@@ -1,18 +1,20 @@
 <?php
 session_start();
+if (!isset($_SESSION['user_id'])) {
+  header("Location: ../login.php");
+  exit();
+}
+if ($_SESSION['role'] !== 'admin') {
+  header("Location: ../home.php");
+  exit();
+}
 include("../assest/connection/config.php");
 include("include/header.php");
 include("include/topbar.php");
 include("include/sidebar.php");
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
-}
-if ($_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
-    exit();
-}
+
+
 
 $sql = "SELECT * FROM users";
 $result = $conn->query($sql);
@@ -46,7 +48,7 @@ $conn->close();
               <div class="card-header"></div>
               <div class="card-body">
                 <h1>Users</h1>
-                <table id="example2" class="table table-bordered table-hover">
+                <table id="attendanceTable" class="table table-bordered table-hover">
                   <thead>
                 <tr>
                 <th>ID</th>
@@ -85,8 +87,31 @@ $conn->close();
             </tr>
         <?php endif; ?>
     </table>
-    <a href="registration.php">Add New User</a>
+    <button onclick="document.location='registration.php'" type="button" class="btn btn-primary">Add new User</button>
+    </section>
+    <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <footer class="main-footer">
+    <strong>Copyright &copy; 2024 <a href="https://outerinfo.online">Outerinfo</a>.</strong>
+    All rights reserved.
+    <div class="float-right d-none d-sm-inline-block">
+      <b>Version</b> 1.0
+    </div>
+  </footer>
 
 <?php
 include("include/footer.php");
 ?>
+<script>
+$(document).ready(function() {
+    $('#attendanceTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+    });
+});
+</script>

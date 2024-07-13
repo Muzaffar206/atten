@@ -3,8 +3,8 @@ session_start();
 include("assest/connection/config.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    $username = mysqli_real_escape_string($conn,$_POST['username']);
+    $password = mysqli_real_escape_string($conn,$_POST['password']);
     $rememberMe = isset($_POST['remember_me']); // if "Remember Me" is selected
 
     
@@ -35,11 +35,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($row['role'] === 'admin') {
                 header("Location: admin/index.php");
             } else {
-                header("Location: user/home.php");
+                header("Location: home.php");
             }
             exit();
         } else {
-            $alert .= '<div class="alert alert-danger" role="alert">Wrong email id or password</div>';
+            $alert .= '<div class="alert alert-danger" role="alert">Wrong username or password</div>';
         }
     } else {
         $alert .= '<div class="alert alert-danger" role="alert">No users found</div>';

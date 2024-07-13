@@ -44,7 +44,7 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="./index.php" class="nav-link">
+                <a href="./index.php" class="nav-link" >
                   <i class="far fa-circle nav-icon"></i>
                   <p>Home</p>
                 </a>
@@ -70,7 +70,13 @@
               <li class="nav-item">
                 <a href="./attendance_report.php" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Attendance</p>
+                  <p>Attendance report</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./get_atten.php" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Monthly Attendance</p>
                 </a>
               </li>
             </ul>

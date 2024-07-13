@@ -20,75 +20,77 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Attendance</title>
-    <?php include("include/header.php");?>
+    <?php include("include/header.php"); ?>
 
     <div class="limiter">
-		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
-			<div class="wrap-login100">
-					<span class="login100-form-logo">
-						<img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
-					</span>
+        <div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
+            <div class="wrap-login100">
+                <span class="login100-form-logo">
+                    <img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
+                </span>
 
-					<span class="login100-form-title p-b-34 p-t-27">
+                <span class="login100-form-title p-b-34 p-t-27">
                     Welcome <?php echo htmlspecialchars($username); ?>
-					</span>
+                </span>
 
-					<div class="wrap-input100">
-    <div class="radio-inputs">
-        <label class="radio">
-            <input type="radio" name="scheme" id="type" value="In" checked="" required>
-            <span class="name">In</span>
-        </label>
-        <label class="radio">
-            <input type="radio" name="scheme" id="type" value="Out" required>
-            <span class="name">Out</span>
-        </label>
-    </div>
-</div>
-
-					<div class="wrap-input100">
+                <div class="wrap-input100">
                     <div class="radio-inputs">
-                    <label class="radio">
-                     <input type="radio" name="attendance_mode" value="office" checked="">
-                        <span class="name">Office</span>
-                     </label>
-                     <label class="radio">
-                      <input type="radio" name="attendance_mode" value="outdoor">
-                          <span class="name">Outdoor</span>
-                     </label>
+                        <label class="radio">
+                            <input type="radio" name="scheme" id="type" value="In" checked="" required>
+                            <span class="name">In</span>
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="scheme" id="type" value="Out" required>
+                            <span class="name">Out</span>
+                        </label>
                     </div>
-					</div>
-                   
-                    
+                </div>
 
-					<div class="container-login100-form-btn">
-						<button onclick="enableAttendance()" class="login100-form-btn">
-							Give attendance
-						</button>
-                    
-					</div>
-                    <div id="camera" style="width: 400px; height: 500px; display: none;"></div>
-    <div id="cameraSelfie" style="width: 400px; height: 500px; display: none;">
+                <div class="wrap-input100">
+                    <div class="radio-inputs">
+                        <label class="radio">
+                            <input type="radio" name="attendance_mode" value="office" checked="">
+                            <span class="name">Office</span>
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="attendance_mode" value="outdoor">
+                            <span class="name">Outdoor</span>
+                        </label>
+                    </div>
+                </div>
+
+
+
+                <div class="container-login100-form-btn">
+                    <button onclick="enableAttendance()" class="login100-form-btn">
+                        Give attendance
+                    </button>
+
+                </div>
+                <div id="camera" style="width: 400px; height: 500px; display: none;"></div>
+                <div id="cameraSelfie" style="width: 400px; height: 500px; display: none;">
         <video id="video" width="500" height="400" autoplay></video>
         <canvas id="canvas" width="500" height="400" style="display: none;"></canvas>
         <button class="button123" onclick="captureSelfie()">Capture Selfie</button>
     </div>
 
-                    <div class="container-login100-form-btn">
-                    <button class="button123" onclick="document.location='logout.php'"><span>Logout!</span></button></div>
-
-				
-			</div>
-		</div>
-	</div>
+                <div class="container-login100-form-btn">
+                    <button class="button123" onclick="document.location='logout.php'"><span>Logout!</span></button>
+                </div>
 
 
-    
- <script>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
         function enableAttendance() {
             var mode = document.querySelector('input[name="attendance_mode"]:checked').value;
             var type = document.querySelector('input[name="scheme"]:checked').value;
@@ -107,8 +109,9 @@ $conn->close();
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     position => showPositionForOffice(position, scanType),
-                    showError,
-                    { enableHighAccuracy: true }
+                    showError, {
+                        enableHighAccuracy: true
+                    }
                 );
             } else {
                 alert("Geolocation is not supported by this browser.");
@@ -120,9 +123,18 @@ $conn->close();
             var lon = position.coords.longitude;
             console.log(`Current Position: Lat=${lat}, Lon=${lon}`);
 
-            var officeLocations = [
-                { name: "Office 1", lat: 19.0748, lon: 72.8856, radius: 0.2 }, // Adjusted radius for MESCO
-                { name: "Office 2", lat: 19.07654352059129, lon: 72.88898322125363, radius: 0.2 } // Adjusted radius for MUMBRA
+            var officeLocations = [{
+                    name: "Office 1",
+                    lat: 19.0748,
+                    lon: 72.8856,
+                    radius: 0.2
+                }, // Adjusted radius for MESCO
+                {
+                    name: "Office 2",
+                    lat: 19.07654352059129,
+                    lon: 72.88898322125363,
+                    radius: 0.2
+                } // Adjusted radius for MUMBRA
             ];
 
             var withinRange = false;
@@ -176,9 +188,9 @@ $conn->close();
             var R = 6371; // Radius of the earth in km
             var dLat = deg2rad(lat2 - lat1);
             var dLon = deg2rad(lon2 - lon1);
-            var a = 
+            var a =
                 Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             var d = R * c; // Distance in km
@@ -192,9 +204,9 @@ $conn->close();
         function startCamera(scanType) {
             document.getElementById("camera").style.display = "block";
             const html5QrCode = new Html5Qrcode("camera");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                {
+            html5QrCode.start({
+                    facingMode: "environment"
+                }, {
                     fps: 10,
                     qrbox: 250
                 },
@@ -218,7 +230,9 @@ $conn->close();
         function startCameraForOutdoor(scanType, lat, lon) {
             document.getElementById('cameraSelfie').style.display = 'block';
             const video = document.getElementById('video');
-            const constraints = { video: true };
+            const constraints = {
+                video: true
+            };
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
                     video.srcObject = stream;
@@ -246,35 +260,37 @@ $conn->close();
         }
 
         function captureSelfieAndLogAttendance(mode, data1, scanType) {
-            const video = document.getElementById('video');
-            const constraints = { video: true };
-            navigator.mediaDevices.getUserMedia(constraints)
+            const video = document.createElement('video');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            navigator.mediaDevices.getUserMedia({
+                    video: true
+                })
                 .then(stream => {
                     video.srcObject = stream;
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        document.getElementById('cameraSelfie').style.display = 'block';
-                        document.querySelector('button[onclick="captureSelfie()"]').onclick = () => {
-                            const selfie = captureSelfie();
-                            logAttendance(mode, data1, null, selfie, scanType);
-                            stream.getTracks().forEach(track => track.stop()); // Stop video stream
-                            document.getElementById('cameraSelfie').style.display = 'none';
-                        };
-                    };
+                    video.play();
+                    setTimeout(() => {
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const selfie = canvas.toDataURL('image/png');
+                        logAttendance(mode, data1, null, selfie, scanType);
+                        stream.getTracks().forEach(track => track.stop()); // Stop video stream
+                    }, 1000); // Capture selfie after 1 seconds
                 })
                 .catch(err => {
                     console.log("Error accessing webcam: " + err);
                 });
         }
 
+
         function logAttendance(mode, data1, data2, selfie, scanType) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "log_attendance.php", true);
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function () {
+            xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
                     console.log(xhr.responseText);
-                    alert("Attendance logged successfully.");
+                    
                 }
             };
             var params = "mode=" + mode + "&data1=" + encodeURIComponent(data1) + "&scanType=" + scanType;
@@ -302,6 +318,7 @@ $conn->close();
         // setInterval(updateISTClock, 1000);
     </script>
 
-<?php include("include/footer.php");?>
-</body>
+    <?php include("include/footer.php"); ?>
+    </body>
+
 </html>

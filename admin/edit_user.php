@@ -1,24 +1,25 @@
 <?php
 session_start();
-include("../assest/connection/config.php");
-
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
+  header("Location: ../login.php");
+  exit();
 }
 if ($_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
-    exit();
+  header("Location: ../home.php");
+  exit();
 }
+include("../assest/connection/config.php");
+
+
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id = $_POST['id'];
-    $username = $_POST['username'];
-    $employer_id = $_POST['employer_id'];
-    $full_name = $_POST['full_name'];
-    $email = $_POST['email'];
-    $phone_number = $_POST['phone_number'];
-    $address = $_POST['address'];
+    $username = htmlspecialchars($_POST['username']);
+    $employer_id = htmlspecialchars($_POST['employer_id']);
+    $full_name = htmlspecialchars($_POST['full_name']);
+    $email = htmlspecialchars($_POST['email']);
+    $phone_number = htmlspecialchars($_POST['phone_number']);
+    $address = htmlspecialchars($_POST['address']);
     $department = $_POST['department'];
 
     // Check if password field is set and not empty
@@ -145,7 +146,17 @@ include("include/sidebar.php");
               </form>
             </div>
 
-
+            </section>
+    <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <footer class="main-footer">
+    <strong>Copyright &copy; 2024 <a href="https://outerinfo.online">Outerinfo</a>.</strong>
+    All rights reserved.
+    <div class="float-right d-none d-sm-inline-block">
+      <b>Version</b> 1.0
+    </div>
+  </footer>
 
 
 

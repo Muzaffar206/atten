@@ -1,28 +1,29 @@
 <?php
 session_start();
-include("../assest/connection/config.php");
-include("include/header.php");
-include("include/topbar.php");
-include("include/sidebar.php");
-
 if (!isset($_SESSION['user_id'])) {
   header("Location: ../login.php");
   exit();
 }
 if ($_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
-    exit();
+  header("Location: ../home.php");
+  exit();
 }
+include("../assest/connection/config.php");
+include("include/header.php");
+include("include/topbar.php");
+include("include/sidebar.php");
+
+
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
+    $username = htmlspecialchars($_POST['username']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $employer_id = $_POST['employer_id'];
-    $full_name = $_POST['full_name'];
-    $email = $_POST['email'];
-    $phone_number = $_POST['phone_number'];
-    $address = $_POST['address'];
+    $employer_id = htmlspecialchars($_POST['employer_id']);
+    $full_name = htmlspecialchars($_POST['full_name']);
+    $email = htmlspecialchars($_POST['email']);
+    $phone_number = htmlspecialchars($_POST['phone_number']);
+    $address = htmlspecialchars($_POST['address']);
     $department = $_POST['department'];
 
  // Check if the username, employer_id, or email already exists
@@ -92,8 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $sql->bind_param("ssissssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department);
 
             if ($sql->execute() === TRUE) {
-                $alert .= '<div class="alert alert-success" role="alert">Registration successful! Redirecting to login...</div>';
-                echo "<script>setTimeout(function(){ window.location.href = '../login.php'; }, 3000);</script>";
+                $alert .= '<div class="alert alert-success" role="alert">Registration successful!</div>';
             } else {
                 $alert .= '<div class="alert alert-danger" role="alert">Error: ' . $sql->error . '</div>';
             }
@@ -114,6 +114,7 @@ $conn->close();
     <section class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
+        <?php if(!empty($alert)) echo $alert; ?>
           <div class="col-sm-6">
             <h1>Create New User</h1>
           </div>
@@ -202,9 +203,16 @@ $conn->close();
               </form>
             </div>
             </section>
-            <!-- /.card --> 
-         <?php # if(!empty($alert)) echo $alert; ?>
-
+    <!-- /.content -->
+    </div>
+    <!-- /.content-wrapper -->
+    <footer class="main-footer">
+    <strong>Copyright &copy; 2024 <a href="https://outerinfo.online">Outerinfo</a>.</strong>
+    All rights reserved.
+    <div class="float-right d-none d-sm-inline-block">
+      <b>Version</b> 1.0
+    </div>
+  </footer>
 
 
 

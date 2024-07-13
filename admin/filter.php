@@ -7,12 +7,12 @@ include("include/sidebar.php");
 
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.php");
-    exit();
+  header("Location: ../login.php");
+  exit();
 }
 if ($_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
-    exit();
+  header("Location: ../home.php");
+  exit();
 }
 
 // Fetch all users for the filter dropdown
@@ -146,14 +146,21 @@ $conn->close();
         <input type="date" name="end_date" id="end_date" value="<?php echo $endDate; ?>">
 
         <button type="submit" class="btn btn-primary">Filter</button>
-        <button type="submit" class="btn btn-success" name="export_csv" value="1">Export CSV</button>
     </form>
+    <form method="GET" action="export_csv.php">
+    <input type="hidden" name="user" value="<?php echo $filterUser; ?>">
+    <input type="hidden" name="department" value="<?php echo $department; ?>">
+    <input type="hidden" name="start_date" value="<?php echo $startDate; ?>">
+    <input type="hidden" name="end_date" value="<?php echo $endDate; ?>">
+    <button type="submit" class="btn btn-success" name="export_csv" value="1">Export CSV</button>
+</form>
+
     
 
               </div>
               <!-- /.card-header -->
               <div class="card-body">
-                <table id="example2" class="table table-bordered table-hover">
+                <table id="attendanceTable" class="table table-bordered table-hover">
                   <thead>
                 <tr>
             <th>User ID</th>
@@ -186,7 +193,6 @@ $conn->close();
               <!-- /.card-body -->
             </div>
             <!-- /.card -->
-    <button class="btn btn-block btn-danger btn-sm" onclick="document.location='../logout.php'">Logout</button>
 
           </div>
           <!-- /.col -->
@@ -196,7 +202,8 @@ $conn->close();
       <!-- /.container-fluid -->
     </section>
     <!-- /.content -->
-
+    </div>
+    <!-- /.content-wrapper -->
     <footer class="main-footer">
     <strong>Copyright &copy; 2024 <a href="https://outerinfo.online">Outerinfo</a>.</strong>
     All rights reserved.
@@ -209,3 +216,15 @@ $conn->close();
     <?php
 include("include/footer.php");
 ?>
+<script>
+$(document).ready(function() {
+    $('#attendanceTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+    });
+});
+</script>
