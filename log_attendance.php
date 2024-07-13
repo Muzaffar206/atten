@@ -6,7 +6,6 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-
 date_default_timezone_set('Asia/Kolkata'); // Set default timezone to IST
 
 $user_id = $_SESSION['user_id'];
@@ -19,34 +18,6 @@ if (isset($_POST['selfie']) && !empty($_POST['selfie'])) {
     $selfie = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $_POST['selfie']));
 }
 
-// Check if both "In" and "Out" attendance already logged for today in outdoor mode
-$sqlCheckInAttendance = "SELECT COUNT(*) AS count FROM attendance WHERE user_id = ? AND DATE(in_time) = CURDATE() AND mode = ? AND in_time IS NOT NULL";
-$stmtCheckInAttendance = $conn->prepare($sqlCheckInAttendance);
-$stmtCheckInAttendance->bind_param("is", $user_id, $mode);
-$stmtCheckInAttendance->execute();
-$stmtCheckInAttendance->bind_result($inAttendanceCount);
-$stmtCheckInAttendance->fetch();
-$stmtCheckInAttendance->close();
-
-$sqlCheckOutAttendance = "SELECT COUNT(*) AS count FROM attendance WHERE user_id = ? AND DATE(out_time) = CURDATE() AND mode = ? AND out_time IS NOT NULL";
-$stmtCheckOutAttendance = $conn->prepare($sqlCheckOutAttendance);
-$stmtCheckOutAttendance->bind_param("is", $user_id, $mode);
-$stmtCheckOutAttendance->execute();
-$stmtCheckOutAttendance->bind_result($outAttendanceCount);
-$stmtCheckOutAttendance->fetch();
-$stmtCheckOutAttendance->close();
-
-if ($scanType === 'In' && $inAttendanceCount > 0) {
-    echo "You have already logged 'In' attendance for today in $mode mode.";
-    exit();
-}
-
-if ($scanType === 'Out' && $outAttendanceCount > 0) {
-    echo "You have already logged 'Out' attendance for today in $mode mode.";
-    exit();
-}
-
-// Proceed to log attendance
 if ($mode === 'Office') {
     $data1 = $_POST['data1']; // QR Code message
     if ($scanType === "In") {
@@ -107,4 +78,3 @@ if ($stmt->execute()) {
 
 $stmt->close();
 $conn->close();
-?>
