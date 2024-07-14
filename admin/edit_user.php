@@ -1,5 +1,6 @@
 <?php
 session_start();
+session_regenerate_id(true);
 if (!isset($_SESSION['user_id'])) {
   header("Location: ../login.php");
   exit();
@@ -10,157 +11,155 @@ if ($_SESSION['role'] !== 'admin') {
 }
 include("../assest/connection/config.php");
 
-
-
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = $_POST['id'];
-    $username = htmlspecialchars($_POST['username']);
-    $employer_id = htmlspecialchars($_POST['employer_id']);
-    $full_name = htmlspecialchars($_POST['full_name']);
-    $email = htmlspecialchars($_POST['email']);
-    $phone_number = htmlspecialchars($_POST['phone_number']);
-    $address = htmlspecialchars($_POST['address']);
-    $department = $_POST['department'];
+  $id = $_POST['id'];
+  $username = htmlspecialchars($_POST['username']);
+  $employer_id = htmlspecialchars($_POST['employer_id']);
+  $full_name = htmlspecialchars($_POST['full_name']);
+  $email = htmlspecialchars($_POST['email']);
+  $phone_number = htmlspecialchars($_POST['phone_number']);
+  $address = htmlspecialchars($_POST['address']);
+  $department = $_POST['department'];
+  $role = $_POST['role'];
 
-    // Check if password field is set and not empty
-    if (!empty($_POST['password'])) {
-        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-
-        // Update user with password
-        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, address=?, department=? WHERE id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $address, $department, $id);
-    } else {
-        // Update user without password change
-        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, address=?, department=? WHERE id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sisssssi", $username, $employer_id, $full_name, $email, $phone_number, $address, $department, $id);
-    }
-
-    // Execute SQL statement
-    if ($stmt->execute()) {
-        header("Location: users.php");
-    } else {
-        echo "Error updating record: " . $stmt->error;
-    }
-
-    $stmt->close();
-    $conn->close();
-} else {
-    // Fetch user data for editing
-    $id = $_GET['id'];
-    $sql = "SELECT * FROM users WHERE id=?";
+  // Check if password field is set and not empty
+  if (!empty($_POST['password'])) {
+    // Update with password
+    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, address=?, department=?, role=? WHERE id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-
-    $stmt->close();
-    $conn->close();
+    $stmt->bind_param("sisssssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $address, $department, $role, $id);
+} else {
+    // Update without password change
+    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, address=?, department=?, role=? WHERE id=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $address, $department, $role, $id);
 }
-include("include/header.php");
-include("include/topbar.php");
-include("include/sidebar.php");
+
+  // Execute SQL statement
+  if ($stmt->execute()) {
+    header("Location: users.php");
+  } else {
+    echo "Error updating record: " . $stmt->error;
+  }
+
+  $stmt->close();
+  $conn->close();
+} else {
+  // Fetch user data for editing
+  $id = $_GET['id'];
+  $sql = "SELECT * FROM users WHERE id=?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $user = $result->fetch_assoc();
+
+  $stmt->close();
+  $conn->close();
+}
 ?>
 
+<?php include("include/header.php"); ?>
+<?php include("include/topbar.php"); ?>
+<?php include("include/sidebar.php"); ?>
+
 <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1>Edit user</h1>
-          </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-              <li class="breadcrumb-item active">edit</li>
-            </ol>
-          </div>
+  <!-- Content Header (Page header) -->
+  <section class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1>Edit User: <?php echo $user['username']; ?></h1>
         </div>
-      </div><!-- /.container-fluid -->
-    </section>
-
-<section class="content">
-      <div class="container-fluid">
-        <div class="row">
-          <!-- left column -->
-          <div class="col-md-6">
-            <!-- general form elements -->
-            <div class="card card-primary">
-              <div class="card-header">
-                <h3 class="card-title">Username : <?php echo $user['username']; ?></h3>
-              </div>
-              <!-- /.card-header -->
-              <!-- form start -->
-    <form method="post" action="" enctype="multipart/form-data">
-    <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
-    <div class="card-body">
-        <div class="form-group">
-        <label>Username</label>
-        <input type="text" class="form-control" name="username" value="<?php echo $user['username']; ?>"  required>
-    </div>
-    <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" class="form-control"  name="password"> <!-- Admin to set new password -->
-                  </div>
-
-                  <div class="form-group">
-                    <label>Employee id</label>
-                    <input type="text" class="form-control" value="<?php echo $user['employer_id']; ?>" name="employer_id">
-                  </div>
-                  <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" class="form-control"  value="<?php echo $user['full_name']; ?>" name="full_name">
-                  </div>
-                  <div class="form-group">
-                    <label>Email</label>
-                    <input type="Email" class="form-control" value="<?php echo $user['email']; ?>"  name="email" >
-                  </div>
-                  <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" class="form-control" value="<?php echo $user['phone_number']; ?>" name="phone_number">
-                  </div>
-                  <div class="form-group">
-                  <label >Address</label>
-                  <textarea class="form-control" name="address"><?php echo $user['address']; ?></textarea>
-                  </div>
-                  <div class="form-group">
-                  <label>Select department</label>
-                  <select name="department" id="department" class="form-control select2" style="width: 100%;">
-            <option value="">Select department</option>
-            <option value="Education" <?php if ($user['department'] === 'Education') echo 'selected'; ?>>Education</option>
-            <option value="Medical" <?php if ($user['department'] === 'Medical') echo 'selected'; ?>>Medical</option>
-            <option value="ROP" <?php if ($user['department'] === 'ROP') echo 'selected'; ?>>ROP</option>
-            <option value="Admin" <?php if ($user['department'] === 'Admin') echo 'selected'; ?>>Admin</option>
-            <option value="Clinics" <?php if ($user['department'] === 'Clinics') echo 'selected'; ?>>Clinics</option>
-        </select>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+            <li class="breadcrumb-item active">Edit User</li>
+          </ol>
         </div>
-                </div>
-                <!-- /.card-body -->
+      </div>
+    </div><!-- /.container-fluid -->
+  </section>
 
-                <div class="card-footer">
-                  <button type="submit" value="Update" class="btn btn-primary">Submit</button>
-                </div>
-              </form>
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card card-primary">
+            <div class="card-header">
+              <h3 class="card-title">Edit User Details</h3>
             </div>
+            <!-- /.card-header -->
+            <!-- form start -->
+            <form method="post" action="" enctype="multipart/form-data">
+              <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
+              <div class="card-body">
+                <div class="form-group">
+                  <label>Username</label>
+                  <input type="text" class="form-control" name="username" value="<?php echo $user['username']; ?>" required>
+                </div>
+                <div class="form-group">
+                  <label>Password</label>
+                  <input type="password" class="form-control" name="password">
+                  <small class="text-muted">Leave blank if not changing.</small>
+                </div>
+                <div class="form-group">
+                  <label>Employee ID</label>
+                  <input type="text" class="form-control" name="employer_id" value="<?php echo $user['employer_id']; ?>">
+                </div>
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" class="form-control" name="full_name" value="<?php echo $user['full_name']; ?>">
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" class="form-control" name="email" value="<?php echo $user['email']; ?>">
+                </div>
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input type="text" class="form-control" name="phone_number" value="<?php echo $user['phone_number']; ?>">
+                </div>
+                <div class="form-group">
+                  <label>Address</label>
+                  <textarea class="form-control" name="address"><?php echo $user['address']; ?></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Select Department</label>
+                  <select name="department" class="form-control">
+                    <option value="">Select department</option>
+                    <option value="Education" <?php echo ($user['department'] == 'Education') ? 'selected' : ''; ?>>Education</option>
+                    <option value="Medical" <?php echo ($user['department'] == 'Medical') ? 'selected' : ''; ?>>Medical</option>
+                    <option value="ROP" <?php echo ($user['department'] == 'ROP') ? 'selected' : ''; ?>>ROP</option>
+                    <option value="Admin" <?php echo ($user['department'] == 'Admin') ? 'selected' : ''; ?>>Admin</option>
+                    <option value="Clinics" <?php echo ($user['department'] == 'Clinics') ? 'selected' : ''; ?>>Clinics</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Select Role</label>
+                  <select name="role" class="form-control">
+                    <option value="user" <?php echo ($user['role'] == 'user') ? 'selected' : ''; ?>>User</option>
+                    <option value="admin" <?php echo ($user['role'] == 'admin') ? 'selected' : ''; ?>>Admin</option>
+                    <!-- Add more roles as needed -->
+                  </select>
+                </div>
+              </div>
+              <!-- /.card-body -->
 
-            </section>
-    <!-- /.content -->
-    </div>
-    <!-- /.content-wrapper -->
-    <footer class="main-footer">
-    <strong>Copyright &copy; 2024 <a href="https://outerinfo.online">Outerinfo</a>.</strong>
-    All rights reserved.
-    <div class="float-right d-none d-sm-inline-block">
-      <b>Version</b> 1.0
-    </div>
-  </footer>
+              <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </form>
+          </div>
+          <!-- /.card -->
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </div><!-- /.container-fluid -->
+  </section>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
 
-
-
-
-
-       
-    <?php    include("include/footer.php"); ?>
+<?php include("include/footer.php"); ?>

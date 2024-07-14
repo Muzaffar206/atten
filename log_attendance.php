@@ -1,5 +1,6 @@
 <?php
 session_start();
+session_regenerate_id(true);
 include("assest/connection/config.php");
 
 if (!isset($_SESSION['user_id'])) {
@@ -59,7 +60,9 @@ if ($mode === 'Office') {
 } else {
     echo "Invalid attendance mode.";
     $conn->close();
+    header("Location: login.php");
     exit();
+   
 }
 
 if ($stmt->execute()) {

@@ -43,43 +43,37 @@
               </p>
             </a>
             <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="./index.php" class="nav-link" >
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Home</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="./filter.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Filter</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="./registration.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Create a new user</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="./users.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Employee</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="./attendance_report.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Attendance report</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="./get_atten.php" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Monthly Attendance</p>
-                </a>
-              </li>
-            </ul>
+                        <li class="nav-item">
+                            <a href="./index.php" class="nav-link <?php echo ($activePage === 'home') ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Home</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="./registration.php" class="nav-link <?php echo ($activePage === 'registration') ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Create a new user</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="./users.php" class="nav-link <?php echo ($activePage === 'employee') ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Total Employee</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="./attendance_report.php" class="nav-link <?php echo ($activePage === 'attendance_report') ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Attendance report</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="./get_atten.php" class="nav-link <?php echo ($activePage === 'monthly_attendance') ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>M/Y Attendance</p>
+                            </a>
+                        </li>
+                    </ul>
           </li>
           
         </ul>

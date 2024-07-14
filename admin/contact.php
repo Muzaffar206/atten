@@ -1,5 +1,6 @@
 <?php
 session_start();
+session_regenerate_id(true);
 if (!isset($_SESSION['user_id'])) {
   header("Location: ../login.php");
   exit();
@@ -76,11 +77,4 @@ include("include/sidebar.php");
     <!-- /.content -->
   </div>
   <!-- /.content-wrapper -->
-
-  <footer class="main-footer">
-    <div class="float-right d-none d-sm-block">
-      <b>Version</b> 3.2.0
-    </div>
-    <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong> All rights reserved.
-  </footer>
   <?php include("include/footer.php"); ?>

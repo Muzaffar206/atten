@@ -746,3 +746,13 @@ iframe {
   animation: drop 6s ease-in-out infinite;
 }
 
+
+
+.dashboard{
+  color: white;
+  text-decoration: none;
+
+}
+.dashboard:hover{
+  color: rgb(0, 255, 247);
+}

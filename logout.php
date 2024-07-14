@@ -1,5 +1,6 @@
 <?php
 session_start();
+session_regenerate_id(true);
 
 // Unset all session variables
 $_SESSION = array();
