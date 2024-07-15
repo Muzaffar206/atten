@@ -96,8 +96,15 @@ include("include/sidebar.php");
                                     <label for="department">Department:</label>
                                     <select name="department" id="department" class="form-control">
                                         <option value="">All Departments</option>
+                                        <option value="Education" <?php echo ($filterDepartment == 'Education') ? 'selected' : ''; ?>>Education</option>
+                                        <option value="Medical" <?php echo ($filterDepartment == 'Medical') ? 'selected' : ''; ?>>Medical</option>
                                         <option value="ROP" <?php echo ($filterDepartment == 'ROP') ? 'selected' : ''; ?>>ROP</option>
                                         <option value="Admin" <?php echo ($filterDepartment == 'Admin') ? 'selected' : ''; ?>>Admin</option>
+                                        <option value="Accounts" <?php echo ($filterDepartment == 'Accounts') ? 'selected' : ''; ?>>Accounts</option>
+                                        <option value="FRD" <?php echo ($filterDepartment == 'FRD') ? 'selected' : ''; ?>>FRD</option>
+                                        <option value="Newspaper" <?php echo ($filterDepartment == 'Newspaper') ? 'selected' : ''; ?>>Newspaper</option>
+                                        <option value="RC Mahim" <?php echo ($filterDepartment == 'RC Mahim') ? 'selected' : ''; ?>>RC Mahim</option>
+                                        <option value="Study centre" <?php echo ($filterDepartment == 'Study centre') ? 'selected' : ''; ?>>Study centre</option>
                                         <option value="Clinics" <?php echo ($filterDepartment == 'Clinics') ? 'selected' : ''; ?>>Clinics</option>
                                     </select>
                                 </div>

@@ -28,12 +28,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, address=?, department=?, role=? WHERE id=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sisssssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $address, $department, $role, $id);
-} else {
+  } else {
     // Update without password change
     $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, address=?, department=?, role=? WHERE id=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $address, $department, $role, $id);
-}
+  }
 
   // Execute SQL statement
   if ($stmt->execute()) {
@@ -132,6 +132,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <option value="Medical" <?php echo ($user['department'] == 'Medical') ? 'selected' : ''; ?>>Medical</option>
                     <option value="ROP" <?php echo ($user['department'] == 'ROP') ? 'selected' : ''; ?>>ROP</option>
                     <option value="Admin" <?php echo ($user['department'] == 'Admin') ? 'selected' : ''; ?>>Admin</option>
+                    <option value="Accounts" <?php echo ($user['department'] == 'Accounts') ? 'selected' : ''; ?>>Accounts</option>
+                    <option value="FRD" <?php echo ($user['department'] == 'FRD') ? 'selected' : ''; ?>>FRD</option>
+                    <option value="Newspaper" <?php echo ($user['department'] == 'Newspaper') ? 'selected' : ''; ?>>Newspaper</option>
+                    <option value="RC Mahim" <?php echo ($user['department'] == 'RC Mahim') ? 'selected' : ''; ?>>RC Mahim</option>
+                    <option value="Study centre" <?php echo ($user['department'] == 'Study centre') ? 'selected' : ''; ?>>Study centre</option>
                     <option value="Clinics" <?php echo ($user['department'] == 'Clinics') ? 'selected' : ''; ?>>Clinics</option>
                   </select>
                 </div>

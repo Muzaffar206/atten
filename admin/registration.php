@@ -270,6 +270,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <option value="Medical">Medical</option>
                                         <option value="ROP">ROP</option>
                                         <option value="Admin">Admin</option>
+                                        <option value="Admin">Accounts</option>
+                                        <option value="Admin">FRD</option>
+                                        <option value="Admin">Newspaper</option>
+                                        <option value="Admin">RC Mahim</option>
+                                        <option value="Admin">Study centre</option>
                                         <option value="Clinics">Clinics</option>
                                     </select>
                                 </div>

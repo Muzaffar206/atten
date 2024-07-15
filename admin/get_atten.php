@@ -8,20 +8,20 @@ $activePage = 'monthly_attendance';
 include("include/sidebar.php");
 
 if (!isset($_SESSION['user_id'])) {
-  header("Location: ../login.php");
-  exit();
+    header("Location: ../login.php");
+    exit();
 }
 if ($_SESSION['role'] !== 'admin') {
-  header("Location: ../home.php");
-  exit();
+    header("Location: ../home.php");
+    exit();
 }
 
 $department = isset($_POST['department']) ? $_POST['department'] : 'All';
 $from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
 $to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
 
-$users_query = ($department === 'All') ? 
-    "SELECT id, employer_id, full_name, department FROM users" : 
+$users_query = ($department === 'All') ?
+    "SELECT id, employer_id, full_name, department FROM users" :
     "SELECT id, employer_id, full_name, department FROM users WHERE department = ?";
 
 $stmt_users = $conn->prepare($users_query);
@@ -73,11 +73,15 @@ $stmt_users->close();
                                         <div class="form-group">
                                             <label for="department">Select Department:</label>
                                             <select name="department" id="department" class="form-control">
-                                                <option value="All">All Departments</option>
                                                 <option value="Education">Education</option>
                                                 <option value="Medical">Medical</option>
                                                 <option value="ROP">ROP</option>
                                                 <option value="Admin">Admin</option>
+                                                <option value="Admin">Accounts</option>
+                                                <option value="Admin">FRD</option>
+                                                <option value="Admin">Newspaper</option>
+                                                <option value="Admin">RC Mahim</option>
+                                                <option value="Admin">Study centre</option>
                                                 <option value="Clinics">Clinics</option>
                                             </select>
                                         </div>
@@ -103,7 +107,7 @@ $stmt_users->close();
                                 </div>
                             </form>
 
-                            <?php if ($users_result->num_rows > 0): ?>
+                            <?php if ($users_result->num_rows > 0) : ?>
                                 <form method="post" action="download_xls.php">
                                     <input type="hidden" name="department" value="<?php echo $department; ?>">
                                     <input type="hidden" name="from_date" value="<?php echo $from_date; ?>">
@@ -117,23 +121,23 @@ $stmt_users->close();
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table id="attendanceTable" class="table table-bordered table-hover">
-                                <thead id="sticky-header">
+                                    <thead id="sticky-header">
                                         <tr>
                                             <th>Department</th>
                                             <th>Employer Code</th>
                                             <th>Employer Name</th>
-                                            <?php foreach ($dates as $date): ?>
+                                            <?php foreach ($dates as $date) : ?>
                                                 <th style="min-width: 45px;"><?php echo $date; ?></th>
                                             <?php endforeach; ?>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php while ($user = $users_result->fetch_assoc()): ?>
+                                        <?php while ($user = $users_result->fetch_assoc()) : ?>
                                             <tr>
                                                 <td><?php echo $user['department']; ?></td>
                                                 <td><?php echo $user['employer_id']; ?></td>
                                                 <td><?php echo $user['full_name']; ?></td>
-                                                <?php foreach ($dates as $date): ?>
+                                                <?php foreach ($dates as $date) : ?>
                                                     <td>
                                                         <?php
                                                         $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
@@ -187,16 +191,16 @@ include("include/footer.php");
 $conn->close();
 ?>
 <script>
-$(document).ready(function() {
-    $('#attendanceTable').DataTable({
-        "scrollX": true,
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true
+    $(document).ready(function() {
+        $('#attendanceTable').DataTable({
+            "scrollX": true,
+            "paging": true,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "responsive": true
+        });
     });
-});
 </script>
