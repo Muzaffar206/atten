@@ -103,3 +103,22 @@
 	});
 
 })(jQuery);
+
+function updateClock() {
+    const now = new Date();
+    const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    const timeString = now.toLocaleTimeString('en-GB', options);
+    document.getElementById('clock').textContent = timeString;
+
+    const dateOptions = { timeZone: 'Asia/Kolkata', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('en-GB', dateOptions);
+    document.getElementById('date').textContent = dateString;
+}
+setInterval(updateClock, 1000);
+updateClock(); // initial call to display the clock immediately
+
+
+window.onload = function(){
+    //hide the preloader
+    document.querySelector(".preloader").style.display = "none"; 
+}

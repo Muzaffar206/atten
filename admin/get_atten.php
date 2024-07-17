@@ -16,13 +16,30 @@ if ($_SESSION['role'] !== 'admin') {
     exit();
 }
 
+// Fetch distinct departments from users table
+$departments_query = "SELECT DISTINCT department FROM users";
+$result_departments = $conn->query($departments_query);
+
+// Check if query was successful
+if (!$result_departments) {
+    die('Error fetching departments: ' . $conn->error);
+}
+
 $department = isset($_POST['department']) ? $_POST['department'] : 'All';
 $from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
 $to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
 
 $users_query = ($department === 'All') ?
-    "SELECT id, employer_id, full_name, department FROM users" :
-    "SELECT id, employer_id, full_name, department FROM users WHERE department = ?";
+    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
+     FROM users u
+     LEFT JOIN attendance a ON u.id = a.user_id
+     GROUP BY u.id" :
+    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
+     FROM users u
+     LEFT JOIN attendance a ON u.id = a.user_id
+     WHERE u.department = ?
+     GROUP BY u.id";
+
 
 $stmt_users = $conn->prepare($users_query);
 if ($department !== 'All') {
@@ -73,16 +90,10 @@ $stmt_users->close();
                                         <div class="form-group">
                                             <label for="department">Select Department:</label>
                                             <select name="department" id="department" class="form-control">
-                                                <option value="Education">Education</option>
-                                                <option value="Medical">Medical</option>
-                                                <option value="ROP">ROP</option>
-                                                <option value="Admin">Admin</option>
-                                                <option value="Admin">Accounts</option>
-                                                <option value="Admin">FRD</option>
-                                                <option value="Admin">Newspaper</option>
-                                                <option value="Admin">RC Mahim</option>
-                                                <option value="Admin">Study centre</option>
-                                                <option value="Clinics">Clinics</option>
+                                                <option value="All" <?php echo ($department === 'All') ? 'selected' : ''; ?>>All Departments</option>
+                                                <?php while ($row = $result_departments->fetch_assoc()) : ?>
+                                                    <option value="<?php echo $row['department']; ?>" <?php echo ($department === $row['department']) ? 'selected' : ''; ?>><?php echo $row['department']; ?></option>
+                                                <?php endwhile; ?>
                                             </select>
                                         </div>
                                     </div>
@@ -152,6 +163,7 @@ $stmt_users->close();
                                                             $attendance_result = $stmt_attendance->get_result();
                                                             if ($attendance_result->num_rows > 0) {
                                                                 $attendance_data = $attendance_result->fetch_assoc();
+                                                                echo $user['data']. "<br>";
                                                                 echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
                                                                 echo "In Time: " . date('H:i:s', strtotime($attendance_data['in_time'])) . "<br>";
                                                                 if ($attendance_data['out_time'] != null) {

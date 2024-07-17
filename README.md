@@ -7,3 +7,5 @@ ADD COLUMN email VARCHAR(255),
 ADD COLUMN phone_number VARCHAR(20),
 ADD COLUMN passport_size_photo VARCHAR(255),
 ADD COLUMN address TEXT;
+
+PHP 7.2 for XLS

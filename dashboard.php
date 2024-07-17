@@ -26,7 +26,7 @@ $to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
 
 // Fetch attendance data based on user ID and date range
 $attendance_query = "SELECT users.id AS user_id, users.username, users.employer_id, users.full_name, DATE(attendance.in_time) as date, 
-                attendance.in_time, attendance.out_time, attendance.mode,  users.department 
+                attendance.in_time, attendance.out_time, attendance.mode,attendance.data, attendance.is_present,  users.department 
                 FROM attendance 
                 JOIN users ON attendance.user_id = users.id 
                 WHERE users.id = ?";
@@ -108,8 +108,10 @@ $result = $stmt_attendance->get_result();
                         <th>Full Name</th>
                         <th>Date</th>
                         <th>Mode</th>
+                        <th>From Where</th>
                         <th>In Time</th>
                         <th>Out Time</th>
+                        <th>Attendance</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,8 +123,16 @@ $result = $stmt_attendance->get_result();
                         echo "<td>" . htmlspecialchars($row['full_name'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($row['date']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['mode']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['data']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['in_time']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['out_time']) . "</td>";
+                        echo "<td>";
+                        if ($row['is_present'] == 1) {
+                            echo "Present";
+                        } else {
+                            echo "Absent";
+                        }
+                        echo "</td>";
                         echo "</tr>";
                     }
                     ?>

@@ -1,21 +1,24 @@
 <?php
 session_start();
 session_regenerate_id(true);
+
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
 }
+
 if ($_SESSION['role'] !== 'admin') {
     header("Location: ../home.php");
     exit();
 }
+
 include("../assest/connection/config.php");
 include("include/header.php");
 include("include/topbar.php");
 $activePage = 'registration';
 include("include/sidebar.php");
 
-$alert = ''; // Initialize alert variable
+$errors = [];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = htmlspecialchars($_POST['username']);
@@ -29,150 +32,122 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $department = $_POST['department'];
     $role = isset($_POST['role']) ? $_POST['role'] : 'user'; // Default role to 'user'
 
-    // Check if the username, employer_id, or email already exists
-    $sql_check = $conn->prepare("SELECT * FROM users WHERE username = ? OR employer_id = ? OR email = ?");
-    $sql_check->bind_param("sss", $username, $employer_id, $email);
-    $sql_check->execute();
-    $result = $sql_check->get_result();
+ // Check if the username, employer_id, or email already exists and is not deleted
+$sql_check = $conn->prepare("SELECT * FROM users WHERE username = ? OR employer_id = ? OR email = ?");
+$sql_check->bind_param("sss", $username, $employer_id, $email);
+$sql_check->execute();
+$result = $sql_check->get_result();
 
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        if ($row['deleted_at'] !== null) {
+            $errors[] = 'This account has been deleted and cannot be reused. Please use a different username, employer ID, or email.';
+        } else {
             if ($row['username'] == $username) {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Username already exists. Please choose a different username.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
+                $errors[] = 'Username already exists. Please choose a different username.';
             }
             if ($row['employer_id'] == $employer_id) {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Employer ID already exists. Please use a different employer ID.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
+                $errors[] = 'Employer ID already exists. Please use a different employer ID.';
             }
             if ($row['email'] == $email) {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Email already exists. Please use a different email address.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
+                $errors[] = 'Email already exists. Please use a different email address.';
             }
         }
-    } else {
-        // Check if passwords match
-        if ($_POST['password'] !== $_POST['confirm_password']) {
+    }
+}
+
+// Check if passwords match
+if ($_POST['password'] !== $_POST['confirm_password']) {
+    $errors[] = 'Passwords do not match. Please re-enter passwords.';
+}
+
+// Check file uploads and accumulate errors
+$uploadOk = 1;
+if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0) {
+    // File upload
+    $target_dir = "../uploads/";
+    $target_file = $target_dir . time() . '_' . basename($_FILES["passport_size_photo"]["name"]);
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+    // Check if image file is an actual image or fake image
+    $check = getimagesize($_FILES["passport_size_photo"]["tmp_name"]);
+    if ($check === false) {
+        $errors[] = 'File is not an image.';
+        $uploadOk = 0;
+    }
+
+    // Check if file already exists
+    if (file_exists($target_file)) {
+        $errors[] = 'Sorry, file already exists.';
+        $uploadOk = 0;
+    }
+
+    // Check file size (limit to 5MB)
+    if ($_FILES["passport_size_photo"]["size"] > 5000000) {
+        $errors[] = 'Sorry, your file is too large.';
+        $uploadOk = 0;
+    }
+
+    // Allow certain file formats
+    if (!in_array($imageFileType, ["jpg", "jpeg", "png", "gif"])) {
+        $errors[] = 'Sorry, only JPG, JPEG, PNG & GIF files are allowed.';
+        $uploadOk = 0;
+    }
+}
+
+// If there are errors, display them in a single alert message
+if (!empty($errors)) {
+    $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+    foreach ($errors as $error) {
+        $alert .= $error . '<br>';
+    }
+    $alert .= '<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+          </div>';
+} else {
+    // No errors, proceed with user registration
+    $passport_size_photo = null;
+    if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0 && $uploadOk == 1) {
+        // Handle file upload
+        if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
+            $passport_size_photo = $target_file;
+        } else {
             $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        Passwords do not match. Please re-enter passwords.
+                        Sorry, there was an error uploading your file.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                       </div>';
-        } else {
-            // File upload
-            $target_dir = "../uploads/";
-            $target_file = $target_dir . time() . '_' . basename($_FILES["passport_size_photo"]["name"]);
-            $uploadOk = 1;
-            $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-            // Check if image file is an actual image or fake image
-            $check = getimagesize($_FILES["passport_size_photo"]["tmp_name"]);
-            if ($check !== false) {
-                $uploadOk = 1;
-            } else {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            File is not an image.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
-                $uploadOk = 0;
-            }
-
-            // Check if file already exists
-            if (file_exists($target_file)) {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Sorry, file already exists.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
-                $uploadOk = 0;
-            }
-
-            // Check file size (limit to 5MB)
-            if ($_FILES["passport_size_photo"]["size"] > 5000000) {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Sorry, your file is too large.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
-                $uploadOk = 0;
-            }
-
-            // Allow certain file formats
-            if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Sorry, only JPG, JPEG, PNG & GIF files are allowed.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
-                $uploadOk = 0;
-            }
-
-            // Check if $uploadOk is set to 0 by an error
-            if ($uploadOk == 0) {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            Sorry, your file was not uploaded.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>';
-            } else {
-                if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
-                    $passport_size_photo = $target_file; // Store the file path in the database
-
-                    // Insert user data into the database
-                    $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, department, role) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department, $role);
-
-                    if ($sql->execute() === TRUE) {
-                        $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    Registration successful!
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                  </div>';
-                    } else {
-                        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    Error: ' . $sql->error . '
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                  </div>';
-                    }
-
-                    $sql->close();
-                } else {
-                    $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                Sorry, there was an error uploading your file.
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>';
-                }
-            }
         }
     }
 
-    $sql_check->close();
-    $conn->close();
+    // Insert user data into the database
+    $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, department, role) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department, $role);
+
+    if ($sql->execute() === TRUE) {
+        $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                    Registration successful!
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>';
+    } else {
+        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    Error: ' . $sql->error . '
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>';
+    }
+
+    $sql->close();
+}
+
+$sql_check->close();
+$conn->close();
 }
 ?>
 <div class="content-wrapper">

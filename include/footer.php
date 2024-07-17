@@ -7,12 +7,5 @@
 	<script src="./vendor/countdowntime/countdowntime.js"></script>
 	<script src="./assest/js/bootstrap.bundle.min.js"></script>
 	<script src="./assest/js/main.js"></script>
-    <script>
-
-window.onload = function(){
-        //hide the preloader
-        document.querySelector(".preloader").style.display = "none"; 
-    }
-</script>
 </body>
 </html>

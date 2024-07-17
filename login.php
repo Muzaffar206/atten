@@ -1,6 +1,7 @@
 <?php
 session_start();
 session_regenerate_id(true);
+date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
 include("assest/connection/config.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -86,6 +87,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
 			<div class="wrap-login100">
             <?php if(!empty($alert)) echo $alert; ?>
+            <div class="date" id="date"></div>
+                <div class="clock" id="clock"></div>
 				<form method="post" action="" class="login100-form validate-form">
 					<span class="login100-form-logo">
 						<img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">

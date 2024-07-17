@@ -1,6 +1,8 @@
 <?php
 session_start();
 session_regenerate_id(true);
+date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+
 include("assest/connection/config.php");
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -26,22 +28,6 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Attendance</title>
-    <style>
-        .clock {
-            font-size: 2em;
-            color: white;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .date {
-            font-size: 1.2em;
-            color: white;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        
-    </style>
     <?php include("include/header.php"); ?>
 
     <div class="limiter">

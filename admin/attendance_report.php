@@ -25,28 +25,24 @@ $lastDeletion = $result->fetch_assoc()['last_deletion'] ?? '1970-01-01 00:00:00'
 // Check for selfies older than 2 days
 $twoDaysAgo = date('Y-m-d H:i:s', strtotime('-2 days'));
 
-// Adjusted SQL query to check selfies older than 2 days
 $sql = "SELECT COUNT(*) as old_selfie_count 
         FROM attendance 
         WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
         AND in_time < ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param('s', $twoDaysAgo); // Ensure $twoDaysAgo reflects correct time comparison
+$stmt->bind_param('s', $twoDaysAgo);
 $stmt->execute();
 $result = $stmt->get_result();
 $row = $result->fetch_assoc();
 
-// Set $_SESSION['old_selfies'] based on query result
 if ($row['old_selfie_count'] > 0 && $lastDeletion < $twoDaysAgo) {
     $_SESSION['old_selfies'] = true;
 } else {
     $_SESSION['old_selfies'] = false;
 }
 
-// Debugging to check $_SESSION['old_selfies'] value
 $stmt->close();
 
-// Function to display the alert
 function displayAlert() {
     if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
         echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -58,9 +54,7 @@ function displayAlert() {
     }
 }
 
-// Handle selfie deletion form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
-    // Update selfies to NULL where conditions are met
     $sqlUpdate = "UPDATE attendance SET selfie_in = NULL, selfie_out = NULL 
                   WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
                   AND in_time < ?";
@@ -68,33 +62,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     $stmtUpdate->bind_param('s', $twoDaysAgo);
     $stmtUpdate->execute();
 
-    // Check if update was successful
     if ($stmtUpdate->affected_rows > 0) {
-        // Update last deletion timestamp
         $currentTime = date('Y-m-d H:i:s');
         $sqlLogUpdate = "INSERT INTO deletion_log (last_deletion) VALUES (?)";
         $stmtLogUpdate = $conn->prepare($sqlLogUpdate);
         $stmtLogUpdate->bind_param('s', $currentTime);
         $stmtLogUpdate->execute();
 
-        // Set session variable to stop alert
         $_SESSION['old_selfies'] = false;
     } else {
-        // No rows were updated
         echo "No selfies were deleted.";
     }
 
-    // Redirect to avoid form resubmission on refresh
     header("Location: attendance_report.php");
     exit();
 }
 
-// Initialize variables for filters
 $filterDepartment = isset($_GET['department']) ? $_GET['department'] : '';
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// Build SQL query with filters
 $sql = "SELECT 
             users.id AS user_id,
             attendance.id AS attendance_id, 
@@ -114,19 +101,16 @@ $sql = "SELECT
 
 $whereClause = [];
 
-// Add department filter
 if (!empty($filterDepartment)) {
     $whereClause[] = "users.department = '$filterDepartment'";
 }
 
-// Add date range filter
 if (!empty($startDate) && !empty($endDate)) {
     $whereClause[] = "DATE(attendance.in_time) BETWEEN '$startDate' AND '$endDate'";
 } elseif (!empty($startDate)) {
     $whereClause[] = "DATE(attendance.in_time) = '$startDate'";
 }
 
-// Combine where clauses
 if (!empty($whereClause)) {
     $sql .= " WHERE " . implode(" AND ", $whereClause);
 }
@@ -135,13 +119,16 @@ $sql .= " ORDER BY attendance.id DESC ";
 
 $result = $conn->query($sql);
 
+// Fetch departments dynamically
+$departmentsQuery = "SELECT DISTINCT department FROM users";
+$departmentsResult = $conn->query($departmentsQuery);
+
 include("include/header.php");
 include("include/topbar.php");
 $activePage = 'attendance_report';
 include("include/sidebar.php");
 ?>
 <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
     <section class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -155,7 +142,7 @@ include("include/sidebar.php");
                     </ol>
                 </div>
             </div>
-        </div><!-- /.container-fluid -->
+        </div>
     </section>
 
     <section class="content">
@@ -174,16 +161,11 @@ include("include/sidebar.php");
                                                 <label for="department">Department:</label>
                                                 <select name="department" id="department" class="form-control">
                                                     <option value="">All Departments</option>
-                                                    <option value="Education" <?php echo ($filterDepartment == 'Education') ? 'selected' : ''; ?>>Education</option>
-                                                    <option value="Medical" <?php echo ($filterDepartment == 'Medical') ? 'selected' : ''; ?>>Medical</option>
-                                                    <option value="ROP" <?php echo ($filterDepartment == 'ROP') ? 'selected' : ''; ?>>ROP</option>
-                                                    <option value="Admin" <?php echo ($filterDepartment == 'Admin') ? 'selected' : ''; ?>>Admin</option>
-                                                    <option value="Accounts" <?php echo ($filterDepartment == 'Accounts') ? 'selected' : ''; ?>>Accounts</option>
-                                                    <option value="FRD" <?php echo ($filterDepartment == 'FRD') ? 'selected' : ''; ?>>FRD</option>
-                                                    <option value="Newspaper" <?php echo ($filterDepartment == 'Newspaper') ? 'selected' : ''; ?>>Newspaper</option>
-                                                    <option value="RC Mahim" <?php echo ($filterDepartment == 'RC Mahim') ? 'selected' : ''; ?>>RC Mahim</option>
-                                                    <option value="Study centre" <?php echo ($filterDepartment == 'Study centre') ? 'selected' : ''; ?>>Study centre</option>
-                                                    <option value="Clinics" <?php echo ($filterDepartment == 'Clinics') ? 'selected' : ''; ?>>Clinics</option>
+                                                    <?php while ($deptRow = $departmentsResult->fetch_assoc()) { ?>
+                                                        <option value="<?php echo $deptRow['department']; ?>" <?php echo ($filterDepartment == $deptRow['department']) ? 'selected' : ''; ?>>
+                                                            <?php echo $deptRow['department']; ?>
+                                                        </option>
+                                                    <?php } ?>
                                                 </select>
                                             </div>
                                         </div>
@@ -203,14 +185,14 @@ include("include/sidebar.php");
                                             <div class="form-group">
                                                 <label>&nbsp;</label><br>
                                                 <button type="submit" class="btn btn-primary">Filter</button>
-                                                <a href="export_xls.php?department=<?php echo urlencode($filterDepartment); ?>&start_date=<?php echo urlencode($startDate); ?>&end_date=<?php echo urlencode($endDate); ?>" class="btn btn-success">Export XLS</a>
+                                                <a href="report_xls.php?department=<?php echo urlencode($filterDepartment); ?>&start_date=<?php echo urlencode($startDate); ?>&end_date=<?php echo urlencode($endDate); ?>" class="btn btn-success">Export XLS</a>
                                             </div>
                                         </div>
                                     </div>
                                 </form>
-                                <?php displayAlert(); ?> <!-- Display alert based on session variable -->
+                                <?php displayAlert(); ?>
                                 <form id="deleteSelfiesForm" method="POST" action="">
-                                    <input type="hidden" name="delete_selfies" value="true"> <!-- Added hidden input -->
+                                    <input type="hidden" name="delete_selfies" value="true">
                                     <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 2 minutes?')">Delete Selfies</button>
                                 </form>
                             </div>
@@ -264,7 +246,7 @@ include("include/sidebar.php");
                     </div>
                 </div>
             </div>
-        </div><!-- /.container-fluid -->
+        </div>
     </section>
 </div>
 
