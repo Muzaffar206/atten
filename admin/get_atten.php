@@ -163,7 +163,7 @@ $stmt_users->close();
                                                             $attendance_result = $stmt_attendance->get_result();
                                                             if ($attendance_result->num_rows > 0) {
                                                                 $attendance_data = $attendance_result->fetch_assoc();
-                                                                echo $user['data']. "<br>";
+                                                                echo $user['data'] . "<br>";
                                                                 echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
                                                                 echo "In Time: " . date('H:i:s', strtotime($attendance_data['in_time'])) . "<br>";
                                                                 if ($attendance_data['out_time'] != null) {

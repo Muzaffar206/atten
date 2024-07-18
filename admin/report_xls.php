@@ -1,4 +1,6 @@
 <?php
+session_start();
+session_regenerate_id(true);
 include("../assest/connection/config.php");
 require '../vendor/autoload.php';
 
@@ -207,4 +209,3 @@ readfile($filePath);
 unlink($filePath);
 
 exit;
-?>

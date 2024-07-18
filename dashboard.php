@@ -59,6 +59,7 @@ $result = $stmt_attendance->get_result();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -69,6 +70,7 @@ $result = $stmt_attendance->get_result();
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     <?php include("include/header.php"); ?>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="text-center my-4">
@@ -83,18 +85,18 @@ $result = $stmt_attendance->get_result();
                         <label for="from_date">From Date:</label>
                         <input type="date" id="from_date" name="from_date" class="form-control" value="<?php echo htmlspecialchars($from_date); ?>">
                     </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="to_date">To Date:</label>
+                    <input type="date" id="to_date" name="to_date" class="form-control" value="<?php echo htmlspecialchars($to_date); ?>">
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="to_date">To Date:</label>
-                        <input type="date" id="to_date" name="to_date" class="form-control" value="<?php echo htmlspecialchars($to_date); ?>">
-                    </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary">Filter</button>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <button type="submit" class="btn btn-primary">Filter</button>
-                    </div>
                 </form>
             </div>
         </div>
@@ -153,11 +155,11 @@ $result = $stmt_attendance->get_result();
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
     <script>
-        window.onload = function(){
-        //hide the preloader
-        document.querySelector(".preloader").style.display = "none";
-    }
-        $(document).ready(function () {
+        window.onload = function() {
+            //hide the preloader
+            document.querySelector(".preloader").style.display = "none";
+        }
+        $(document).ready(function() {
             $('#attendanceTable').DataTable({
                 "paging": true,
                 "lengthChange": true,
@@ -170,4 +172,5 @@ $result = $stmt_attendance->get_result();
         });
     </script>
 </body>
+
 </html>

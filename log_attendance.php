@@ -62,7 +62,6 @@ if ($mode === 'Office') {
     $conn->close();
     header("Location: login.php");
     exit();
-   
 }
 
 if ($stmt->execute()) {

@@ -1,13 +1,17 @@
-<?php 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "attendance_system";
+<?php
+error_reporting(0);
 
+require_once 'index.php';
+
+// Establish database connection
 $conn = new mysqli($servername, $username, $password, $dbname);
-// $conn = new mysqli('localhost', 'root', '', 'attendance_system');
 
+// Check connection
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    // Log the error internally (optional)
+    error_log("Connection failed: " . $conn->connect_error);
+
+    exit();
 }
+
 ?>

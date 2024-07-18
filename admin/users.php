@@ -68,7 +68,7 @@ $conn->close();
                                 <form method="get" action="">
                                     <div class="row">
                                         <div class="col-md-4">
-                                        <div class="form-group">
+                                            <div class="form-group">
                                                 <label for="department">Filter by Department:</label>
                                                 <select class="form-control" id="department" name="department">
                                                     <option value="">All Departments</option>
@@ -166,7 +166,7 @@ $conn->close();
 include("include/footer.php");
 ?>
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
         $('#attendanceTable').DataTable({
             "paging": true,
             "lengthChange": true,

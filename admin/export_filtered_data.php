@@ -23,25 +23,25 @@ $objPHPExcel = new Spreadsheet();
 
 // Set properties
 $objPHPExcel->getProperties()->setCreator("Your Name")
-                             ->setLastModifiedBy("Your Name")
-                             ->setTitle("Employee Data")
-                             ->setSubject("Employee Data")
-                             ->setDescription("Employee Data Export")
-                             ->setKeywords("employee")
-                             ->setCategory("Employee Data");
+    ->setLastModifiedBy("Your Name")
+    ->setTitle("Employee Data")
+    ->setSubject("Employee Data")
+    ->setDescription("Employee Data Export")
+    ->setKeywords("employee")
+    ->setCategory("Employee Data");
 
 // Add data headers
 $objPHPExcel->setActiveSheetIndex(0)
-            ->setCellValue('A1', 'ID')
-            ->setCellValue('B1', 'Username')
-            ->setCellValue('C1', 'Employer ID')
-            ->setCellValue('D1', 'Full Name')
-            ->setCellValue('E1', 'Email')
-            ->setCellValue('F1', 'Phone Number')
-            ->setCellValue('G1', 'Address')
-            ->setCellValue('H1', 'Role')
-            ->setCellValue('I1', 'Department')
-            ->setCellValue('J1', 'Passport Size Photo');
+    ->setCellValue('A1', 'ID')
+    ->setCellValue('B1', 'Username')
+    ->setCellValue('C1', 'Employer ID')
+    ->setCellValue('D1', 'Full Name')
+    ->setCellValue('E1', 'Email')
+    ->setCellValue('F1', 'Phone Number')
+    ->setCellValue('G1', 'Address')
+    ->setCellValue('H1', 'Role')
+    ->setCellValue('I1', 'Department')
+    ->setCellValue('J1', 'Passport Size Photo');
 
 // Set default filter values
 $filter_department = isset($_GET['department']) ? $_GET['department'] : '';
@@ -74,15 +74,15 @@ $rowCount = 2;
 // Iterate through results
 while ($row_export = $result_export->fetch_assoc()) {
     $objPHPExcel->getActiveSheet()
-                ->setCellValue('A' . $rowCount, $row_export['id'])
-                ->setCellValue('B' . $rowCount, $row_export['username'])
-                ->setCellValue('C' . $rowCount, $row_export['employer_id'])
-                ->setCellValue('D' . $rowCount, $row_export['full_name'])
-                ->setCellValue('E' . $rowCount, $row_export['email'])
-                ->setCellValue('F' . $rowCount, $row_export['phone_number'])
-                ->setCellValue('G' . $rowCount, $row_export['address'])
-                ->setCellValue('H' . $rowCount, $row_export['role'])
-                ->setCellValue('I' . $rowCount, $row_export['department']);
+        ->setCellValue('A' . $rowCount, $row_export['id'])
+        ->setCellValue('B' . $rowCount, $row_export['username'])
+        ->setCellValue('C' . $rowCount, $row_export['employer_id'])
+        ->setCellValue('D' . $rowCount, $row_export['full_name'])
+        ->setCellValue('E' . $rowCount, $row_export['email'])
+        ->setCellValue('F' . $rowCount, $row_export['phone_number'])
+        ->setCellValue('G' . $rowCount, $row_export['address'])
+        ->setCellValue('H' . $rowCount, $row_export['role'])
+        ->setCellValue('I' . $rowCount, $row_export['department']);
 
     // Add image if available
     $imagePath = $row_export['passport_size_photo'];
@@ -105,8 +105,8 @@ while ($row_export = $result_export->fetch_assoc()) {
     // Auto-size columns based on content length
     foreach (range('A', 'J') as $col) {
         $objPHPExcel->getActiveSheet()
-                    ->getColumnDimension($col)
-                    ->setAutoSize(true);
+            ->getColumnDimension($col)
+            ->setAutoSize(true);
     }
 
     $rowCount++;
@@ -129,4 +129,3 @@ $objWriter = new Xlsx($objPHPExcel);
 $objWriter->save('php://output');
 
 exit();
-?>

@@ -32,122 +32,122 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $department = $_POST['department'];
     $role = isset($_POST['role']) ? $_POST['role'] : 'user'; // Default role to 'user'
 
- // Check if the username, employer_id, or email already exists and is not deleted
-$sql_check = $conn->prepare("SELECT * FROM users WHERE username = ? OR employer_id = ? OR email = ?");
-$sql_check->bind_param("sss", $username, $employer_id, $email);
-$sql_check->execute();
-$result = $sql_check->get_result();
+    // Check if the username, employer_id, or email already exists and is not deleted
+    $sql_check = $conn->prepare("SELECT * FROM users WHERE username = ? OR employer_id = ? OR email = ?");
+    $sql_check->bind_param("sss", $username, $employer_id, $email);
+    $sql_check->execute();
+    $result = $sql_check->get_result();
 
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        if ($row['deleted_at'] !== null) {
-            $errors[] = 'This account has been deleted and cannot be reused. Please use a different username, employer ID, or email.';
-        } else {
-            if ($row['username'] == $username) {
-                $errors[] = 'Username already exists. Please choose a different username.';
-            }
-            if ($row['employer_id'] == $employer_id) {
-                $errors[] = 'Employer ID already exists. Please use a different employer ID.';
-            }
-            if ($row['email'] == $email) {
-                $errors[] = 'Email already exists. Please use a different email address.';
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            if ($row['deleted_at'] !== null) {
+                $errors[] = 'This account has been deleted and cannot be reused. Please use a different username, employer ID, or email.';
+            } else {
+                if ($row['username'] == $username) {
+                    $errors[] = 'Username already exists. Please choose a different username.';
+                }
+                if ($row['employer_id'] == $employer_id) {
+                    $errors[] = 'Employer ID already exists. Please use a different employer ID.';
+                }
+                if ($row['email'] == $email) {
+                    $errors[] = 'Email already exists. Please use a different email address.';
+                }
             }
         }
     }
-}
 
-// Check if passwords match
-if ($_POST['password'] !== $_POST['confirm_password']) {
-    $errors[] = 'Passwords do not match. Please re-enter passwords.';
-}
-
-// Check file uploads and accumulate errors
-$uploadOk = 1;
-if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0) {
-    // File upload
-    $target_dir = "../uploads/";
-    $target_file = $target_dir . time() . '_' . basename($_FILES["passport_size_photo"]["name"]);
-    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-    // Check if image file is an actual image or fake image
-    $check = getimagesize($_FILES["passport_size_photo"]["tmp_name"]);
-    if ($check === false) {
-        $errors[] = 'File is not an image.';
-        $uploadOk = 0;
+    // Check if passwords match
+    if ($_POST['password'] !== $_POST['confirm_password']) {
+        $errors[] = 'Passwords do not match. Please re-enter passwords.';
     }
 
-    // Check if file already exists
-    if (file_exists($target_file)) {
-        $errors[] = 'Sorry, file already exists.';
-        $uploadOk = 0;
+    // Check file uploads and accumulate errors
+    $uploadOk = 1;
+    if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0) {
+        // File upload
+        $target_dir = "../uploads/";
+        $target_file = $target_dir . time() . '_' . basename($_FILES["passport_size_photo"]["name"]);
+        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+        // Check if image file is an actual image or fake image
+        $check = getimagesize($_FILES["passport_size_photo"]["tmp_name"]);
+        if ($check === false) {
+            $errors[] = 'File is not an image.';
+            $uploadOk = 0;
+        }
+
+        // Check if file already exists
+        if (file_exists($target_file)) {
+            $errors[] = 'Sorry, file already exists.';
+            $uploadOk = 0;
+        }
+
+        // Check file size (limit to 5MB)
+        if ($_FILES["passport_size_photo"]["size"] > 5000000) {
+            $errors[] = 'Sorry, your file is too large.';
+            $uploadOk = 0;
+        }
+
+        // Allow certain file formats
+        if (!in_array($imageFileType, ["jpg", "jpeg", "png", "gif"])) {
+            $errors[] = 'Sorry, only JPG, JPEG, PNG & GIF files are allowed.';
+            $uploadOk = 0;
+        }
     }
 
-    // Check file size (limit to 5MB)
-    if ($_FILES["passport_size_photo"]["size"] > 5000000) {
-        $errors[] = 'Sorry, your file is too large.';
-        $uploadOk = 0;
-    }
-
-    // Allow certain file formats
-    if (!in_array($imageFileType, ["jpg", "jpeg", "png", "gif"])) {
-        $errors[] = 'Sorry, only JPG, JPEG, PNG & GIF files are allowed.';
-        $uploadOk = 0;
-    }
-}
-
-// If there are errors, display them in a single alert message
-if (!empty($errors)) {
-    $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
-    foreach ($errors as $error) {
-        $alert .= $error . '<br>';
-    }
-    $alert .= '<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    // If there are errors, display them in a single alert message
+    if (!empty($errors)) {
+        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+        foreach ($errors as $error) {
+            $alert .= $error . '<br>';
+        }
+        $alert .= '<button type="button" class="close" data-dismiss="alert" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
           </div>';
-} else {
-    // No errors, proceed with user registration
-    $passport_size_photo = null;
-    if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0 && $uploadOk == 1) {
-        // Handle file upload
-        if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
-            $passport_size_photo = $target_file;
-        } else {
-            $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    } else {
+        // No errors, proceed with user registration
+        $passport_size_photo = null;
+        if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0 && $uploadOk == 1) {
+            // Handle file upload
+            if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
+                $passport_size_photo = $target_file;
+            } else {
+                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
                         Sorry, there was an error uploading your file.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                       </div>';
+            }
         }
-    }
 
-    // Insert user data into the database
-    $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, department, role) 
+        // Insert user data into the database
+        $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, department, role) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department, $role);
+        $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department, $role);
 
-    if ($sql->execute() === TRUE) {
-        $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+        if ($sql->execute() === TRUE) {
+            $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
                     Registration successful!
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                   </div>';
-    } else {
-        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+        } else {
+            $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
                     Error: ' . $sql->error . '
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                   </div>';
+        }
+
+        $sql->close();
     }
 
-    $sql->close();
-}
-
-$sql_check->close();
-$conn->close();
+    $sql_check->close();
+    $conn->close();
 }
 ?>
 <div class="content-wrapper">
@@ -286,7 +286,7 @@ $conn->close();
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
 
-    togglePassword.addEventListener('click', function () {
+    togglePassword.addEventListener('click', function() {
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
         this.classList.toggle('fa-eye-slash');
@@ -296,7 +296,7 @@ $conn->close();
     const inputFile = document.getElementById('exampleInputFile');
     const inputLabel = document.querySelector('.custom-file-label');
 
-    inputFile.addEventListener('change', function () {
+    inputFile.addEventListener('change', function() {
         const fileName = this.files[0].name;
         inputLabel.textContent = fileName;
     });

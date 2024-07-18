@@ -5,11 +5,11 @@ date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
 include("assest/connection/config.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = mysqli_real_escape_string($conn,$_POST['username']);
-    $password = mysqli_real_escape_string($conn,$_POST['password']);
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $password = mysqli_real_escape_string($conn, $_POST['password']);
     $rememberMe = isset($_POST['remember_me']); // if "Remember Me" is selected
 
-    
+
 
     $sql = "SELECT * FROM users WHERE username=?";
     $stmt = $conn->prepare($sql);
@@ -77,58 +77,61 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Login</title>
-    <?php include("include/header.php");?>
+    <?php include("include/header.php"); ?>
 
-	<div class="limiter">
-		<div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
-			<div class="wrap-login100">
-            <?php if(!empty($alert)) echo $alert; ?>
-            <div class="date" id="date"></div>
+    <div class="limiter">
+        <div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
+            <div class="wrap-login100">
+                <?php if (!empty($alert)) echo $alert; ?>
+                <div class="date" id="date"></div>
                 <div class="clock" id="clock"></div>
-				<form method="post" action="" class="login100-form validate-form">
-					<span class="login100-form-logo">
-						<img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
-					</span>
+                <form method="post" action="" class="login100-form validate-form">
+                    <span class="login100-form-logo">
+                        <img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
+                    </span>
 
-					<span class="login100-form-title p-b-34 p-t-27">
-						Log in
-					</span>
+                    <span class="login100-form-title p-b-34 p-t-27">
+                        Log in
+                    </span>
 
-					<div class="wrap-input100 validate-input" data-validate = "Enter username">
-						<input class="input100" type="text" name="username" placeholder="Username"required>
-						<span class="focus-input100" data-placeholder="&#xf207;"></span>
-					</div>
+                    <div class="wrap-input100 validate-input" data-validate="Enter username">
+                        <input class="input100" type="text" name="username" placeholder="Username" required>
+                        <span class="focus-input100" data-placeholder="&#xf207;"></span>
+                    </div>
 
-					<div class="wrap-input100 validate-input" data-validate="Enter password">
-						<input class="input100" type="password" name="password" placeholder="Password" required>
-						<span class="focus-input100" data-placeholder="&#xf191;"></span>
-					</div>
+                    <div class="wrap-input100 validate-input" data-validate="Enter password">
+                        <input class="input100" type="password" name="password" id="password" placeholder="Password" required>
+                        <span class="focus-input100" data-placeholder="&#xf191;"></span>
+                        <span toggle="#password" class="eye-toggle fa fa-fw fa-eye field-icon toggle-password"></span>
+                    </div>
 
-					<div class="contact100-form-checkbox">
-						<input class="input-checkbox100" type="checkbox" id="remember_me" name="remember_me">
-						<label class="label-checkbox100" for="remember_me">
-							Remember me
-						</label>
-					</div>
+                    <div class="contact100-form-checkbox">
+                        <input class="input-checkbox100" type="checkbox" id="remember_me" name="remember_me">
+                        <label class="label-checkbox100" for="remember_me">
+                            Remember me
+                        </label>
+                    </div>
 
-					<div class="container-login100-form-btn">
-						<button type="submit" value="Login" class="login100-form-btn">
-							Login
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
-	
-
-	
-    <?php include("include/footer.php");?>
+                    <div class="container-login100-form-btn">
+                        <button type="submit" value="Login" class="login100-form-btn">
+                            Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 
-</body>
+
+    <?php include("include/footer.php"); ?>
+
+
+    </body>
+
 </html>

@@ -43,7 +43,8 @@ if ($row['old_selfie_count'] > 0 && $lastDeletion < $twoDaysAgo) {
 
 $stmt->close();
 
-function displayAlert() {
+function displayAlert()
+{
     if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
         echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
                 <strong>Reminder!</strong> Please delete selfies older than 2 days.
@@ -253,7 +254,7 @@ include("include/sidebar.php");
 <?php include("include/footer.php"); ?>
 
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
         $('#attendanceTable').DataTable({
             "paging": true,
             "lengthChange": true,

@@ -32,4 +32,3 @@ if (isset($_GET['id'])) {
 
 header("Location: users.php");
 exit();
-?>

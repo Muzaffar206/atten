@@ -22,12 +22,12 @@ $department = isset($_POST['department']) ? $_POST['department'] : 'All';
 $from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
 $to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
 
-$users_query = ($department === 'All') ? 
-"SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
+$users_query = ($department === 'All') ?
+    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
 FROM users u
 LEFT JOIN attendance a ON u.id = a.user_id
 GROUP BY u.id" :
-"SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
+    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
 FROM users u
 LEFT JOIN attendance a ON u.id = a.user_id
 WHERE u.department = ?
@@ -86,18 +86,18 @@ while ($user = $users_result->fetch_assoc()) {
     $sheet->setCellValue('A' . $row_num, $user['department']);
     $sheet->setCellValue('B' . $row_num, $user['employer_id']);
     $sheet->setCellValue('C' . $row_num, $user['full_name']);
-    
+
     foreach ($dates as $date) {
         $attendance_query = "SELECT * FROM attendance WHERE user_id = ? AND DATE_FORMAT(in_time, '%d-%m-%Y') = ?";
         $stmt_attendance = $conn->prepare($attendance_query);
         $stmt_attendance->bind_param("is", $user['id'], $date);
         $stmt_attendance->execute();
         $attendance_result = $stmt_attendance->get_result();
-        
+
         if ($attendance_result->num_rows > 0) {
             $attendance_data = $attendance_result->fetch_assoc();
-            $cell_value = 
-                $user['data'] . "\n" . 
+            $cell_value =
+                $user['data'] . "\n" .
                 "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "\n" .
                 "In: " . date('H:i:s', strtotime($attendance_data['in_time'])) . "\n" .
                 ($attendance_data['out_time'] ? "Out: " . date('H:i:s', strtotime($attendance_data['out_time'])) : "");
@@ -107,7 +107,7 @@ while ($user = $users_result->fetch_assoc()) {
         } else {
             $sheet->setCellValue($column . $row_num, "Absent");
         }
-        
+
         $stmt_attendance->close();
         $column++;
     }
@@ -115,7 +115,7 @@ while ($user = $users_result->fetch_assoc()) {
 }
 
 // Adjust column widths
-foreach(range('A', $sheet->getHighestColumn()) as $col) {
+foreach (range('A', $sheet->getHighestColumn()) as $col) {
     $sheet->getColumnDimension($col)->setAutoSize(true);
 }
 
@@ -126,4 +126,3 @@ header('Cache-Control: max-age=0');
 $writer = new Xlsx($spreadsheet);
 $writer->save('php://output');
 exit();
-?>

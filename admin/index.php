@@ -51,7 +51,7 @@ $monthlyAttendanceQuery = "SELECT DATE_FORMAT(in_time, '%Y-%m') AS month_year,
                            GROUP BY DATE_FORMAT(in_time, '%Y-%m')";
 $monthlyAttendanceResult = $conn->query($monthlyAttendanceQuery);
 while ($row = $monthlyAttendanceResult->fetch_assoc()) {
-    $monthlyAttendanceData[$row['month_year']] = $row['attendance_count'];
+  $monthlyAttendanceData[$row['month_year']] = $row['attendance_count'];
 }
 
 // Yearly attendance data (average present and absent)
@@ -69,10 +69,10 @@ $yearlyAttendanceQuery = "SELECT DATE_FORMAT(in_time, '%Y-%m') AS month_year,
                           GROUP BY DATE_FORMAT(in_time, '%Y-%m')";
 $yearlyAttendanceResult = $conn->query($yearlyAttendanceQuery);
 while ($row = $yearlyAttendanceResult->fetch_assoc()) {
-    $yearlyAttendanceData[$row['month_year']] = array(
-        'present_count' => $row['present_count'],
-        'absent_count' => $row['absent_count']
-    );
+  $yearlyAttendanceData[$row['month_year']] = array(
+    'present_count' => $row['present_count'],
+    'absent_count' => $row['absent_count']
+  );
 }
 ?>
 
@@ -192,7 +192,7 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
 
 <!-- Script to initialize the line chart -->
 <script>
-  $(function () {
+  $(function() {
     // Data from PHP
     var monthlyData = <?php echo json_encode($monthlyAttendanceData); ?>;
     var yearlyData = <?php echo json_encode($yearlyAttendanceData); ?>;
@@ -217,21 +217,22 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
       data: {
         labels: yearlyMonths,
         datasets: [{
-          label: 'Present',
-          data: presentCounts,
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1,
-          fill: false
-        },
-        {
-          label: 'Absent',
-          data: absentCounts,
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 1,
-          fill: false
-        }]
+            label: 'Present',
+            data: presentCounts,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            fill: false
+          },
+          {
+            label: 'Absent',
+            data: absentCounts,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1,
+            fill: false
+          }
+        ]
       },
       options: {
         responsive: true,
@@ -259,4 +260,5 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
 
 <!-- Additional scripts as needed -->
 </body>
+
 </html>

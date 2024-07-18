@@ -57,6 +57,21 @@ AttendanceViaLocation is a web application for managing employee attendance with
      ```
    - Or access via `http://localhost/atten` if using XAMPP's Apache server.
 
+### Manual Installation
+
+1. **📂 Download Source Code**:
+   - Download the source code from the GitHub repository.
+
+2. **💾 Extract Files**:
+   - Extract the files to the `htdocs` directory of your XAMPP installation
+
+3. **💾 Set Up Database**:
+   - Open phpMyAdmin (or your preferred database management tool).
+   - Create a new database named `attendance_system`.
+
+3. **🌍 Set Up Database**:
+   - Open any browser and search url (`http://localhost/atten`).
+
 ## 📝 Usage
 
 ### Employee Guide
