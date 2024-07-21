@@ -1,6 +1,7 @@
 <?php
 session_start();
 session_regenerate_id(true); // Regenerate session ID to prevent session fixation
+
 include("assest/connection/config.php");
 
 if (!isset($_SESSION['user_id'])) {
@@ -20,31 +21,45 @@ $selfie_in_path = null;
 $selfie_out_path = null;
 
 try {
-    if ($conn->connect_error) {
-        throw new Exception("Database connection failed.");
-    }
 
     // Assuming username is stored in session
     $username = $_SESSION['username'];
 
-    // Directory to store selfies
-    $userDir = 'uploads/selfies/' . $username . '/';
+    // Directory to store selfies (ensure this directory is protected)
+    $userDir = 'uploads/selfies/' . basename($username) . '/';
     if (!is_dir($userDir)) {
-        mkdir($userDir, 0777, true);
+        mkdir($userDir, 0700, true); // Use safer permissions
     }
 
-    $selfie_in_filename = null;
-    $selfie_out_filename = null;
+    // File validation and handling
+    $allowedExtensions = ['jpg', 'jpeg', 'png'];
+    $allowedMimeTypes = ['image/jpeg', 'image/png'];
 
-    // Handle selfie uploads
+    function validateFile($file, $allowedExtensions, $allowedMimeTypes) {
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception("File upload error.");
+        }
+
+        $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $fileMimeType = mime_content_type($file['tmp_name']);
+
+        if (!in_array($fileExtension, $allowedExtensions) || !in_array($fileMimeType, $allowedMimeTypes)) {
+            throw new Exception("Invalid file type.");
+        }
+
+        return $fileExtension;
+    }
+
     if (isset($_FILES['selfie_in']) && $_FILES['selfie_in']['error'] === UPLOAD_ERR_OK) {
-        $selfie_in_filename = $username . '_in_' .$mode. date('Ymd_His') . '.jpg';
+        $fileExtension = validateFile($_FILES['selfie_in'], $allowedExtensions, $allowedMimeTypes);
+        $selfie_in_filename = $username . '_in_' .$mode. date('Ymd_His') . '.' . $fileExtension;
         $selfie_in_path = $userDir . $selfie_in_filename;
         move_uploaded_file($_FILES['selfie_in']['tmp_name'], $selfie_in_path);
     }
 
     if (isset($_FILES['selfie_out']) && $_FILES['selfie_out']['error'] === UPLOAD_ERR_OK) {
-        $selfie_out_filename = $username . '_out_' .$mode. date('Ymd_His') . '.jpg';
+        $fileExtension = validateFile($_FILES['selfie_out'], $allowedExtensions, $allowedMimeTypes);
+        $selfie_out_filename = $username . '_out_' .$mode. date('Ymd_His') . '.' . $fileExtension;
         $selfie_out_path = $userDir . $selfie_out_filename;
         move_uploaded_file($_FILES['selfie_out']['tmp_name'], $selfie_out_path);
     }
@@ -105,7 +120,7 @@ try {
         }
 
         if ($finalStmt->execute()) {
-            // Add the logic for updating is_present
+            // Update is_present
             if ($stmt->insert_id) {
                 $attendance_id = $stmt->insert_id;
                 $is_present = ($scanType === 'In') ? 1 : 0;
@@ -126,7 +141,7 @@ try {
 
     $stmt->close();
 } catch (Exception $e) {
-    // Handle exceptions silently or log to a secure file
+    // Handle exceptions and log errors
     error_log($e->getMessage());
     echo json_encode(["status" => "error", "message" => "An error occurred. Please try again later."]);
 } finally {

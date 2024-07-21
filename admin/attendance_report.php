@@ -231,8 +231,8 @@ include("include/sidebar.php");
                                                         <td>" . ($row['longitude'] ?? 'N/A') . "</td>
                                                         <td>" . $row['in_time'] . "</td>
                                                         <td>" . $row['out_time'] . "</td>
-                                                        <td>" . (!empty($row['selfie_in']) ? '<img src="data:image/jpeg;base64,' . base64_encode($row['selfie_in']) . '" alt="Selfie_in" width="150" height="150" >' : 'N/A') . "</td>
-                                                        <td>" . (!empty($row['selfie_out']) ? '<img src="data:image/jpeg;base64,' . base64_encode($row['selfie_out']) . '" alt="Selfie_out" width="150" height="150" >' : 'N/A') . "</td>
+                                                        <td>" . (!empty($row['selfie_in']) ? '<img src="../' . htmlspecialchars($row['selfie_in']) . '" alt="Selfie_in" width="150" height="150" >' : 'N/A') . "</td>
+                                                        <td>" . (!empty($row['selfie_out']) ? '<img src="../' . htmlspecialchars($row['selfie_out']) . '" alt="Selfie_out" width="150" height="150" >' : 'N/A') . "</td>
                                                         <td>" . (($row['latitude'] && $row['longitude']) ? '<a href="https://www.google.com/maps?q=' . $row['latitude'] . ',' . $row['longitude'] . '" target="_blank">View on Map</a>' : 'N/A') . "</td>
                                                       </tr>";
                                             }
