@@ -99,3 +99,6 @@ For security issues, please email [shaikhmuzaffar206@gmail.com](mailto:shaikhmuz
 
 ## 📞 Contact
 For support or further questions, contact [shaikhmuzaffar206@gmail.com](mailto:shaikhmuzaffar206@gmail.com).
+
+
+composer require maennchen/zipstream-php --ignore-platform-reqs

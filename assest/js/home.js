@@ -194,22 +194,34 @@
         function logAttendance(mode, data1, data2, selfie, scanType) {
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "log_attendance.php", true);
-            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhr.onreadystatechange = function() {
                 if (xhr.readyState == 4 && xhr.status == 200) {
-                    console.log(xhr.responseText);
-                    alert("Attendance logged successfully");
+                    var response = JSON.parse(xhr.responseText);
+                    alert(response.message);
                 }
             };
-            var params = "mode=" + mode + "&data1=" + encodeURIComponent(data1) + "&scanType=" + scanType;
-            if (data2 !== null) {
-                params += "&data2=" + encodeURIComponent(data2);
+        
+            var formData = new FormData();
+            formData.append("mode", mode);
+            formData.append("data1", data1);
+            formData.append("scanType", scanType);
+            if (selfie) {
+                var blob = dataURLToBlob(selfie);
+                formData.append(scanType === "In" ? "selfie_in" : "selfie_out", blob, scanType === "In" ? "selfie_in.jpg" : "selfie_out.jpg");
             }
-            if (selfie !== null) {
-                params += "&selfie=" + encodeURIComponent(selfie);
-            }
-            xhr.send(params);
+        
+            xhr.send(formData);
         }
+        
+        function dataURLToBlob(dataURL) {
+            var binary = atob(dataURL.split(',')[1]);
+            var array = [];
+            for (var i = 0; i < binary.length; i++) {
+                array.push(binary.charCodeAt(i));
+            }
+            return new Blob([new Uint8Array(array)], { type: 'image/jpeg' });
+        }
+        
         function updateClock() {
             const now = new Date();
             const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };

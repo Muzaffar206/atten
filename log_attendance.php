@@ -15,16 +15,38 @@ $mode = filter_input(INPUT_POST, 'mode', FILTER_SANITIZE_STRING);
 $scanType = filter_input(INPUT_POST, 'scanType', FILTER_SANITIZE_STRING);
 $timestamp = date('Y-m-d H:i:s'); // IST timezone timestamp
 $date = date('Y-m-d'); // Current date
-$selfie = null;
 
-if (isset($_POST['selfie']) && !empty($_POST['selfie'])) {
-    // Validate selfie data
-    $selfie = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $_POST['selfie']));
-}
+$selfie_in_path = null;
+$selfie_out_path = null;
 
 try {
     if ($conn->connect_error) {
         throw new Exception("Database connection failed.");
+    }
+
+    // Assuming username is stored in session
+    $username = $_SESSION['username'];
+
+    // Directory to store selfies
+    $userDir = 'uploads/selfies/' . $username . '/';
+    if (!is_dir($userDir)) {
+        mkdir($userDir, 0777, true);
+    }
+
+    $selfie_in_filename = null;
+    $selfie_out_filename = null;
+
+    // Handle selfie uploads
+    if (isset($_FILES['selfie_in']) && $_FILES['selfie_in']['error'] === UPLOAD_ERR_OK) {
+        $selfie_in_filename = $username . '_in_' .$mode. date('Ymd_His') . '.jpg';
+        $selfie_in_path = $userDir . $selfie_in_filename;
+        move_uploaded_file($_FILES['selfie_in']['tmp_name'], $selfie_in_path);
+    }
+
+    if (isset($_FILES['selfie_out']) && $_FILES['selfie_out']['error'] === UPLOAD_ERR_OK) {
+        $selfie_out_filename = $username . '_out_' .$mode. date('Ymd_His') . '.jpg';
+        $selfie_out_path = $userDir . $selfie_out_filename;
+        move_uploaded_file($_FILES['selfie_out']['tmp_name'], $selfie_out_path);
     }
 
     if ($mode === 'Office') {
@@ -33,11 +55,11 @@ try {
             $sql = "INSERT INTO attendance (user_id, mode, data, in_time, selfie_in) VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("issss", $user_id, $mode, $data1, $timestamp, $selfie);
+            $stmt->bind_param("issss", $user_id, $mode, $data1, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
             $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND data = ? AND mode = ? AND in_time IS NOT NULL";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssiss", $timestamp, $selfie, $user_id, $data1, $mode);
+            $stmt->bind_param("ssiss", $timestamp, $selfie_out_path, $user_id, $data1, $mode);
         } else {
             throw new Exception("Invalid scan type.");
         }
@@ -50,11 +72,11 @@ try {
             $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, in_time, selfie_in) VALUES (?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isddss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie);
+            $stmt->bind_param("isddss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
             $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND in_time IS NOT NULL";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssidds", $timestamp, $selfie, $user_id, $latitude, $longitude, $mode);
+            $stmt->bind_param("ssidds", $timestamp, $selfie_out_path, $user_id, $latitude, $longitude, $mode);
         } else {
             throw new Exception("Invalid scan type.");
         }
@@ -84,25 +106,29 @@ try {
 
         if ($finalStmt->execute()) {
             // Add the logic for updating is_present
-            $attendance_id = $stmt->insert_id;
-            $is_present = ($scanType === 'In') ? 1 : 0;
-            $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
-            $updateUserStmt = $conn->prepare($updateUserSql);
-            $updateUserStmt->bind_param("ii", $is_present, $attendance_id);
-            $updateUserStmt->execute();
-
-            // Optional: Echo success message or handle further success logic here
+            if ($stmt->insert_id) {
+                $attendance_id = $stmt->insert_id;
+                $is_present = ($scanType === 'In') ? 1 : 0;
+                $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
+                $updateUserStmt = $conn->prepare($updateUserSql);
+                $updateUserStmt->bind_param("ii", $is_present, $attendance_id);
+                $updateUserStmt->execute();
+                $updateUserStmt->close();
+            }
+            echo json_encode(["status" => "success", "message" => "Attendance logged successfully."]);
         } else {
-            // Optional: Handle error updating final attendance here
+            echo json_encode(["status" => "error", "message" => "Failed to update final attendance."]);
         }
         $finalStmt->close();
     } else {
-        // Optional: Handle error logging attendance here
+        echo json_encode(["status" => "error", "message" => "Failed to log attendance."]);
     }
 
     $stmt->close();
 } catch (Exception $e) {
     // Handle exceptions silently or log to a secure file
+    error_log($e->getMessage());
+    echo json_encode(["status" => "error", "message" => "An error occurred. Please try again later."]);
 } finally {
     $conn->close();
 }
