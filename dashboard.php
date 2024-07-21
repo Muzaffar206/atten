@@ -24,36 +24,50 @@ $stmt->close();
 $from_date = isset($_GET['from_date']) ? $_GET['from_date'] : date('Y-m-d');
 $to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
 
-// Fetch attendance data based on user ID and date range
-$attendance_query = "SELECT users.id AS user_id, users.username, users.employer_id, users.full_name, DATE(attendance.in_time) as date, 
-                attendance.in_time, attendance.out_time, attendance.mode,attendance.data, attendance.is_present,  users.department 
-                FROM attendance 
-                JOIN users ON attendance.user_id = users.id 
-                WHERE users.id = ?";
+// Fetch aggregated attendance data based on user ID and date range
+$attendance_query = "SELECT 
+                        users.id AS user_id, 
+                        users.username, 
+                        users.employer_id, 
+                        users.full_name, 
+                        DATE(final_attendance.first_in) as date, 
+                        MIN(final_attendance.first_in) as first_in, 
+                        MAX(final_attendance.last_out) as last_out, 
+                        MIN(final_attendance.first_mode) as first_mode, 
+                        MAX(final_attendance.last_mode) as last_mode, 
+                        COUNT(attendance.id) AS total_entries,
+                        GROUP_CONCAT(attendance.data SEPARATOR ', ') AS data,
+                        CASE WHEN MAX(attendance.is_present) = 1 THEN 'Present' ELSE 'Absent' END AS attendance_status,
+                        users.department 
+                    FROM final_attendance 
+                    JOIN users ON final_attendance.user_id = users.id 
+                    LEFT JOIN attendance ON attendance.user_id = users.id AND DATE(attendance.in_time) = DATE(final_attendance.first_in) 
+                    WHERE users.id = ?";
 
 // Modify query based on filter conditions
 if (!empty($from_date) && !empty($to_date)) {
-    $attendance_query .= " AND DATE(attendance.in_time) BETWEEN ? AND ?";
+    $attendance_query .= " AND DATE(final_attendance.first_in) BETWEEN ? AND ?";
+    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
     $stmt_attendance = $conn->prepare($attendance_query);
     $stmt_attendance->bind_param("iss", $user_id, $from_date, $to_date);
 } elseif (!empty($from_date)) {
-    $attendance_query .= " AND DATE(attendance.in_time) >= ?";
+    $attendance_query .= " AND DATE(final_attendance.first_in) >= ?";
+    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
     $stmt_attendance = $conn->prepare($attendance_query);
     $stmt_attendance->bind_param("is", $user_id, $from_date);
 } elseif (!empty($to_date)) {
-    $attendance_query .= " AND DATE(attendance.in_time) <= ?";
+    $attendance_query .= " AND DATE(final_attendance.first_in) <= ?";
+    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
     $stmt_attendance = $conn->prepare($attendance_query);
     $stmt_attendance->bind_param("is", $user_id, $to_date);
 } else {
+    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
     $stmt_attendance = $conn->prepare($attendance_query);
     $stmt_attendance->bind_param("i", $user_id);
 }
 
 $stmt_attendance->execute();
 $result = $stmt_attendance->get_result();
-
-// Debug: Check $result output
-// var_dump($result); // Uncomment this line to debug $result
 
 ?>
 
@@ -109,11 +123,12 @@ $result = $stmt_attendance->get_result();
                         <th>Employer ID</th>
                         <th>Full Name</th>
                         <th>Date</th>
-                        <th>Mode</th>
+                        <th>First Mode</th>
+                        <th>Last Mode</th>
                         <th>From Where</th>
-                        <th>In Time</th>
-                        <th>Out Time</th>
-                        <th>Attendance</th>
+                        <th>First In</th>
+                        <th>Last Out</th>
+                        <th>Attendance Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,17 +139,12 @@ $result = $stmt_attendance->get_result();
                         echo "<td>" . htmlspecialchars($row['employer_id'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($row['full_name'] ?? '') . "</td>";
                         echo "<td>" . htmlspecialchars($row['date']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['mode']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['first_mode']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['last_mode']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['data']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['in_time']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['out_time']) . "</td>";
-                        echo "<td>";
-                        if ($row['is_present'] == 1) {
-                            echo "Present";
-                        } else {
-                            echo "Absent";
-                        }
-                        echo "</td>";
+                        echo "<td>" . htmlspecialchars($row['first_in']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['last_out']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['attendance_status']) . "</td>";
                         echo "</tr>";
                     }
                     ?>
@@ -156,7 +166,7 @@ $result = $stmt_attendance->get_result();
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
     <script>
         window.onload = function() {
-            //hide the preloader
+            // Hide the preloader
             document.querySelector(".preloader").style.display = "none";
         }
         $(document).ready(function() {
