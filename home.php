@@ -36,7 +36,7 @@ $conn->close();
                 <div class="date" id="date"></div>
                 <div class="clock" id="clock"></div>
                 <span class="login100-form-logo">
-                    <img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
+                    <img src="assest/images/MESCO.png" width="100px">
                 </span>
 
                 <span class="login100-form-title p-b-34 p-t-27">

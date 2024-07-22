@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="clock" id="clock"></div>
                 <form method="post" action="" class="login100-form validate-form">
                     <span class="login100-form-logo">
-                        <img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px">
+                        <img src="assest/images/MESCO.png" alt="MESCO LOGO" width="100px">
                     </span>
 
                     <span class="login100-form-title p-b-34 p-t-27">

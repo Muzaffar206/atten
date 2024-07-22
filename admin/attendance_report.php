@@ -16,68 +16,11 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 include("../assest/connection/config.php");
+include("delete_old_selfies.php");
 
-// Check the last deletion timestamp
-$sql = "SELECT last_deletion FROM deletion_log ORDER BY id DESC LIMIT 1";
-$result = $conn->query($sql);
-$lastDeletion = $result->fetch_assoc()['last_deletion'] ?? '1970-01-01 00:00:00';
 
-// Check for selfies older than 2 days
-$twoDaysAgo = date('Y-m-d H:i:s', strtotime('-2 days'));
 
-$sql = "SELECT COUNT(*) as old_selfie_count 
-        FROM attendance 
-        WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
-        AND in_time < ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param('s', $twoDaysAgo);
-$stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
 
-if ($row['old_selfie_count'] > 0 && $lastDeletion < $twoDaysAgo) {
-    $_SESSION['old_selfies'] = true;
-} else {
-    $_SESSION['old_selfies'] = false;
-}
-
-$stmt->close();
-
-function displayAlert()
-{
-    if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
-        echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Reminder!</strong> Please delete selfies older than 2 days.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>';
-    }
-}
-
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
-    $sqlUpdate = "UPDATE attendance SET selfie_in = NULL, selfie_out = NULL 
-                  WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
-                  AND in_time < ?";
-    $stmtUpdate = $conn->prepare($sqlUpdate);
-    $stmtUpdate->bind_param('s', $twoDaysAgo);
-    $stmtUpdate->execute();
-
-    if ($stmtUpdate->affected_rows > 0) {
-        $currentTime = date('Y-m-d H:i:s');
-        $sqlLogUpdate = "INSERT INTO deletion_log (last_deletion) VALUES (?)";
-        $stmtLogUpdate = $conn->prepare($sqlLogUpdate);
-        $stmtLogUpdate->bind_param('s', $currentTime);
-        $stmtLogUpdate->execute();
-
-        $_SESSION['old_selfies'] = false;
-    } else {
-        echo "No selfies were deleted.";
-    }
-
-    header("Location: attendance_report.php");
-    exit();
-}
 
 $filterDepartment = isset($_GET['department']) ? $_GET['department'] : '';
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';

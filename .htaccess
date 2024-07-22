@@ -1,5 +1,0 @@
-<FilesMatch "\.(jpg|jpeg|png|gif|pdf)$">
-    Require all denied
-</FilesMatch>
-
-Options -Indexes
