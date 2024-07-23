@@ -21,7 +21,6 @@ $selfie_in_path = null;
 $selfie_out_path = null;
 
 try {
-
     // Assuming username is stored in session
     $username = $_SESSION['username'];
 
@@ -52,29 +51,47 @@ try {
 
     if (isset($_FILES['selfie_in']) && $_FILES['selfie_in']['error'] === UPLOAD_ERR_OK) {
         $fileExtension = validateFile($_FILES['selfie_in'], $allowedExtensions, $allowedMimeTypes);
-        $selfie_in_filename = $username . '_in_' .$mode. date('Ymd_His') . '.' . $fileExtension;
+        $selfie_in_filename = $username . '_in_' . $mode . date('Ymd_His') . '.' . $fileExtension;
         $selfie_in_path = $userDir . $selfie_in_filename;
         move_uploaded_file($_FILES['selfie_in']['tmp_name'], $selfie_in_path);
     }
 
     if (isset($_FILES['selfie_out']) && $_FILES['selfie_out']['error'] === UPLOAD_ERR_OK) {
         $fileExtension = validateFile($_FILES['selfie_out'], $allowedExtensions, $allowedMimeTypes);
-        $selfie_out_filename = $username . '_out_' .$mode. date('Ymd_His') . '.' . $fileExtension;
+        $selfie_out_filename = $username . '_out_' . $mode . date('Ymd_His') . '.' . $fileExtension;
         $selfie_out_path = $userDir . $selfie_out_filename;
         move_uploaded_file($_FILES['selfie_out']['tmp_name'], $selfie_out_path);
     }
 
     if ($mode === 'Office') {
         $data1 = filter_input(INPUT_POST, 'data1', FILTER_SANITIZE_STRING);
+
         if ($scanType === "In") {
             $sql = "INSERT INTO attendance (user_id, mode, data, in_time, selfie_in) VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("issss", $user_id, $mode, $data1, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
-            $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND data = ? AND mode = ? AND in_time IS NOT NULL";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssiss", $timestamp, $selfie_out_path, $user_id, $data1, $mode);
+            // Check if there's an existing record for the same day
+            $checkSql = "SELECT COUNT(*) FROM attendance WHERE user_id = ? AND data = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("isss", $user_id, $data1, $mode, $date);
+            $checkStmt->execute();
+            $checkStmt->bind_result($count);
+            $checkStmt->fetch();
+            $checkStmt->close();
+
+            if ($count > 0) {
+                // Update existing record
+                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND data = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssisss", $timestamp, $selfie_out_path, $user_id, $data1, $mode, $date);
+            } else {
+                // Insert new record if no existing record for today
+                $sql = "INSERT INTO attendance (user_id, mode, data, in_time, selfie_in, out_time, selfie_out) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("issssss", $user_id, $mode, $data1, $timestamp, $selfie_in_path, $timestamp, $selfie_out_path);
+            }
         } else {
             throw new Exception("Invalid scan type.");
         }
@@ -83,15 +100,33 @@ try {
         $coords = explode(',', $coords);
         $latitude = filter_var($coords[0], FILTER_VALIDATE_FLOAT);
         $longitude = filter_var($coords[1], FILTER_VALIDATE_FLOAT);
+
         if ($scanType === "In") {
             $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, in_time, selfie_in) VALUES (?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("isddss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
-            $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND in_time IS NOT NULL";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssidds", $timestamp, $selfie_out_path, $user_id, $latitude, $longitude, $mode);
+            // Check if there's an existing record for the same day
+            $checkSql = "SELECT COUNT(*) FROM attendance WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("iddss", $user_id, $latitude, $longitude, $mode, $date);
+            $checkStmt->execute();
+            $checkStmt->bind_result($count);
+            $checkStmt->fetch();
+            $checkStmt->close();
+
+            if ($count > 0) {
+                // Update existing record
+                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssiddss", $timestamp, $selfie_out_path, $user_id, $latitude, $longitude, $mode, $date);
+            } else {
+                // Insert new record if no existing record for today
+                $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, in_time, selfie_in, out_time, selfie_out) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("isddssss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path, $timestamp, $selfie_out_path);
+            }
         } else {
             throw new Exception("Invalid scan type.");
         }

@@ -112,51 +112,30 @@ if ($result->num_rows > 0) {
         $sheet->setCellValue('I' . $rowNumber, $row['in_time']);
         $sheet->setCellValue('J' . $rowNumber, $row['out_time']);
 
-        // Handle selfies
-        if (!empty($row['selfie_in'])) {
-            $imageNameIn = 'selfie_' . $row['username'] . '_' . date('Ymd_His') . '_in.jpg';
-            $imagePathIn = __DIR__ . '/selfies/' . $row['username'] . '/' . $imageNameIn;
-            if (!is_dir(dirname($imagePathIn))) {
-                mkdir(dirname($imagePathIn), 0777, true); // Create directory if not exists
-            }
-            file_put_contents($imagePathIn, $row['selfie_in']);
+        // Handle selfies from file directory
+        $selfieInPath = '../uploads/selfies/' . $row['username'] . '/selfie_in.jpg';
+        $selfieOutPath = '../uploads/selfies/' . $row['username'] . '/selfie_out.jpg';
 
+        if (file_exists($selfieInPath)) {
             $selfieIn = new Drawing();
             $selfieIn->setName('Selfie In');
             $selfieIn->setDescription('Selfie In');
-            $selfieIn->setPath($imagePathIn);
+            $selfieIn->setPath($selfieInPath);
             $selfieIn->setCoordinates('K' . $rowNumber);
-            // Adjust the image size proportionally
-            [$widthIn, $heightIn, $typeIn, $attrIn] = getimagesize($imagePathIn);
-            $selfieIn->setHeight(80); // Adjust height if needed
-            $selfieIn->setWidth(80 * $widthIn / $heightIn); // Adjust width proportionally
-            $selfieIn->setOffsetX(5); // Adjust X offset if needed
-            $selfieIn->setOffsetY(5); // Adjust Y offset if needed
+            $selfieIn->setHeight(80);
             $selfieIn->setWorksheet($sheet);
-            $sheet->getRowDimension($rowNumber)->setRowHeight(80); // Adjust row height if needed
+            $sheet->getRowDimension($rowNumber)->setRowHeight(80);
         }
 
-        if (!empty($row['selfie_out'])) {
-            $imageNameOut = 'selfie_' . $row['username'] . '_' . date('Ymd_His') . '_out.jpg';
-            $imagePathOut = __DIR__ . '/selfies/' . $row['username'] . '/' . $imageNameOut;
-            if (!is_dir(dirname($imagePathOut))) {
-                mkdir(dirname($imagePathOut), 0777, true); // Create directory if not exists
-            }
-            file_put_contents($imagePathOut, $row['selfie_out']);
-
+        if (file_exists($selfieOutPath)) {
             $selfieOut = new Drawing();
             $selfieOut->setName('Selfie Out');
             $selfieOut->setDescription('Selfie Out');
-            $selfieOut->setPath($imagePathOut);
+            $selfieOut->setPath($selfieOutPath);
             $selfieOut->setCoordinates('L' . $rowNumber);
-            // Adjust the image size proportionally
-            [$widthOut, $heightOut, $typeOut, $attrOut] = getimagesize($imagePathOut);
-            $selfieOut->setHeight(80); // Adjust height if needed
-            $selfieOut->setWidth(80 * $widthOut / $heightOut); // Adjust width proportionally
-            $selfieOut->setOffsetX(5); // Adjust X offset if needed
-            $selfieOut->setOffsetY(5); // Adjust Y offset if needed
+            $selfieOut->setHeight(80);
             $selfieOut->setWorksheet($sheet);
-            $sheet->getRowDimension($rowNumber)->setRowHeight(80); // Adjust row height if needed
+            $sheet->getRowDimension($rowNumber)->setRowHeight(80);
         }
 
         // Handle map link
@@ -181,24 +160,6 @@ $fileName = 'attendance_report_' . date('Ymd_His') . '.xlsx';
 $filePath = __DIR__ . '/' . $fileName;
 $writer->save($filePath);
 
-// Clean up selfies after generating the report
-$files = scandir(__DIR__ . '/selfies/');
-foreach ($files as $file) {
-    if (is_dir(__DIR__ . '/selfies/' . $file) && strpos($file, '.') !== 0) {
-        // Check if it's a directory and not a hidden directory (e.g., . or ..)
-        $selfieFiles = scandir(__DIR__ . '/selfies/' . $file);
-        foreach ($selfieFiles as $selfieFile) {
-            if (strpos($selfieFile, 'selfie_') === 0 && pathinfo($selfieFile, PATHINFO_EXTENSION) === 'jpg') {
-                unlink(__DIR__ . '/selfies/' . $file . '/' . $selfieFile);
-            }
-        }
-        // After deleting files, delete the directory if it's empty
-        if (count(scandir(__DIR__ . '/selfies/' . $file)) <= 2) { // 2 because of . and ..
-            rmdir(__DIR__ . '/selfies/' . $file);
-        }
-    }
-}
-
 // Download the generated XLSX file
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 header('Content-Disposition: attachment;filename="' . $fileName . '"');
@@ -209,3 +170,4 @@ readfile($filePath);
 unlink($filePath);
 
 exit;
+?>

@@ -69,13 +69,12 @@ $sheet->setCellValue('B1', 'Employer Code');
 $sheet->setCellValue('C1', 'Employer Name');
 
 $column = 'D';
+$column_count = 0;
 foreach ($dates as $date) {
     $sheet->setCellValue($column . '1', $date);
     $column++;
+    $column_count++;
 }
-
-// Set bold and larger font for the first row
-$sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true)->setSize(14);
 
 // Apply border to the first row
 $styleArray = [
@@ -88,6 +87,12 @@ $styleArray = [
 ];
 $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray($styleArray);
 
+// Center align headers and content
+$sheet->getStyle('A1:' . $sheet->getHighestColumn() . $sheet->getHighestRow())
+    ->getAlignment()
+    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+    ->setVertical(Alignment::VERTICAL_CENTER);
+
 // Initialize row number
 $row_num = 2;
 
@@ -97,18 +102,22 @@ while ($user = $users_result->fetch_assoc()) {
     $sheet->setCellValue('B' . $row_num, $user['employer_id']);
     $sheet->setCellValue('C' . $row_num, $user['full_name']);
 
-    foreach ($dates as $date) {
+    for ($i = 0; $i < $column_count; $i++) {
         $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, a.is_present, a.data 
                              FROM final_attendance fa
                              LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
                              WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
         $stmt_attendance = $conn->prepare($attendance_query);
-        $formatted_date = date('Y-m-d', strtotime($date));
+        $formatted_date = date('Y-m-d', strtotime($dates[$i]));
         $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
         $stmt_attendance->execute();
         $attendance_result = $stmt_attendance->get_result();
 
-        if ($attendance_result->num_rows > 0) {
+        $is_sunday = (date('w', strtotime($formatted_date)) == 0);
+
+        if ($is_sunday) {
+            $cell_value = "Holiday";
+        } elseif ($attendance_result->num_rows > 0) {
             $attendance_data = $attendance_result->fetch_assoc();
             $cell_value = $user['data'] . "\n" .
                           "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "\n" .
@@ -118,12 +127,17 @@ while ($user = $users_result->fetch_assoc()) {
                 $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n" .
                                "Last Mode: " . $attendance_data['last_mode'];
             }
-            $sheet->setCellValue($column . $row_num, $cell_value);
-            // Set wrap text and align left
-            $sheet->getStyle($column . $row_num)->getAlignment()->setWrapText(true)->setHorizontal(Alignment::HORIZONTAL_LEFT);
         } else {
-            $sheet->setCellValue($column . $row_num, "Absent");
+            $cell_value = "Absent";
         }
+
+        $sheet->setCellValue($column . $row_num, $cell_value);
+        // Set wrap text and align left
+        $sheet->getStyle($column . $row_num)
+            ->getAlignment()
+            ->setWrapText(true)
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+            ->setVertical(Alignment::VERTICAL_CENTER);
 
         $stmt_attendance->close();
         $column++;
@@ -132,13 +146,18 @@ while ($user = $users_result->fetch_assoc()) {
 }
 
 // Adjust column widths
-foreach (range('A', $sheet->getHighestColumn()) as $col) {
-    $sheet->getColumnDimension($col)->setAutoSize(true);
+$highestColumn = $sheet->getHighestColumn(); // This will return 'D'
+$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn); // Convert 'D' to 4
+
+for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
+    $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex); // Convert 4 to 'D'
+    $sheet->getColumnDimension($colLetter)->setWidth(20);
 }
 
-// Adjust row heights to 144 px
-foreach ($sheet->getRowDimensions() as $rowDim) {
-    $rowDim->setRowHeight(144);
+// Adjust row heights to 100 px
+$rowCount = $sheet->getHighestRow();
+for ($row = 1; $row <= $rowCount; $row++) {
+    $sheet->getRowDimension($row)->setRowHeight(100);
 }
 
 // Output the file
