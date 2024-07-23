@@ -12,6 +12,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 // Check for selfies older than 2 minutes
 $twoMinutesAgo = date('Y-m-d H:i:s', strtotime('-2 minutes'));
 
+// Function to handle errors
+function handle_error($error_message)
+{
+    $log_file = "error_log.txt";
+    $current_time = date('Y-m-d H:i:s');
+    $log_message = "[{$current_time}] ERROR: {$error_message}\n";
+    file_put_contents($log_file, $log_message, FILE_APPEND);
+    echo "An error occurred. Please check the logs for details.";
+}
+
+// Function to display alert for old selfies
+function displayAlert()
+{
+    if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
+        echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong>Reminder!</strong> Please delete selfies older than 2 minutes.
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>';
+    }
+}
+
 // Check for old selfies
 $sql = "SELECT COUNT(*) as old_selfie_count 
         FROM attendance 
@@ -34,29 +57,10 @@ $oldSelfiesExist = ($row['old_selfie_count'] > 0);
 $_SESSION['old_selfies'] = $oldSelfiesExist;
 $stmt->close();
 
-function handle_error($error_message) {
-    $log_file = "error_log.txt"; // Ensure this directory exists and is writable
-    $current_time = date('Y-m-d H:i:s');
-    $log_message = "[{$current_time}] ERROR: {$error_message}\n";
-    file_put_contents($log_file, $log_message, FILE_APPEND);
-    echo "An error occurred. Please check the logs for details.";
-}
-
-function displayAlert()
-{
-    if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
-        echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Reminder!</strong> Please delete selfies older than 2 minutes.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>';
-    }
-}
-
+// Delete old selfies when admin triggers the action
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     // Query to get old selfies
-    $sqlGetSelfies = "SELECT user_id, selfie_in, selfie_out 
+    $sqlGetSelfies = "SELECT id, user_id, selfie_in, selfie_out 
                       FROM attendance 
                       WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
                       AND (in_time < ? OR out_time < ?)";
@@ -75,28 +79,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     $deletedSelfiesCount = 0;
 
     while ($row = $resultGetSelfies->fetch_assoc()) {
+        $attendanceId = $row['id'];
         $userId = $row['user_id'];
         $selfieIn = $row['selfie_in'];
         $selfieOut = $row['selfie_out'];
 
-        // Define file paths using paths stored in the database
-        $selfieInPath = "../uploads/selfies/" . basename($selfieIn);
-        $selfieOutPath = "../uploads/selfies/" . basename($selfieOut);
-
-        // Debugging: Log file paths
-        error_log("Deleting selfie_in file: " . $selfieInPath);
-        error_log("Deleting selfie_out file: " . $selfieOutPath);
-
         // Delete files if they exist
-        if (file_exists($selfieInPath)) {
-            if (unlink($selfieInPath)) {
+        if (!empty($selfieIn)) {
+            $selfieInPath = "../" . $selfieIn;
+            if (file_exists($selfieInPath) && unlink($selfieInPath)) {
                 $deletedSelfiesCount++;
             } else {
                 handle_error("Failed to delete file: " . $selfieInPath);
             }
         }
-        if (file_exists($selfieOutPath)) {
-            if (unlink($selfieOutPath)) {
+        if (!empty($selfieOut)) {
+            $selfieOutPath = "../" . $selfieOut;
+            if (file_exists($selfieOutPath) && unlink($selfieOutPath)) {
                 $deletedSelfiesCount++;
             } else {
                 handle_error("Failed to delete file: " . $selfieOutPath);
@@ -106,14 +105,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
         // Update database to NULL
         $sqlUpdate = "UPDATE attendance 
                       SET selfie_in = NULL, selfie_out = NULL 
-                      WHERE user_id = ? 
-                      AND (selfie_in = ? OR selfie_out = ?)";
+                      WHERE id = ?";
         $stmtUpdate = $conn->prepare($sqlUpdate);
         if (!$stmtUpdate) {
             handle_error("Prepare statement for updating selfies failed: " . $conn->error);
             exit();
         }
-        $stmtUpdate->bind_param('iss', $userId, $selfieIn, $selfieOut);
+        $stmtUpdate->bind_param('i', $attendanceId);
         if (!$stmtUpdate->execute()) {
             handle_error("Execute statement for updating selfies failed: " . $stmtUpdate->error);
             exit();
@@ -137,14 +135,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
         $stmtLogUpdate->close();
 
         $_SESSION['old_selfies'] = false;
-        echo "Selfies deleted successfully.";
+        $_SESSION['success_message'] = "Selfies deleted successfully.";
     } else {
-        echo "No selfies were deleted.";
+        $_SESSION['info_message'] = "No selfies were deleted.";
     }
 
     $stmtGetSelfies->close();
     header("Location: attendance_report.php");
     exit();
 }
-
-?>

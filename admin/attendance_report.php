@@ -139,6 +139,16 @@ include("include/sidebar.php");
                                     <input type="hidden" name="delete_selfies" value="true">
                                     <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 2 minutes?')">Delete Selfies</button>
                                 </form>
+                                <?php
+                                if (isset($_SESSION['success_message'])) {
+                                    echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
+                                    unset($_SESSION['success_message']);
+                                }
+                                if (isset($_SESSION['info_message'])) {
+                                    echo '<div class="alert alert-info">' . $_SESSION['info_message'] . '</div>';
+                                    unset($_SESSION['info_message']);
+                                }
+                                ?>
                             </div>
                             <div class="table-responsive">
                                 <table id="attendanceTable" class="table table-bordered table-hover">

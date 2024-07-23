@@ -29,21 +29,31 @@ $department = isset($_POST['department']) ? $_POST['department'] : 'All';
 $from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
 $to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
 
+$to_date_adjusted = date('Y-m-d', strtotime($to_date . ' +1 day'));
+
 $users_query = ($department === 'All') ?
-    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
+    "SELECT u.id, u.employer_id, u.full_name, u.department, 
+            MAX(fa.first_in) AS latest_first_in, 
+            MAX(a.data) AS data
      FROM users u
-     LEFT JOIN attendance a ON u.id = a.user_id
+     LEFT JOIN final_attendance fa ON u.id = fa.user_id
+     LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+     WHERE fa.first_in >= ? AND fa.first_in < ?
      GROUP BY u.id" :
-    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(a.data) AS data
+    "SELECT u.id, u.employer_id, u.full_name, u.department, 
+            MAX(fa.first_in) AS latest_first_in, 
+            MAX(a.data) AS data
      FROM users u
-     LEFT JOIN attendance a ON u.id = a.user_id
-     WHERE u.department = ?
+     LEFT JOIN final_attendance fa ON u.id = fa.user_id
+     LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ?
      GROUP BY u.id";
 
-
 $stmt_users = $conn->prepare($users_query);
-if ($department !== 'All') {
-    $stmt_users->bind_param("s", $department);
+if ($department === 'All') {
+    $stmt_users->bind_param("ss", $from_date, $to_date_adjusted);
+} else {
+    $stmt_users->bind_param("sss", $department, $from_date, $to_date_adjusted);
 }
 $stmt_users->execute();
 $users_result = $stmt_users->get_result();
@@ -156,18 +166,25 @@ $stmt_users->close();
                                                         if ($day_of_week == 0) {
                                                             echo "Holiday";
                                                         } else {
-                                                            $attendance_query = "SELECT * FROM attendance WHERE user_id = ? AND DATE_FORMAT(in_time, '%d-%m-%Y') = ?";
+                                                            $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, a.is_present, a.data 
+                     FROM final_attendance fa
+                     LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+                     WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
                                                             $stmt_attendance = $conn->prepare($attendance_query);
-                                                            $stmt_attendance->bind_param("is", $user['id'], $date);
+                                                            $formatted_date = date('Y-m-d', strtotime($date));
+                                                            $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
                                                             $stmt_attendance->execute();
                                                             $attendance_result = $stmt_attendance->get_result();
+
                                                             if ($attendance_result->num_rows > 0) {
                                                                 $attendance_data = $attendance_result->fetch_assoc();
                                                                 echo $user['data'] . "<br>";
                                                                 echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
-                                                                echo "In Time: " . date('H:i:s', strtotime($attendance_data['in_time'])) . "<br>";
-                                                                if ($attendance_data['out_time'] != null) {
-                                                                    echo "Out Time: " . date('H:i:s', strtotime($attendance_data['out_time'])) . "<br>";
+                                                                echo "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "<br>";
+                                                                echo "First Mode: " . $attendance_data['first_mode'] . "<br>";
+                                                                if ($attendance_data['last_out'] != null) {
+                                                                    echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
+                                                                    echo "Last Mode: " . $attendance_data['last_mode'] . "<br>";
                                                                 }
                                                             } else {
                                                                 echo "Absent";

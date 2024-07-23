@@ -2,7 +2,7 @@
  <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="index.php" class="brand-link">
-      <img src="../assest/css/MESCO.png" alt="MESCO Logo" style="background-color: white; border-radius: 15px;" width="120px" >
+      <img src="../assest/images/MESCO.png" alt="MESCO Logo" style="background-color: white; border-radius: 15px;" width="120px" >
     </a>
 
     <!-- Sidebar -->
