@@ -173,20 +173,24 @@ include("include/sidebar.php");
                                         <?php
                                         if ($result->num_rows > 0) {
                                             while ($row = $result->fetch_assoc()) {
+                                                // Remove 'admin/' from selfie paths
+                                                $selfie_in = !empty($row['selfie_in']) ? str_replace('admin/', '', $row['selfie_in']) : '';
+                                                $selfie_out = !empty($row['selfie_out']) ? str_replace('admin/', '', $row['selfie_out']) : '';
+                                        
                                                 echo "<tr>
-                                                        <td>" . $row['attendance_id'] . "</td>
-                                                        <td>" . $row['employer_id'] . "</td>
-                                                        <td>" . $row['username'] . "</td>
-                                                        <td>" . $row['full_name'] . "</td>
-                                                        <td>" . $row['department'] . "</td>
-                                                        <td>" . $row['mode'] . "</td>
-                                                        <td>" . ($row['latitude'] ?? 'N/A') . "</td>
-                                                        <td>" . ($row['longitude'] ?? 'N/A') . "</td>
-                                                        <td>" . $row['in_time'] . "</td>
-                                                        <td>" . $row['out_time'] . "</td>
-                                                        <td>" . (!empty($row['selfie_in']) ? '<img src="../' . htmlspecialchars($row['selfie_in']) . '" alt="Selfie_in" width="150" height="150" >' : 'N/A') . "</td>
-                                                        <td>" . (!empty($row['selfie_out']) ? '<img src="../' . htmlspecialchars($row['selfie_out']) . '" alt="Selfie_out" width="150" height="150" >' : 'N/A') . "</td>
-                                                        <td>" . (($row['latitude'] && $row['longitude']) ? '<a href="https://www.google.com/maps?q=' . $row['latitude'] . ',' . $row['longitude'] . '" target="_blank">View on Map</a>' : 'N/A') . "</td>
+                                                        <td>" . htmlspecialchars($row['attendance_id']) . "</td>
+                                                        <td>" . htmlspecialchars($row['employer_id']) . "</td>
+                                                        <td>" . htmlspecialchars($row['username']) . "</td>
+                                                        <td>" . htmlspecialchars($row['full_name']) . "</td>
+                                                        <td>" . htmlspecialchars($row['department']) . "</td>
+                                                        <td>" . htmlspecialchars($row['mode']) . "</td>
+                                                        <td>" . (!empty($row['latitude']) ? htmlspecialchars($row['latitude']) : 'N/A') . "</td>
+                                                        <td>" . (!empty($row['longitude']) ? htmlspecialchars($row['longitude']) : 'N/A') . "</td>
+                                                        <td>" . htmlspecialchars($row['in_time']) . "</td>
+                                                        <td>" . htmlspecialchars($row['out_time']) . "</td>
+                                                        <td>" . (!empty($selfie_in) ? '<img src="' . htmlspecialchars($selfie_in) . '" alt="Selfie_in" width="150" height="150">' : 'N/A') . "</td>
+                                                        <td>" . (!empty($selfie_out) ? '<img src="' . htmlspecialchars($selfie_out) . '" alt="Selfie_out" width="150" height="150">' : 'N/A') . "</td>
+                                                        <td>" . (!empty($row['latitude']) && !empty($row['longitude']) ? '<a href="https://www.google.com/maps?q=' . htmlspecialchars($row['latitude']) . ',' . htmlspecialchars($row['longitude']) . '" target="_blank">View on Map</a>' : 'N/A') . "</td>
                                                       </tr>";
                                             }
                                         } else {

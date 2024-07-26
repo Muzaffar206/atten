@@ -25,7 +25,7 @@ try {
     $username = $_SESSION['username'];
 
     // Directory to store selfies (ensure this directory is protected)
-    $userDir = 'uploads/selfies/' . basename($username) . '/';
+    $userDir = 'admin/Selfies_in&out/' . basename($username) . '/';
     if (!is_dir($userDir)) {
         mkdir($userDir, 0700, true); // Use safer permissions
     }

@@ -60,10 +60,11 @@ $stmt->close();
 // Delete old selfies when admin triggers the action
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     // Query to get old selfies
-    $sqlGetSelfies = "SELECT id, user_id, selfie_in, selfie_out 
-                      FROM attendance 
-                      WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
-                      AND (in_time < ? OR out_time < ?)";
+    $sqlGetSelfies = "SELECT a.id, a.user_id, a.selfie_in, a.selfie_out, u.username 
+                      FROM attendance a
+                      JOIN users u ON a.user_id = u.id
+                      WHERE (a.selfie_in IS NOT NULL OR a.selfie_out IS NOT NULL) 
+                      AND (a.in_time < ? OR a.out_time < ?)";
     $stmtGetSelfies = $conn->prepare($sqlGetSelfies);
     if (!$stmtGetSelfies) {
         handle_error("Prepare statement for getting selfies failed: " . $conn->error);
@@ -81,12 +82,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     while ($row = $resultGetSelfies->fetch_assoc()) {
         $attendanceId = $row['id'];
         $userId = $row['user_id'];
+        $username = $row['username'];
         $selfieIn = $row['selfie_in'];
         $selfieOut = $row['selfie_out'];
 
+        $userDir = 'Selfies_in&out/' . basename($username) . '/';
+
         // Delete files if they exist
         if (!empty($selfieIn)) {
-            $selfieInPath = "../" . $selfieIn;
+            $selfieInPath = $userDir . basename($selfieIn);
             if (file_exists($selfieInPath) && unlink($selfieInPath)) {
                 $deletedSelfiesCount++;
             } else {
@@ -94,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
             }
         }
         if (!empty($selfieOut)) {
-            $selfieOutPath = "../" . $selfieOut;
+            $selfieOutPath = $userDir . basename($selfieOut);
             if (file_exists($selfieOutPath) && unlink($selfieOutPath)) {
                 $deletedSelfiesCount++;
             } else {
