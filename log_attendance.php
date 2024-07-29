@@ -149,37 +149,61 @@ try {
                          VALUES (?, ?, ?, ?)
                          ON DUPLICATE KEY UPDATE 
                             last_out = GREATEST(COALESCE(last_out, VALUES(last_out)), VALUES(last_out)),
-                            last_mode = IF(COALESCE(last_out, VALUES(last_out)) = VALUES(last_out), VALUES(last_mode), last_mode)";
+                                                       last_mode = IF(COALESCE(last_out, VALUES(last_out)) = VALUES(last_out), VALUES(last_mode), last_mode)";
             $finalStmt = $conn->prepare($finalSql);
             $finalStmt->bind_param("isss", $user_id, $date, $timestamp, $mode);
+        } else {
+            throw new Exception("Invalid scan type.");
         }
 
         if ($finalStmt->execute()) {
-            // Update is_present
-            if ($stmt->insert_id) {
-                $attendance_id = $stmt->insert_id;
-                $is_present = ($scanType === 'In') ? 1 : 0;
-                $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
-                $updateUserStmt = $conn->prepare($updateUserSql);
-                $updateUserStmt->bind_param("ii", $is_present, $attendance_id);
-                $updateUserStmt->execute();
-                $updateUserStmt->close();
+            // Calculate total hours
+            $calcSql = "SELECT TIMESTAMPDIFF(MINUTE, first_in, last_out) / 60 AS total_hours
+                        FROM final_attendance
+                        WHERE user_id = ? AND date = ?";
+            $calcStmt = $conn->prepare($calcSql);
+            $calcStmt->bind_param("is", $user_id, $date);
+            $calcStmt->execute();
+            $calcStmt->bind_result($total_hours);
+            $calcStmt->fetch();
+            $calcStmt->close();
+
+            // Update the total_hours column
+            $updateFinalSql = "UPDATE final_attendance
+                               SET total_hours = ?
+                               WHERE user_id = ? AND date = ?";
+            $updateFinalStmt = $conn->prepare($updateFinalSql);
+            $updateFinalStmt->bind_param("dis", $total_hours, $user_id, $date);
+
+            if ($updateFinalStmt->execute()) {
+                echo "Attendance recorded and total hours updated successfully.";
+            } else {
+                throw new Exception("Failed to update total hours.");
             }
-            echo json_encode(["status" => "success", "message" => "Attendance logged successfully."]);
         } else {
-            echo json_encode(["status" => "error", "message" => "Failed to update final attendance."]);
+            throw new Exception("Failed to update final_attendance.");
         }
-        $finalStmt->close();
     } else {
-        echo json_encode(["status" => "error", "message" => "Failed to log attendance."]);
+        throw new Exception("Failed to record attendance.");
+    }
+    // Update is_present field
+    if ($stmt->insert_id) {
+        $attendance_id = $stmt->insert_id;
+        $is_present = ($scanType === 'In') ? 1 : 0;
+        $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
+        $updateUserStmt = $conn->prepare($updateUserSql);
+        $updateUserStmt->bind_param("ii", $is_present, $attendance_id);
+        $updateUserStmt->execute();
+        $updateUserStmt->close();
     }
 
+    // Close statement and connection
     $stmt->close();
-} catch (Exception $e) {
-    // Handle exceptions and log errors
-    error_log($e->getMessage());
-    echo json_encode(["status" => "error", "message" => "An error occurred. Please try again later."]);
-} finally {
     $conn->close();
+
+} catch (Exception $e) {
+    error_log($e->getMessage());
+    echo "An error occurred: " . htmlspecialchars($e->getMessage());
 }
 ?>
+

@@ -34,7 +34,8 @@ $to_date_adjusted = date('Y-m-d', strtotime($to_date . ' +1 day'));
 $users_query = ($department === 'All') ?
     "SELECT u.id, u.employer_id, u.full_name, u.department, 
             MAX(fa.first_in) AS latest_first_in, 
-            MAX(a.data) AS data
+            MAX(a.data) AS data,
+            MAX(fa.total_hours) AS total_hours
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
@@ -42,7 +43,8 @@ $users_query = ($department === 'All') ?
      GROUP BY u.id" :
     "SELECT u.id, u.employer_id, u.full_name, u.department, 
             MAX(fa.first_in) AS latest_first_in, 
-            MAX(a.data) AS data
+            MAX(a.data) AS data,
+            MAX(fa.total_hours) AS total_hours
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
@@ -166,7 +168,7 @@ $stmt_users->close();
                                                         if ($day_of_week == 0) {
                                                             echo "Holiday";
                                                         } else {
-                                                            $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, a.is_present, a.data 
+                                                            $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode,fa.total_hours, a.is_present, a.data 
                      FROM final_attendance fa
                      LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
                      WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
@@ -185,6 +187,7 @@ $stmt_users->close();
                                                                 if ($attendance_data['last_out'] != null) {
                                                                     echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
                                                                     echo "Last Mode: " . $attendance_data['last_mode'] . "<br>";
+                                                                    echo "Total hours: " . $attendance_data['total_hours'] . "<br>";
                                                                 }
                                                             } else {
                                                                 echo "Absent";

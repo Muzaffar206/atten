@@ -29,6 +29,7 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Attendance</title>
     <?php include("include/header.php"); ?>
+    <script src="assest/js/notification.js"></script>
 
     <div class="limiter">
         <div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">

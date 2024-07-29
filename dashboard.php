@@ -38,7 +38,8 @@ $attendance_query = "SELECT
                         COUNT(attendance.id) AS total_entries,
                         GROUP_CONCAT(attendance.data SEPARATOR ', ') AS data,
                         CASE WHEN MAX(attendance.is_present) = 1 THEN 'Present' ELSE 'Absent' END AS attendance_status,
-                        users.department 
+                        users.department,
+                        final_attendance.total_hours
                     FROM final_attendance 
                     JOIN users ON final_attendance.user_id = users.id 
                     LEFT JOIN attendance ON attendance.user_id = users.id AND DATE(attendance.in_time) = DATE(final_attendance.first_in) 
@@ -88,7 +89,7 @@ $result = $stmt_attendance->get_result();
 <body>
     <div class="container-fluid">
         <div class="text-center my-4">
-            <img src="assest/css/MESCO.png" alt="MESCO LOGO" width="100px" class="my-3">
+            <img src="assest/images/MESCO.png" alt="MESCO LOGO" width="100px" class="my-3">
             <h2>Welcome <?php echo htmlspecialchars($username); ?></h2>
         </div>
 
@@ -129,6 +130,7 @@ $result = $stmt_attendance->get_result();
                         <th>First In</th>
                         <th>Last Out</th>
                         <th>Attendance Status</th>
+                        <th>Total Hours Worked</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -145,6 +147,7 @@ $result = $stmt_attendance->get_result();
                         echo "<td>" . htmlspecialchars($row['first_in']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['last_out']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['attendance_status']) . "</td>";
+                        echo "<td>" . htmlspecialchars($row['total_hours']) . "</td>";
                         echo "</tr>";
                     }
                     ?>

@@ -135,10 +135,21 @@ include("include/sidebar.php");
                                     </div>
                                 </form>
                                 <?php displayAlert(); ?>
-                                <form id="deleteSelfiesForm" method="POST" action="">
-                                    <input type="hidden" name="delete_selfies" value="true">
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 2 minutes?')">Delete Selfies</button>
-                                </form>
+                                <div class="row">
+                                    <div class="col-auto">
+                                        <!-- Delete Selfies Form -->
+                                        <form id="deleteSelfiesForm" method="POST" action="">
+                                            <input type="hidden" name="delete_selfies" value="true">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 2 minutes?')">Delete Selfies</button>
+                                        </form>
+                                    </div>
+                                    <div class="col-auto">
+                                        <!-- Download Selfies Form -->
+                                        <form action="generate_selfies_zip.php" method="post">
+                                            <button type="submit" class="btn btn-primary">Download All Selfies</button>
+                                        </form>
+                                    </div>
+                                </div>
                                 <?php
                                 if (isset($_SESSION['success_message'])) {
                                     echo '<div class="alert alert-success">' . $_SESSION['success_message'] . '</div>';
@@ -176,7 +187,7 @@ include("include/sidebar.php");
                                                 // Remove 'admin/' from selfie paths
                                                 $selfie_in = !empty($row['selfie_in']) ? str_replace('admin/', '', $row['selfie_in']) : '';
                                                 $selfie_out = !empty($row['selfie_out']) ? str_replace('admin/', '', $row['selfie_out']) : '';
-                                        
+
                                                 echo "<tr>
                                                         <td>" . htmlspecialchars($row['attendance_id']) . "</td>
                                                         <td>" . htmlspecialchars($row['employer_id']) . "</td>

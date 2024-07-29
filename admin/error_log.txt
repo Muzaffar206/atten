@@ -1,0 +1,142 @@
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240729_212524.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240729_214931.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240729_210520.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240729_214931.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240727_003530.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240727_003549.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Office20240727_003350.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Office20240727_003429.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240726_212831.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240726_212836.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240725_005810.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240725_005816.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240725_005250.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240725_005816.jpg - Exists: Yes
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240724_002111.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_002125.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240724_000928.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240724_002025.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240724_000310.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_002125.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Alfiya/Alfiya_in_Outdoor20240723_223446.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Alfiya/Alfiya_out_Outdoor20240723_223452.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/muzaffar/muzaffar_in_Outdoor20240723_222053.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/muzaffar/muzaffar_out_Outdoor20240723_222058.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Office20240723_215248.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Office20240723_215259.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240723_215144.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240723_215149.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240723_214943.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_000316.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240723_214818.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_000316.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240723_000446.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_000316.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240722_235138.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240723_215149.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Office19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Office19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin2/admin2_in_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin2/admin2_out_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_19700101_010000.jpg - Exists: No
+[2024-07-29 18:48:13] ERROR: Spreadsheet object created: Yes
+[2024-07-29 18:48:13] ERROR: Writer object created: Yes
+[2024-07-29 18:48:13] ERROR: Temporary file path: C:\Users\ASUS\AppData\Local\Temp\xls1B6A.tmp
+[2024-07-29 18:48:13] ERROR: Final file path: C:\xampp\htdocs\atten\admin/attendance_report_20240729_184813.xlsx
+[2024-07-29 18:48:13] ERROR: File size: 2727932 bytes
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240730_000253.jpg - Exists: Yes
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240730_000316.jpg - Exists: Yes
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240730_000249.jpg - Exists: Yes
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240730_000316.jpg - Exists: Yes
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240729_212524.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240729_235857.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240729_210520.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240729_235857.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240727_003530.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240727_003549.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Office20240727_003350.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Office20240727_003429.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240726_212831.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240726_212836.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240725_005810.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240725_005816.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240725_005250.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240725_005816.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240724_002111.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_002125.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240724_000928.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240724_002025.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240724_000310.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_002125.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Alfiya/Alfiya_in_Outdoor20240723_223446.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Alfiya/Alfiya_out_Outdoor20240723_223452.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/muzaffar/muzaffar_in_Outdoor20240723_222053.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/muzaffar/muzaffar_out_Outdoor20240723_222058.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Office20240723_215248.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Office20240723_215259.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240723_215144.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240723_215149.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240723_214943.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_000316.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240723_214818.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_000316.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240723_000446.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240724_000316.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_Outdoor20240722_235138.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_Outdoor20240723_215149.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Outdoor19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_Office19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_Office19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin2/admin2_in_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin2/admin2_out_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:07] ERROR: Selfie In Path: Selfies_in&out/admin1/admin1_in_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:08] ERROR: Selfie Out Path: Selfies_in&out/admin1/admin1_out_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:08] ERROR: Selfie In Path: Selfies_in&out/admin/admin_in_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:08] ERROR: Selfie Out Path: Selfies_in&out/admin/admin_out_19700101_010000.jpg - Exists: No
+[2024-07-29 20:35:08] ERROR: Spreadsheet object created: Yes
+[2024-07-29 20:35:08] ERROR: Writer object created: Yes
+[2024-07-29 20:35:08] ERROR: Temporary file path: C:\Users\ASUS\AppData\Local\Temp\xlsFCCC.tmp
+[2024-07-29 20:35:08] ERROR: Final file path: C:\xampp\htdocs\atten\admin/attendance_report_20240729_203508.xlsx
+[2024-07-29 20:35:08] ERROR: File size: 555054 bytes

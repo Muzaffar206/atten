@@ -26,7 +26,7 @@
             <h1 class="display-1">403</h1>
             <h2 class="display-4">Forbidden</h2>
             <p class="lead">You don't have permission to access this resource.</p>
-            <a href="/" class="btn btn-primary">Go to Home</a>
+            <a href="../login.php" class="btn btn-primary">Go to Home</a>
         </div>
     </div>
 

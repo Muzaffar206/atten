@@ -1,4 +1,4 @@
-# Disable direct access
+# Disable direct access to all files
 Order deny,allow
 Deny from all
 
@@ -14,6 +14,11 @@ Deny from all
     Allow from all
 </FilesMatch>
 
+# Allow access to ZIP files in Selfies_in&out folder
+<FilesMatch "^Selfies_in&out/.*\.zip$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
 
 # Redirect unauthorized access to an error page
 ErrorDocument 403 /atten/admin/error403.php

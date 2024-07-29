@@ -112,9 +112,9 @@ while ($user = $users_result->fetch_assoc()) {
         $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
         $stmt_attendance->execute();
         $attendance_result = $stmt_attendance->get_result();
-
+    
         $is_sunday = (date('w', strtotime($formatted_date)) == 0);
-
+    
         if ($is_sunday) {
             $cell_value = "Holiday";
         } elseif ($attendance_result->num_rows > 0) {
@@ -126,11 +126,19 @@ while ($user = $users_result->fetch_assoc()) {
             if ($attendance_data['last_out'] != null) {
                 $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n" .
                                "Last Mode: " . $attendance_data['last_mode'];
+    
+                // Calculate total hours worked
+                $first_in = new DateTime($attendance_data['first_in']);
+                $last_out = new DateTime($attendance_data['last_out']);
+                $interval = $first_in->diff($last_out);
+                $total_hours = $interval->format('%h:%i:%s');
+    
+                $cell_value .= "\nTotal Hours Worked: " . $total_hours;
             }
         } else {
             $cell_value = "Absent";
         }
-
+    
         $sheet->setCellValue($column . $row_num, $cell_value);
         // Set wrap text and align left
         $sheet->getStyle($column . $row_num)
@@ -138,10 +146,11 @@ while ($user = $users_result->fetch_assoc()) {
             ->setWrapText(true)
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER);
-
+    
         $stmt_attendance->close();
         $column++;
     }
+    
     $row_num++;
 }
 
@@ -157,7 +166,7 @@ for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
 // Adjust row heights to 100 px
 $rowCount = $sheet->getHighestRow();
 for ($row = 1; $row <= $rowCount; $row++) {
-    $sheet->getRowDimension($row)->setRowHeight(100);
+    $sheet->getRowDimension($row)->setRowHeight(135);
 }
 
 // Output the file
