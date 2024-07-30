@@ -112,7 +112,7 @@ $conn->close();
                                         <tr>
                                             <th>ID</th>
                                             <th>Username</th>
-                                            <th>Employer ID</th>
+                                            <th>Employee ID</th>
                                             <th>Full Name</th>
                                             <th>Email</th>
                                             <th>Phone Number</th>

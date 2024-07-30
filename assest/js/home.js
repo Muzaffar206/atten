@@ -195,11 +195,23 @@
             var xhr = new XMLHttpRequest();
             xhr.open("POST", "log_attendance.php", true);
             xhr.onreadystatechange = function() {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var response = JSON.parse(xhr.responseText);
-                    alert(response.message);
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.status === 'success') {
+                                alert(response.message);
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        } catch (e) {
+                            alert('An unexpected error occurred. Please try again.');
+                        }
+                    } else {
+                        alert('An error occurred while recording attendance. Please try again.');
+                    }
                 }
-            };
+            };        
         
             var formData = new FormData();
             formData.append("mode", mode);

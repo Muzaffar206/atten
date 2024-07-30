@@ -7,9 +7,13 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+if ($_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php");
+    exit();
+}
 
 $user_id = $_SESSION['user_id'];
-$username = ""; // Initialize username variable
+$username = "";
 
 // Fetch username from database
 $sql = "SELECT username FROM users WHERE id = ?";
@@ -21,8 +25,8 @@ $stmt->fetch();
 $stmt->close();
 
 // Default date values
-$from_date = isset($_GET['from_date']) ? $_GET['from_date'] : date('Y-m-d');
-$to_date = isset($_GET['to_date']) ? $_GET['to_date'] : date('Y-m-d');
+$from_date = isset($_GET['from_date']) ? htmlspecialchars($_GET['from_date']) : date('Y-m-d');
+$to_date = isset($_GET['to_date']) ? htmlspecialchars($_GET['to_date']) : date('Y-m-d');
 
 // Fetch aggregated attendance data based on user ID and date range
 $attendance_query = "SELECT 

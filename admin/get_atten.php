@@ -39,7 +39,7 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE fa.first_in >= ? AND fa.first_in < ?
+     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
      GROUP BY u.id" :
     "SELECT u.id, u.employer_id, u.full_name, u.department, 
             MAX(fa.first_in) AS latest_first_in, 
@@ -48,7 +48,7 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ?
+     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
      GROUP BY u.id";
 
 $stmt_users = $conn->prepare($users_query);
@@ -147,11 +147,12 @@ $stmt_users->close();
                                     <thead id="sticky-header">
                                         <tr>
                                             <th>Department</th>
-                                            <th>Employer Code</th>
-                                            <th>Employer Name</th>
+                                            <th>Employee Code</th>
+                                            <th>Employee Name</th>
                                             <?php foreach ($dates as $date) : ?>
                                                 <th style="min-width: 45px;"><?php echo $date; ?></th>
                                             <?php endforeach; ?>
+                                            <th>Attendance Summary</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -160,18 +161,23 @@ $stmt_users->close();
                                                 <td><?php echo $user['department']; ?></td>
                                                 <td><?php echo $user['employer_id']; ?></td>
                                                 <td><?php echo $user['full_name']; ?></td>
-                                                <?php foreach ($dates as $date) : ?>
-                                                    <td>
+                                                <?php
+                                                $total_absents = 0;
+                                                $total_half_days = 0;
+                                                $total_full_days = 0;
+                                                foreach ($dates as $date) :
+                                                    $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
+                                                    $day_of_week = $attendance_date->format('w');
+                                                ?>
+                                                    <td <?php if ($day_of_week == 0) echo 'style="background-color: #f0f0f0;"'; ?>>
                                                         <?php
-                                                        $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
-                                                        $day_of_week = $attendance_date->format('w');
                                                         if ($day_of_week == 0) {
                                                             echo "Holiday";
                                                         } else {
-                                                            $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode,fa.total_hours, a.is_present, a.data 
-                     FROM final_attendance fa
-                     LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-                     WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
+                                                            $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present, a.data 
+                            FROM final_attendance fa
+                            LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+                            WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
                                                             $stmt_attendance = $conn->prepare($attendance_query);
                                                             $formatted_date = date('Y-m-d', strtotime($date));
                                                             $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
@@ -188,15 +194,34 @@ $stmt_users->close();
                                                                     echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
                                                                     echo "Last Mode: " . $attendance_data['last_mode'] . "<br>";
                                                                     echo "Total hours: " . $attendance_data['total_hours'] . "<br>";
+                                                                } else {
+                                                                    echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
+                                                                }
+
+                                                                $first_in_time = new DateTime($attendance_data['first_in']);
+                                                                $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
+                                                                if ($first_in_time > $cutoff_time) {
+                                                                    $total_half_days += 0.5;
+                                                                    $total_full_days += 0.5;
+                                                                } else {
+                                                                    $total_full_days += 1;
                                                                 }
                                                             } else {
                                                                 echo "Absent";
+                                                                $total_absents += 1;
                                                             }
                                                             $stmt_attendance->close();
                                                         }
+                                                        $total_days_lwp = $total_absents + $total_half_days;
                                                         ?>
                                                     </td>
                                                 <?php endforeach; ?>
+                                                <td>
+                                                    Absents: <?php echo $total_absents; ?><br>
+                                                    Half Days: <?php echo $total_half_days; ?><br>
+                                                    Total Days Present: <?php echo $total_full_days; ?><br>
+                                                    Total Days Absent: <?php echo $total_days_lwp; ?><br>
+                                                </td>
                                             </tr>
                                         <?php endwhile; ?>
                                     </tbody>

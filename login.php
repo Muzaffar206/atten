@@ -2,16 +2,15 @@
 session_start();
 session_regenerate_id(true);
 date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+
 include("assest/connection/config.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = mysqli_real_escape_string($conn, $_POST['password']);
-    $rememberMe = isset($_POST['remember_me']); // if "Remember Me" is selected
+    $username = trim(mysqli_real_escape_string($conn, $_POST['username']));
+    $password = trim(mysqli_real_escape_string($conn, $_POST['password']));
+    $rememberMe = isset($_POST['remember_me']);
 
-
-
-    $sql = "SELECT * FROM users WHERE username=?";
+    $sql = "SELECT * FROM users WHERE username = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -21,19 +20,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         if (password_verify($password, $row['password'])) {
+            // Set session variables
             $_SESSION['user_id'] = $row['id'];
             $_SESSION['username'] = $row['username'];
             $_SESSION['role'] = $row['role'];
 
+            // Set secure cookie if 'Remember Me' is checked
             if ($rememberMe) {
-                // Set a cookie with a hashed value of username and password
                 $cookie_value = base64_encode(json_encode([
                     'username' => $username,
                     'token' => bin2hex(random_bytes(16)), // Token for additional security
                 ]));
-                setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/"); // 30 days
+                setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/", "", true, true); // 30 days, HttpOnly, Secure
             }
 
+            // Redirect based on user role
             if ($row['role'] === 'admin') {
                 header("Location: admin/index.php");
             } else {
@@ -54,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($cookie_value) {
         $username = $cookie_value['username'];
 
-        $sql = "SELECT * FROM users WHERE username=?";
+        $sql = "SELECT * FROM users WHERE username = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -83,7 +84,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MESCO | Login</title>
     <?php include("include/header.php"); ?>
+</head>
 
+<body>
     <div class="limiter">
         <div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
             <div class="wrap-login100">
@@ -94,10 +97,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <span class="login100-form-logo">
                         <img src="assest/images/MESCO.png" alt="MESCO LOGO" width="100px">
                     </span>
-
-                    <span class="login100-form-title p-b-34 p-t-27">
-                        Log in
-                    </span>
+                    <span class="login100-form-title p-b-34 p-t-27">Log in</span>
 
                     <div class="wrap-input100 validate-input" data-validate="Enter username">
                         <input class="input100" type="text" name="username" placeholder="Username" required>
@@ -112,26 +112,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                     <div class="contact100-form-checkbox">
                         <input class="input-checkbox100" type="checkbox" id="remember_me" name="remember_me">
-                        <label class="label-checkbox100" for="remember_me">
-                            Remember me
-                        </label>
+                        <label class="label-checkbox100" for="remember_me">Remember me</label>
                     </div>
 
                     <div class="container-login100-form-btn">
-                        <button type="submit" value="Login" class="login100-form-btn">
-                            Login
-                        </button>
+                        <button type="submit" value="Login" class="login100-form-btn">Login</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-
-
     <?php include("include/footer.php"); ?>
 
-
-    </body>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.onload = function() {
+            document.querySelector(".preloader").style.display = "none";
+        }
+    </script>
+</body>
 
 </html>

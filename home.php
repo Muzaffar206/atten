@@ -8,6 +8,10 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+if ($_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php"); // Redirect to home.php
+    exit(); // Ensure no further code is executed
+}
 $user_id = $_SESSION['user_id'];
 $sql = "SELECT username FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);

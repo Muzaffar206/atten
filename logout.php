@@ -19,15 +19,15 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// Finally, destroy the session.
+// Destroy the session
 session_destroy();
 
-// Remove the remember me cookie
+// Remove the "Remember Me" cookie
 if (isset($_COOKIE['remember_me'])) {
-    unset($_COOKIE['remember_me']);
-    setcookie('remember_me', '', time() - 3600, '/'); // empty value and old timestamp
+    setcookie('remember_me', '', time() - 3600, '/', '', isset($_SERVER['HTTPS']), true);
 }
 
-// Redirect to the login page or home page
+// Redirect to the login page
 header("Location: login.php");
 exit();
+?>

@@ -41,7 +41,8 @@ $sql = "SELECT
             attendance.selfie_in, 
             attendance.selfie_out
         FROM attendance 
-        JOIN users ON attendance.user_id = users.id";
+        JOIN users ON attendance.user_id = users.id
+        WHERE users.role <> 'admin'"; // Exclude admin role
 
 $whereClause = [];
 

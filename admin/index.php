@@ -74,6 +74,29 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
     'absent_count' => $row['absent_count']
   );
 }
+
+$daysAgo = 15; // Updated to 15 days
+$recentAttendanceQuery = "
+    SELECT DATE(in_time) AS date, 
+           COUNT(*) AS present_count,
+           (SELECT COUNT(*) 
+            FROM users 
+            WHERE role = 'user') - COUNT(*) AS absent_count
+    FROM attendance
+    WHERE DATE(in_time) >= CURDATE() - INTERVAL $daysAgo DAY
+    GROUP BY DATE(in_time)
+    ORDER BY DATE(in_time) DESC
+";
+$recentAttendanceResult = $conn->query($recentAttendanceQuery);
+
+$recentAttendanceData = array();
+while ($row = $recentAttendanceResult->fetch_assoc()) {
+    $recentAttendanceData[$row['date']] = array(
+        'present_count' => $row['present_count'],
+        'absent_count' => $row['absent_count']
+    );
+}
+
 ?>
 
 <div class="content-wrapper">
@@ -159,6 +182,15 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
       </div>
       <!-- /.row -->
 
+      <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Last 9 Days Attendance</h3>
+          </div>
+          <div class="card-body">
+            <canvas id="barChart" style="height: 380px;"></canvas>
+          </div>
+        </div>
+        <!-- /.card -->
       <!-- Main row -->
       <div class="row">
         <section class="col-lg-7 connectedSortable">
@@ -196,6 +228,7 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
     // Data from PHP
     var monthlyData = <?php echo json_encode($monthlyAttendanceData); ?>;
     var yearlyData = <?php echo json_encode($yearlyAttendanceData); ?>;
+    var recentData = <?php echo json_encode($recentAttendanceData); ?>;
 
     // Convert PHP data to Chart.js datasets format
     var months = Object.keys(monthlyData);
@@ -210,9 +243,18 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
       return yearlyData[month]['absent_count'];
     });
 
-    // Chart initialization
-    var ctx = document.getElementById('lineChart').getContext('2d');
-    var lineChart = new Chart(ctx, {
+    // Last 5 Days data
+    var recentDates = Object.keys(recentData);
+    var recentPresents = recentDates.map(function(date) {
+      return recentData[date]['present_count'];
+    });
+    var recentAbsents = recentDates.map(function(date) {
+      return recentData[date]['absent_count'];
+    });
+
+    // Yearly Attendance Chart
+    var ctxLine = document.getElementById('lineChart').getContext('2d');
+    var lineChart = new Chart(ctxLine, {
       type: 'line',
       data: {
         labels: yearlyMonths,
@@ -250,6 +292,50 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
             scaleLabel: {
               display: true,
               labelString: 'Attendance Count'
+            }
+          }]
+        }
+      }
+    });
+
+    // Last 5 Days Attendance Chart
+    var ctxBar = document.getElementById('barChart').getContext('2d');
+    var barChart = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: recentDates,
+        datasets: [{
+            label: 'Present',
+            data: recentPresents,
+            backgroundColor: '#0069B9',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'Absent',
+            data: recentAbsents,
+            backgroundColor: 'red',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: 'Date'
+            }
+          }],
+          yAxes: [{
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: 'Count'
             }
           }]
         }

@@ -49,11 +49,53 @@ try {
         return $fileExtension;
     }
 
+    function optimizeImage($filePath, $maxWidth = 800, $maxHeight = 800) {
+        list($width, $height) = getimagesize($filePath);
+        $aspectRatio = $width / $height;
+
+        if ($width > $maxWidth || $height > $maxHeight) {
+            if ($width / $height > $aspectRatio) {
+                $newWidth = $maxWidth;
+                $newHeight = $maxWidth / $aspectRatio;
+            } else {
+                $newWidth = $maxHeight * $aspectRatio;
+                $newHeight = $maxHeight;
+            }
+
+            $imageResized = imagecreatetruecolor($newWidth, $newHeight);
+
+            switch (mime_content_type($filePath)) {
+                case 'image/jpeg':
+                    $image = imagecreatefromjpeg($filePath);
+                    break;
+                case 'image/png':
+                    $image = imagecreatefrompng($filePath);
+                    break;
+                default:
+                    throw new Exception("Unsupported image type.");
+            }
+
+            imagecopyresampled($imageResized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            switch (mime_content_type($filePath)) {
+                case 'image/jpeg':
+                    imagejpeg($imageResized, $filePath, 75);
+                    break;
+                case 'image/png':
+                    imagepng($imageResized, $filePath, 6);
+                    break;
+            }
+
+            imagedestroy($image);
+            imagedestroy($imageResized);
+        }
+    }
+
     if (isset($_FILES['selfie_in']) && $_FILES['selfie_in']['error'] === UPLOAD_ERR_OK) {
         $fileExtension = validateFile($_FILES['selfie_in'], $allowedExtensions, $allowedMimeTypes);
         $selfie_in_filename = $username . '_in_' . $mode . date('Ymd_His') . '.' . $fileExtension;
         $selfie_in_path = $userDir . $selfie_in_filename;
         move_uploaded_file($_FILES['selfie_in']['tmp_name'], $selfie_in_path);
+        optimizeImage($selfie_in_path); // Optimize image
     }
 
     if (isset($_FILES['selfie_out']) && $_FILES['selfie_out']['error'] === UPLOAD_ERR_OK) {
@@ -61,6 +103,7 @@ try {
         $selfie_out_filename = $username . '_out_' . $mode . date('Ymd_His') . '.' . $fileExtension;
         $selfie_out_path = $userDir . $selfie_out_filename;
         move_uploaded_file($_FILES['selfie_out']['tmp_name'], $selfie_out_path);
+        optimizeImage($selfie_out_path); // Optimize image
     }
 
     if ($mode === 'Office') {
@@ -131,7 +174,7 @@ try {
             throw new Exception("Invalid scan type.");
         }
     } else {
-        throw new Exception("Invalid attendance mode.");
+        throw new Exception("Invalid mode.");
     }
 
     if ($stmt->execute()) {
@@ -149,7 +192,7 @@ try {
                          VALUES (?, ?, ?, ?)
                          ON DUPLICATE KEY UPDATE 
                             last_out = GREATEST(COALESCE(last_out, VALUES(last_out)), VALUES(last_out)),
-                                                       last_mode = IF(COALESCE(last_out, VALUES(last_out)) = VALUES(last_out), VALUES(last_mode), last_mode)";
+                            last_mode = IF(COALESCE(last_out, VALUES(last_out)) = VALUES(last_out), VALUES(last_mode), last_mode)";
             $finalStmt = $conn->prepare($finalSql);
             $finalStmt->bind_param("isss", $user_id, $date, $timestamp, $mode);
         } else {
@@ -157,6 +200,17 @@ try {
         }
 
         if ($finalStmt->execute()) {
+            // Update is_present field
+            if ($stmt->insert_id) {
+                $attendance_id = $stmt->insert_id;
+                $is_present = ($scanType === 'In') ? 1 : 0;
+                $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
+                $updateUserStmt = $conn->prepare($updateUserSql);
+                $updateUserStmt->bind_param("ii", $is_present, $attendance_id);
+                $updateUserStmt->execute();
+                $updateUserStmt->close();
+            }
+
             // Calculate total hours
             $calcSql = "SELECT TIMESTAMPDIFF(MINUTE, first_in, last_out) / 60 AS total_hours
                         FROM final_attendance
@@ -176,34 +230,26 @@ try {
             $updateFinalStmt->bind_param("dis", $total_hours, $user_id, $date);
 
             if ($updateFinalStmt->execute()) {
-                echo "Attendance recorded and total hours updated successfully.";
+                $response = array('status' => 'success', 'message' => 'Attendance successfully.');
+                echo json_encode($response);
             } else {
                 throw new Exception("Failed to update total hours.");
             }
         } else {
-            throw new Exception("Failed to update final_attendance.");
+            throw new Exception("Failed to record final attendance.");
         }
     } else {
         throw new Exception("Failed to record attendance.");
     }
-    // Update is_present field
-    if ($stmt->insert_id) {
-        $attendance_id = $stmt->insert_id;
-        $is_present = ($scanType === 'In') ? 1 : 0;
-        $updateUserSql = "UPDATE attendance SET is_present = ? WHERE id = ?";
-        $updateUserStmt = $conn->prepare($updateUserSql);
-        $updateUserStmt->bind_param("ii", $is_present, $attendance_id);
-        $updateUserStmt->execute();
-        $updateUserStmt->close();
-    }
 
-    // Close statement and connection
     $stmt->close();
+    $finalStmt->close();
     $conn->close();
-
+    
 } catch (Exception $e) {
     error_log($e->getMessage());
-    echo "An error occurred: " . htmlspecialchars($e->getMessage());
+    $response = array('status' => 'error', 'message' => 'Error: ' . $e->getMessage());
+    echo json_encode($response);
 }
-?>
 
+?>
