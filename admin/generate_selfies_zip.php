@@ -1,8 +1,18 @@
 <?php
-// Disable error reporting
-error_reporting(0);
-ini_set('display_errors', 0);
+session_regenerate_id(true);
 
+date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+
+// Redirect if user is not logged in or is not an admin
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: ../home.php");
+    exit();
+}
 // Set the correct path to the Selfies_in&out folder
 $selfies_path = 'Selfies_in&out/';
 

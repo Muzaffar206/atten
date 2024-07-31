@@ -1,7 +1,18 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    exit('Unauthorized access');
+session_regenerate_id(true);
+
+date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+
+// Redirect if user is not logged in or is not an admin
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
+    exit();
+}
+
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: ../home.php");
+    exit();
 }
 
 include("../assest/connection/config.php");

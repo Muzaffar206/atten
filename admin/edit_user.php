@@ -2,59 +2,117 @@
 session_start();
 session_regenerate_id(true);
 if (!isset($_SESSION['user_id'])) {
-  header("Location: ../login.php");
-  exit();
+    header("Location: ../login.php");
+    exit();
 }
 if ($_SESSION['role'] !== 'admin') {
-  header("Location: ../home.php");
-  exit();
+    header("Location: ../home.php");
+    exit();
 }
 include("../assest/connection/config.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $id = $_POST['id'];
-  $username = htmlspecialchars($_POST['username']);
-  $employer_id = htmlspecialchars($_POST['employer_id']);
-  $full_name = htmlspecialchars($_POST['full_name']);
-  $email = htmlspecialchars($_POST['email']);
-  $phone_number = htmlspecialchars($_POST['phone_number']);
-  $department = $_POST['department'];
-  $role = $_POST['role'];
+    $id = $_POST['id'];
+    $username = htmlspecialchars($_POST['username']);
+    $employer_id = htmlspecialchars($_POST['employer_id']);
+    $full_name = htmlspecialchars($_POST['full_name']);
+    $email = htmlspecialchars($_POST['email']);
+    $phone_number = htmlspecialchars($_POST['phone_number']);
+    $department = $_POST['department'];
+    $role = $_POST['role'];
+    
+    // Initialize variables for new photo handling
+    $new_photo = null;
+    $old_photo = null;
 
-  // Check if password field is set and not empty
-  if (!empty($_POST['password'])) {
-    // Update with password
-    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, department=?, role=? WHERE id=?";
+    // Fetch existing photo for deletion if a new photo is uploaded
+    $sql = "SELECT passport_size_photo FROM users WHERE id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sisssssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $department, $role, $id);
-  } else {
-    // Update without password change
-    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, department=?, role=? WHERE id=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $department, $role, $id);
-  }
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $old_photo = $row['passport_size_photo'];
+    }
+    $stmt->close();
+    // Track which fields were updated
+    $updated_fields = [];
+    $updates = [];
 
-  // Execute SQL statement
-  if ($stmt->execute()) {
-    header("Location: users.php");
+    // Check if a new photo is uploaded
+    if (isset($_FILES['passport_size_photo']) && $_FILES['passport_size_photo']['error'] == UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['passport_size_photo']['tmp_name'];
+        $fileName = $_FILES['passport_size_photo']['name'];
+        $fileSize = $_FILES['passport_size_photo']['size'];
+        $fileType = $_FILES['passport_size_photo']['type'];
+        $fileNameCmps = explode(".", $fileName);
+        $fileExtension = strtolower(end($fileNameCmps));
+
+        // Define allowed file extensions and upload directory
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+        $uploadDir = '../uploads/';
+        $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+        $uploadFileDir = $uploadDir . $newFileName;
+
+        if (in_array($fileExtension, $allowedExtensions)) {
+            if (move_uploaded_file($fileTmpPath, $uploadFileDir)) {
+                $new_photo = $uploadFileDir;
+
+                // Delete the old photo if it exists
+                if ($old_photo && file_exists($old_photo)) {
+                    unlink($old_photo);
+                }
+                 // Mark photo field as updated
+                 $updates[] = 'Passport Size Photo';
+            } else {
+                echo "There was an error uploading the file.";
+                exit();
+            }
+        } else {
+            echo "Upload failed. Allowed file types: jpg, jpeg, png, gif.";
+            exit();
+        }
+    }
+
+    // Prepare SQL query
+    if (!empty($_POST['password'])) {
+        $password = password_hash(htmlspecialchars($_POST['password']), PASSWORD_DEFAULT);
+        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, department=?, role=?, passport_size_photo=? WHERE id=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $department, $role, $new_photo, $id);
+        // Mark password field as updated
+        $updates[] = 'Password';
+    } else {
+        $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, department=?, role=?, passport_size_photo=? WHERE id=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $department, $role, $new_photo, $id);
+    }
+
+    // Execute SQL statement
+    if ($stmt->execute()) {
+      // Add updated fields to message
+      $updated_fields = implode(', ', $updates);
+      $_SESSION['message'] = "User updated successfully! Updated fields: $updated_fields";
+      header("Location: users.php");
+      exit();
   } else {
-    echo "Error updating record: " . $stmt->error;
+      echo "Error updating record: " . $stmt->error;
   }
 
   $stmt->close();
   $conn->close();
 } else {
-  // Fetch user data for editing
-  $id = $_GET['id'];
-  $sql = "SELECT * FROM users WHERE id=?";
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("i", $id);
-  $stmt->execute();
-  $result = $stmt->get_result();
-  $user = $result->fetch_assoc();
+    // Fetch user data for editing
+    $id = $_GET['id'];
+    $sql = "SELECT * FROM users WHERE id=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
-  $stmt->close();
-  $conn->close();
+    $stmt->close();
+    $conn->close();
 }
 ?>
 
@@ -127,39 +185,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <option value="Medical" <?php echo ($user['department'] == 'Medical') ? 'selected' : ''; ?>>Medical</option>
                     <option value="ROP" <?php echo ($user['department'] == 'ROP') ? 'selected' : ''; ?>>ROP</option>
                     <option value="Admin" <?php echo ($user['department'] == 'Admin') ? 'selected' : ''; ?>>Admin</option>
-                    <option value="Accounts" <?php echo ($user['department'] == 'Accounts') ? 'selected' : ''; ?>>Accounts</option>
-                    <option value="FRD" <?php echo ($user['department'] == 'FRD') ? 'selected' : ''; ?>>FRD</option>
                     <option value="Newspaper" <?php echo ($user['department'] == 'Newspaper') ? 'selected' : ''; ?>>Newspaper</option>
-                    <option value="RC Mahim" <?php echo ($user['department'] == 'RC Mahim') ? 'selected' : ''; ?>>RC Mahim</option>
-                    <option value="Study centre" <?php echo ($user['department'] == 'Study centre') ? 'selected' : ''; ?>>Study centre</option>
-                    <option value="Clinics" <?php echo ($user['department'] == 'Clinics') ? 'selected' : ''; ?>>Clinics</option>
+                    <option value="Others" <?php echo ($user['department'] == 'Others') ? 'selected' : ''; ?>>Others</option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Select Role</label>
+                  <label>Role</label>
                   <select name="role" class="form-control">
-                    <option value="user" <?php echo ($user['role'] == 'user') ? 'selected' : ''; ?>>User</option>
                     <option value="admin" <?php echo ($user['role'] == 'admin') ? 'selected' : ''; ?>>Admin</option>
-                    <!-- Add more roles as needed -->
+                    <option value="user" <?php echo ($user['role'] == 'user') ? 'selected' : ''; ?>>User</option>
                   </select>
+                </div>
+                <div class="form-group">
+                  <label>Passport Size Photo</label>
+                  <input type="file" class="form-control" name="passport_size_photo">
+                  <?php if (!empty($user['passport_size_photo'])): ?>
+                    <br>
+                    <img src="<?php echo $user['passport_size_photo']; ?>" alt="User Photo" style="width: 150px;">
+                  <?php endif; ?>
                 </div>
               </div>
               <!-- /.card-body -->
 
               <div class="card-footer">
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="submit" class="btn btn-primary">Update User</button>
               </div>
             </form>
           </div>
-          <!-- /.card -->
         </div>
-        <!-- /.col -->
       </div>
-      <!-- /.row -->
     </div><!-- /.container-fluid -->
   </section>
   <!-- /.content -->
 </div>
-<!-- /.content-wrapper -->
-
 <?php include("include/footer.php"); ?>

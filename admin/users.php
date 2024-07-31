@@ -101,6 +101,11 @@ $conn->close();
               </div>';
                                 // Clear the message
                                 unset($_SESSION['error_message']);
+                            }
+                            if (isset($_SESSION['message'])) {
+                                echo '<div class="alert alert-success" role="alert">' . $_SESSION['message'] . '</div>';
+                                // Unset the message after displaying
+                                unset($_SESSION['message']);
                             } ?>
                             <div class="card-body">
                                 <h1>Users</h1>
