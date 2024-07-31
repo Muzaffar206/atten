@@ -31,15 +31,14 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE fa.first_in >= ? AND fa.first_in < ?
+     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
      GROUP BY u.id" :
     "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(fa.first_in) AS latest_first_in, MAX(a.data) AS data
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ?
-     GROUP BY u.id
-     WHERE users.role <> 'admin'"; // Exclude admin role";
+     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
+     GROUP BY u.id";
 
 $stmt_users = $conn->prepare($users_query);
 if ($department === 'All') {
@@ -124,48 +123,50 @@ while ($user = $users_result->fetch_assoc()) {
     
         $is_sunday = (date('w', strtotime($formatted_date)) == 0);
     
-        if ($is_sunday) {
-            $cell_value = "Holiday";
-            // Set light gray background for holidays
-            $sheet->getStyle($column . $row_num)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
-        } elseif ($attendance_result->num_rows > 0) {
+        if ($attendance_result->num_rows > 0) {
             $attendance_data = $attendance_result->fetch_assoc();
             $cell_value = $user['data'] . "\n" .
                           "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "\n" .
                           "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "\n" .
                           "First Mode: " . $attendance_data['first_mode'] . "\n";
-                          if ($attendance_data['last_out'] != null) {
-                            $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n" .
-                                           "Last Mode: " . $attendance_data['last_mode'];
+            if ($attendance_data['last_out'] != null) {
+                $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n" .
+                               "Last Mode: " . $attendance_data['last_mode'];
             
-                            // Calculate total hours worked
-                            $first_in = new DateTime($attendance_data['first_in']);
-                            $last_out = new DateTime($attendance_data['last_out']);
-                            $interval = $first_in->diff($last_out);
-                            $total_hours = $interval->format('%h:%i:%s');
+                // Calculate total hours worked
+                $first_in = new DateTime($attendance_data['first_in']);
+                $last_out = new DateTime($attendance_data['last_out']);
+                $interval = $first_in->diff($last_out);
+                $total_hours = $interval->format('%h:%i:%s');
             
-                            $cell_value .= "\nTotal Hours Worked: " . $total_hours;
+                $cell_value .= "\nTotal Hours Worked: " . $total_hours;
             
-                            // Check if it's a half day or full day
-                            $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
-                            if ($first_in > $cutoff_time) {
-                                $total_half_days += 0.5;
-                                $total_full_days += 0.5;
-                            } else {
-                                $total_full_days += 1;
-                            }
-                        } else {
-                            $cell_value .= "No Last Out data";
-                            // Set yellow background for missing last_out data
-                            $sheet->getStyle($column . $row_num)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFFF00');
-                            $total_half_days += 0.5;
-                            $total_full_days += 0.5;
-                        }
-                    } else {
-                        $cell_value = "Absent";
-                        $total_absents += 1;
-                    }
-                    $total_days_lwp = $total_absents + $total_half_days;
+                // Check if it's a half day or full day
+                $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
+                if ($first_in > $cutoff_time) {
+                    $total_half_days += 0.5;
+                    $total_full_days += 0.5;
+                } else {
+                    $total_full_days += 1;
+                }
+            } else {
+                $cell_value .= "No Last Out data";
+                // Set yellow background for missing last_out data
+                $sheet->getStyle($column . $row_num)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFFF00');
+                $total_half_days += 0.5;
+                $total_full_days += 0.5;
+            }
+        } else {
+            if ($is_sunday) {
+                $cell_value = "Holiday";
+                // Set light gray background for holidays
+                $sheet->getStyle($column . $row_num)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
+            } else {
+                $cell_value = "Absent";
+                $total_absents += 1;
+            }
+        }
+        $total_days_lwp = $total_absents + $total_half_days;
     
         $sheet->setCellValue($column . $row_num, $cell_value);
         // Set wrap text and align center
@@ -193,11 +194,11 @@ while ($user = $users_result->fetch_assoc()) {
 }
 
 // Adjust column widths
-$highestColumn = $sheet->getHighestColumn(); // This will return 'D'
-$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn); // Convert 'D' to 4
+$highestColumn = $sheet->getHighestColumn();
+$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
 
 for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-    $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex); // Convert 4 to 'D'
+    $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
     $sheet->getColumnDimension($colLetter)->setWidth(20);
 }
 

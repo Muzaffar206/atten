@@ -171,48 +171,47 @@ $stmt_users->close();
                                                 ?>
                                                     <td <?php if ($day_of_week == 0) echo 'style="background-color: #f0f0f0;"'; ?>>
                                                         <?php
-                                                        if ($day_of_week == 0) {
-                                                            echo "Holiday";
+                                                        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present, a.data 
+                    FROM final_attendance fa
+                    LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+                    WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
+                                                        $stmt_attendance = $conn->prepare($attendance_query);
+                                                        $formatted_date = date('Y-m-d', strtotime($date));
+                                                        $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
+                                                        $stmt_attendance->execute();
+                                                        $attendance_result = $stmt_attendance->get_result();
+
+                                                        if ($attendance_result->num_rows > 0) {
+                                                            $attendance_data = $attendance_result->fetch_assoc();
+                                                            echo $user['data'] . "<br>";
+                                                            echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
+                                                            echo "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "<br>";
+                                                            echo "First Mode: " . $attendance_data['first_mode'] . "<br>";
+                                                            if ($attendance_data['last_out'] != null) {
+                                                                echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
+                                                                echo "Last Mode: " . $attendance_data['last_mode'] . "<br>";
+                                                                echo "Total hours: " . $attendance_data['total_hours'] . "<br>";
+                                                            } else {
+                                                                echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
+                                                            }
+
+                                                            $first_in_time = new DateTime($attendance_data['first_in']);
+                                                            $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
+                                                            if ($first_in_time > $cutoff_time) {
+                                                                $total_half_days += 0.5;
+                                                                $total_full_days += 0.5;
+                                                            } else {
+                                                                $total_full_days += 1;
+                                                            }
                                                         } else {
-                                                            $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present, a.data 
-                            FROM final_attendance fa
-                            LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-                            WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
-                                                            $stmt_attendance = $conn->prepare($attendance_query);
-                                                            $formatted_date = date('Y-m-d', strtotime($date));
-                                                            $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
-                                                            $stmt_attendance->execute();
-                                                            $attendance_result = $stmt_attendance->get_result();
-
-                                                            if ($attendance_result->num_rows > 0) {
-                                                                $attendance_data = $attendance_result->fetch_assoc();
-                                                                echo $user['data'] . "<br>";
-                                                                echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
-                                                                echo "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "<br>";
-                                                                echo "First Mode: " . $attendance_data['first_mode'] . "<br>";
-                                                                if ($attendance_data['last_out'] != null) {
-                                                                    echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
-                                                                    echo "Last Mode: " . $attendance_data['last_mode'] . "<br>";
-                                                                    echo "Total hours: " . $attendance_data['total_hours'] . "<br>";
-                                                                } else {
-                                                                    echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
-                                                                }
-
-                                                                $first_in_time = new DateTime($attendance_data['first_in']);
-                                                                $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
-                                                                if ($first_in_time > $cutoff_time) {
-                                                                    $total_half_days += 0.5;
-                                                                    $total_full_days += 0.5;
-                                                                } else {
-                                                                    $total_full_days += 1;
-                                                                }
+                                                            if ($day_of_week == 0) {
+                                                                echo "Holiday";
                                                             } else {
                                                                 echo "Absent";
                                                                 $total_absents += 1;
                                                             }
-                                                            $stmt_attendance->close();
                                                         }
-                                                        $total_days_lwp = $total_absents + $total_half_days;
+                                                        $stmt_attendance->close();
                                                         ?>
                                                     </td>
                                                 <?php endforeach; ?>
@@ -220,7 +219,7 @@ $stmt_users->close();
                                                     Absents: <?php echo $total_absents; ?><br>
                                                     Half Days: <?php echo $total_half_days; ?><br>
                                                     Total Days Present: <?php echo $total_full_days; ?><br>
-                                                    Total Days Absent: <?php echo $total_days_lwp; ?><br>
+                                                    Total Days Absent: <?php echo $total_absents + $total_half_days; ?><br>
                                                 </td>
                                             </tr>
                                         <?php endwhile; ?>

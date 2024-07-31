@@ -190,22 +190,21 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
             <canvas id="barChart" style="height: 380px;"></canvas>
           </div>
         </div>
-        <!-- /.card -->
-      <!-- Main row -->
-      <div class="row">
-        <section class="col-lg-7 connectedSortable">
-          <!-- Line chart -->
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title">Yearly Attendance</h3>
-            </div>
-            <div class="card-body">
-              <canvas id="lineChart" style="height: 300px;"></canvas>
-            </div>
-          </div>
-          <!-- /.card -->
-        </section>
+       
+     <!-- Main row -->
+<div class="row">
+  <section class="col-12 connectedSortable">
+    <!-- Line chart -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Yearly Attendance</h3>
       </div>
+      <div class="card-body">
+        <canvas id="lineChart" style="height: 300px; width: 100%;"></canvas>
+      </div>
+    </div>
+  </section>
+</div>
       <!-- /.row (main row) -->
     </div><!-- /.container-fluid -->
   </section>
@@ -307,15 +306,15 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
         datasets: [{
             label: 'Present',
             data: recentPresents,
-            backgroundColor: '#0069B9',
-            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: '#28A745',
+            borderColor: '#28A745',
             borderWidth: 1
           },
           {
             label: 'Absent',
             data: recentAbsents,
-            backgroundColor: 'red',
-            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: '#DC3545',
+            borderColor: '#DC3545',
             borderWidth: 1
           }
         ]
@@ -342,7 +341,7 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
       }
     });
   });
-</script>
+ </script>
 
 <!-- Additional scripts as needed -->
 </body>

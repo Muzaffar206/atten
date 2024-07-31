@@ -1,23 +1,20 @@
 <?php
+session_regenerate_id(true); // Regenerate session ID to prevent session fixation
+
 include("../assest/connection/config.php");
 
 date_default_timezone_set('Asia/Kolkata');
 
+// Ensure user is logged in and has admin role
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
     exit();
 }
 
+// Define the cutoff time for old selfies
 $twoMinutesAgo = date('Y-m-d H:i:s', strtotime('-2 minutes'));
 
-function handle_error($error_message) {
-    $log_file = "error_log.txt";
-    $current_time = date('Y-m-d H:i:s');
-    $log_message = "[{$current_time}] ERROR: {$error_message}\n";
-    file_put_contents($log_file, $log_message, FILE_APPEND);
-    echo "An error occurred. Please check the logs for details.";
-}
-
+// Display alert for old selfies
 function displayAlert() {
     if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
         echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -36,12 +33,12 @@ $sql = "SELECT COUNT(*) as old_selfie_count
         AND (in_time < ? OR out_time < ?)";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
-    handle_error("Prepare statement failed: " . $conn->error);
+    echo "An error occurred. Please try again later.";
     exit();
 }
 $stmt->bind_param('ss', $twoMinutesAgo, $twoMinutesAgo);
 if (!$stmt->execute()) {
-    handle_error("Execute statement failed: " . $stmt->error);
+    echo "An error occurred. Please try again later.";
     exit();
 }
 $result = $stmt->get_result();
@@ -55,6 +52,12 @@ $stmt->close();
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     $deletedSelfiesCount = 0;
     $selfiesDir = 'Selfies_in&out/';
+
+    // Ensure the directory exists
+    if (!is_dir($selfiesDir)) {
+        echo "Directory does not exist.";
+        exit();
+    }
 
     // Function to recursively delete old files
     function deleteOldFiles($dir, $twoMinutesAgo, &$deletedSelfiesCount) {
@@ -70,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
                     if (unlink($filePath)) {
                         $deletedSelfiesCount++;
                     } else {
-                        handle_error("Failed to delete file: " . $filePath);
+                        echo "Failed to delete file: " . $filePath;
                     }
                 }
             }
@@ -94,28 +97,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
                      OR (selfie_out IS NOT NULL AND out_time < ?)";
     $stmtUpdate = $conn->prepare($sqlUpdate);
     if (!$stmtUpdate) {
-        handle_error("Prepare statement for updating selfies failed: " . $conn->error);
+        echo "An error occurred. Please try again later.";
         exit();
     }
     $stmtUpdate->bind_param('ssss', $twoMinutesAgo, $twoMinutesAgo, $twoMinutesAgo, $twoMinutesAgo);
     if (!$stmtUpdate->execute()) {
-        handle_error("Execute statement for updating selfies failed: " . $stmtUpdate->error);
+        echo "An error occurred. Please try again later.";
         exit();
     }
     $affectedRows = $stmtUpdate->affected_rows;
     $stmtUpdate->close();
 
+    // Log the deletion
     if ($deletedSelfiesCount > 0 || $affectedRows > 0) {
         $currentTime = date('Y-m-d H:i:s');
         $sqlLogUpdate = "INSERT INTO deletion_log (last_deletion) VALUES (?)";
         $stmtLogUpdate = $conn->prepare($sqlLogUpdate);
         if (!$stmtLogUpdate) {
-            handle_error("Prepare statement for logging deletion failed: " . $conn->error);
+            echo "An error occurred. Please try again later.";
             exit();
         }
         $stmtLogUpdate->bind_param('s', $currentTime);
         if (!$stmtLogUpdate->execute()) {
-            handle_error("Execute statement for logging deletion failed: " . $stmtLogUpdate->error);
+            echo "An error occurred. Please try again later.";
             exit();
         }
         $stmtLogUpdate->close();

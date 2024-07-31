@@ -18,21 +18,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $full_name = htmlspecialchars($_POST['full_name']);
   $email = htmlspecialchars($_POST['email']);
   $phone_number = htmlspecialchars($_POST['phone_number']);
-  $address = htmlspecialchars($_POST['address']);
   $department = $_POST['department'];
   $role = $_POST['role'];
 
   // Check if password field is set and not empty
   if (!empty($_POST['password'])) {
     // Update with password
-    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, address=?, department=?, role=? WHERE id=?";
+    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, department=?, role=? WHERE id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sisssssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $address, $department, $role, $id);
+    $stmt->bind_param("sisssssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $department, $role, $id);
   } else {
     // Update without password change
-    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, address=?, department=?, role=? WHERE id=?";
+    $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, department=?, role=? WHERE id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $address, $department, $role, $id);
+    $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $department, $role, $id);
   }
 
   // Execute SQL statement
@@ -119,10 +118,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="form-group">
                   <label>Phone Number</label>
                   <input type="text" class="form-control" name="phone_number" value="<?php echo $user['phone_number']; ?>">
-                </div>
-                <div class="form-group">
-                  <label>Address</label>
-                  <textarea class="form-control" name="address"><?php echo $user['address']; ?></textarea>
                 </div>
                 <div class="form-group">
                   <label>Select Department</label>

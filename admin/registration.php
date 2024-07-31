@@ -28,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = htmlspecialchars($_POST['full_name']);
     $email = htmlspecialchars($_POST['email']);
     $phone_number = htmlspecialchars($_POST['phone_number']);
-    $address = htmlspecialchars($_POST['address']);
     $department = $_POST['department'];
     $role = isset($_POST['role']) ? $_POST['role'] : 'user'; // Default role to 'user'
 
@@ -123,9 +122,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // Insert user data into the database
-        $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, address, department, role) 
+        $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, department, role) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $address, $department, $role);
+        $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $department, $role);
 
         if ($sql->execute() === TRUE) {
             $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -230,11 +229,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <span class="input-group-text">Upload</span>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Address</label>
-                                    <textarea class="form-control" name="address" placeholder="Address"></textarea>
                                 </div>
 
                                 <div class="form-group">

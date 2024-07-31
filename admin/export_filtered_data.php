@@ -38,7 +38,6 @@ $objPHPExcel->setActiveSheetIndex(0)
     ->setCellValue('D1', 'Full Name')
     ->setCellValue('E1', 'Email')
     ->setCellValue('F1', 'Phone Number')
-    ->setCellValue('G1', 'Address')
     ->setCellValue('H1', 'Role')
     ->setCellValue('I1', 'Department')
     ->setCellValue('J1', 'Passport Size Photo');
@@ -80,7 +79,6 @@ while ($row_export = $result_export->fetch_assoc()) {
         ->setCellValue('D' . $rowCount, $row_export['full_name'])
         ->setCellValue('E' . $rowCount, $row_export['email'])
         ->setCellValue('F' . $rowCount, $row_export['phone_number'])
-        ->setCellValue('G' . $rowCount, $row_export['address'])
         ->setCellValue('H' . $rowCount, $row_export['role'])
         ->setCellValue('I' . $rowCount, $row_export['department']);
 

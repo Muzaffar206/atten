@@ -140,3 +140,6 @@
 [2024-07-29 20:35:08] ERROR: Temporary file path: C:\Users\ASUS\AppData\Local\Temp\xlsFCCC.tmp
 [2024-07-29 20:35:08] ERROR: Final file path: C:\xampp\htdocs\atten\admin/attendance_report_20240729_203508.xlsx
 [2024-07-29 20:35:08] ERROR: File size: 555054 bytes
+[2024-07-31 17:21:34] ERROR: Error generating Excel file: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'WHERE DATE(attendance.in_time) BETWEEN '2024-07-01' AND '2024-07-31' ORDER BY...' at line 17
+[2024-07-31 17:21:44] ERROR: Error generating Excel file: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'WHERE DATE(attendance.in_time) BETWEEN '2024-07-01' AND '2024-07-31' ORDER BY...' at line 17
+[2024-07-31 17:22:14] ERROR: Error generating Excel file: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'WHERE DATE(attendance.in_time) BETWEEN '2024-07-01' AND '2024-07-31' ORDER BY...' at line 17

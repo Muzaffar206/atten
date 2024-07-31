@@ -22,47 +22,10 @@ include("delete_old_selfies.php");
 
 
 
-$filterDepartment = isset($_GET['department']) ? $_GET['department'] : '';
-$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
-$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+$filterDepartment = isset($_GET['department']) ? htmlspecialchars($_GET['department']) : '';
+$startDate = isset($_GET['start_date']) ? htmlspecialchars($_GET['start_date']) : '';
+$endDate = isset($_GET['end_date']) ? htmlspecialchars($_GET['end_date']) : '';
 
-$sql = "SELECT 
-            users.id AS user_id,
-            attendance.id AS attendance_id, 
-            users.employer_id,
-            users.username, 
-            users.full_name,
-            users.department,
-            attendance.mode, 
-            attendance.latitude, 
-            attendance.longitude,
-            attendance.in_time,
-            attendance.out_time, 
-            attendance.selfie_in, 
-            attendance.selfie_out
-        FROM attendance 
-        JOIN users ON attendance.user_id = users.id
-        WHERE users.role <> 'admin'"; // Exclude admin role
-
-$whereClause = [];
-
-if (!empty($filterDepartment)) {
-    $whereClause[] = "users.department = '$filterDepartment'";
-}
-
-if (!empty($startDate) && !empty($endDate)) {
-    $whereClause[] = "DATE(attendance.in_time) BETWEEN '$startDate' AND '$endDate'";
-} elseif (!empty($startDate)) {
-    $whereClause[] = "DATE(attendance.in_time) = '$startDate'";
-}
-
-if (!empty($whereClause)) {
-    $sql .= " WHERE " . implode(" AND ", $whereClause);
-}
-
-$sql .= " ORDER BY attendance.id DESC ";
-
-$result = $conn->query($sql);
 
 // Fetch departments dynamically
 $departmentsQuery = "SELECT DISTINCT department FROM users";
@@ -181,35 +144,7 @@ include("include/sidebar.php");
                                             <th>Map</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <?php
-                                        if ($result->num_rows > 0) {
-                                            while ($row = $result->fetch_assoc()) {
-                                                // Remove 'admin/' from selfie paths
-                                                $selfie_in = !empty($row['selfie_in']) ? str_replace('admin/', '', $row['selfie_in']) : '';
-                                                $selfie_out = !empty($row['selfie_out']) ? str_replace('admin/', '', $row['selfie_out']) : '';
-
-                                                echo "<tr>
-                                                        <td>" . htmlspecialchars($row['attendance_id']) . "</td>
-                                                        <td>" . htmlspecialchars($row['employer_id']) . "</td>
-                                                        <td>" . htmlspecialchars($row['username']) . "</td>
-                                                        <td>" . htmlspecialchars($row['full_name']) . "</td>
-                                                        <td>" . htmlspecialchars($row['department']) . "</td>
-                                                        <td>" . htmlspecialchars($row['mode']) . "</td>
-                                                        <td>" . (!empty($row['latitude']) ? htmlspecialchars($row['latitude']) : 'N/A') . "</td>
-                                                        <td>" . (!empty($row['longitude']) ? htmlspecialchars($row['longitude']) : 'N/A') . "</td>
-                                                        <td>" . htmlspecialchars($row['in_time']) . "</td>
-                                                        <td>" . htmlspecialchars($row['out_time']) . "</td>
-                                                         <td>" . (!empty($selfie_in) ? '<img src="get_image.php?path=' . urlencode($selfie_in) . '" alt="Selfie_in" width="150" height="150">' : 'N/A') . "</td>
-    <td>" . (!empty($selfie_out) ? '<img src="get_image.php?path=' . urlencode($selfie_out) . '" alt="Selfie_out" width="150" height="150">' : 'N/A') . "</td>
-                                                        <td>" . (!empty($row['latitude']) && !empty($row['longitude']) ? '<a href="https://www.google.com/maps?q=' . htmlspecialchars($row['latitude']) . ',' . htmlspecialchars($row['longitude']) . '" target="_blank">View on Map</a>' : 'N/A') . "</td>
-                                                      </tr>";
-                                            }
-                                        } else {
-                                            echo "<tr><td colspan='13'>No records found</td></tr>";
-                                        }
-                                        ?>
-                                    </tbody>
+                                
                                 </table>
                             </div>
                         </div>
@@ -223,14 +158,42 @@ include("include/sidebar.php");
 <?php include("include/footer.php"); ?>
 
 <script>
-    $(document).ready(function() {
-        $('#attendanceTable').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-        });
+   $(document).ready(function() {
+    var table = $('#attendanceTable').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            "url": "get_attendance_data.php",
+            "type": "POST",
+            "data": function(d) {
+                d.department = $('#department').val();
+                d.start_date = $('#start_date').val();
+                d.end_date = $('#end_date').val();
+            }
+        },
+        "columns": [
+            { "data": "attendance_id" },
+            { "data": "employer_id" },
+            { "data": "username" },
+            { "data": "full_name" },
+            { "data": "department" },
+            { "data": "mode" },
+            { "data": "latitude" },
+            { "data": "longitude" },
+            { "data": "in_time" },
+            { "data": "out_time" },
+            { "data": "selfie_in" },
+            { "data": "selfie_out" },
+            { "data": "map" }
+        ],
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "order": [[0, "desc"]]
     });
+
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
+        table.ajax.reload();
+    });
+});
 </script>

@@ -4,13 +4,8 @@ session_regenerate_id(true);
 include("../assest/connection/config.php");
 require '../vendor/autoload.php';
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
-    exit();
-}
-
-if ($_SESSION['role'] !== 'admin') {
-    header("Location: ../home.php");
     exit();
 }
 
@@ -26,7 +21,7 @@ function handle_error($error_message) {
     $current_time = date('Y-m-d H:i:s');
     $log_message = "[{$current_time}] ERROR: {$error_message}\n";
     file_put_contents($log_file, $log_message, FILE_APPEND);
-    error_log($error_message);  // Also log to PHP's error log
+    error_log($error_message);
 }
 
 try {
@@ -50,27 +45,31 @@ try {
                 attendance.selfie_out
             FROM attendance 
             JOIN users ON attendance.user_id = users.id
-            WHERE users.role <> 'admin'"; // Exclude admin role
+            WHERE users.role <> 'admin'";
 
-    $whereClause = [];
-
+    $params = array();
     if (!empty($filterDepartment)) {
-        $whereClause[] = "users.department = '$filterDepartment'";
+        $sql .= " AND users.department = ?";
+        $params[] = $filterDepartment;
     }
-
     if (!empty($startDate) && !empty($endDate)) {
-        $whereClause[] = "DATE(attendance.in_time) BETWEEN '$startDate' AND '$endDate'";
+        $sql .= " AND DATE(attendance.in_time) BETWEEN ? AND ?";
+        $params[] = $startDate;
+        $params[] = $endDate;
     } elseif (!empty($startDate)) {
-        $whereClause[] = "DATE(attendance.in_time) = '$startDate'";
+        $sql .= " AND DATE(attendance.in_time) = ?";
+        $params[] = $startDate;
     }
 
-    if (!empty($whereClause)) {
-        $sql .= " WHERE " . implode(" AND ", $whereClause);
+    $sql .= " ORDER BY attendance.id DESC";
+
+    $stmt = $conn->prepare($sql);
+    if (!empty($params)) {
+        $types = str_repeat('s', count($params));
+        $stmt->bind_param($types, ...$params);
     }
-
-    $sql .= " ORDER BY attendance.id DESC ";
-
-    $result = $conn->query($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
@@ -89,6 +88,8 @@ try {
     $sheet->getStyle('A1:M1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFF00');
 
     $rowNumber = 2;
+    $batchSize = 1000;
+    $batchCount = 0;
 
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
@@ -108,41 +109,30 @@ try {
             $selfieInPath = "Selfies_in&out/" . $row['username'] . "/" . $selfieInFilename;
             $selfieOutPath = "Selfies_in&out/" . $row['username'] . "/" . $selfieOutFilename;
 
-            handle_error("Selfie In Path: {$selfieInPath} - Exists: " . (file_exists($selfieInPath) ? "Yes" : "No"));
-            handle_error("Selfie Out Path: {$selfieOutPath} - Exists: " . (file_exists($selfieOutPath) ? "Yes" : "No"));
-
             if (file_exists($selfieInPath)) {
-                try {
-                    $selfieIn = new Drawing();
-                    $selfieIn->setName('Selfie In');
-                    $selfieIn->setDescription('Selfie In');
-                    $selfieIn->setPath($selfieInPath);
-                    $selfieIn->setCoordinates('K' . $rowNumber);
-                    $selfieIn->setWidth(100);
-                    $selfieIn->setHeight(100);
-                    $selfieIn->setOffsetX(5);
-                    $selfieIn->setOffsetY(5);
-                    $selfieIn->setWorksheet($sheet);
-                } catch (Exception $e) {
-                    handle_error("Error adding Selfie In: " . $e->getMessage());
-                }
+                $selfieIn = new Drawing();
+                $selfieIn->setName('Selfie In');
+                $selfieIn->setDescription('Selfie In');
+                $selfieIn->setPath($selfieInPath);
+                $selfieIn->setCoordinates('K' . $rowNumber);
+                $selfieIn->setWidth(100);
+                $selfieIn->setHeight(100);
+                $selfieIn->setOffsetX(5);
+                $selfieIn->setOffsetY(5);
+                $selfieIn->setWorksheet($sheet);
             }
 
             if (file_exists($selfieOutPath)) {
-                try {
-                    $selfieOut = new Drawing();
-                    $selfieOut->setName('Selfie Out');
-                    $selfieOut->setDescription('Selfie Out');
-                    $selfieOut->setPath($selfieOutPath);
-                    $selfieOut->setCoordinates('L' . $rowNumber);
-                    $selfieOut->setWidth(100);
-                    $selfieOut->setHeight(100);
-                    $selfieOut->setOffsetX(5);
-                    $selfieOut->setOffsetY(5);
-                    $selfieOut->setWorksheet($sheet);
-                } catch (Exception $e) {
-                    handle_error("Error adding Selfie Out: " . $e->getMessage());
-                }
+                $selfieOut = new Drawing();
+                $selfieOut->setName('Selfie Out');
+                $selfieOut->setDescription('Selfie Out');
+                $selfieOut->setPath($selfieOutPath);
+                $selfieOut->setCoordinates('L' . $rowNumber);
+                $selfieOut->setWidth(100);
+                $selfieOut->setHeight(100);
+                $selfieOut->setOffsetX(5);
+                $selfieOut->setOffsetY(5);
+                $selfieOut->setWorksheet($sheet);
             }
 
             // Handle map link
@@ -156,6 +146,12 @@ try {
             $sheet->getRowDimension($rowNumber)->setRowHeight(110);
 
             $rowNumber++;
+            $batchCount++;
+
+            if ($batchCount >= $batchSize) {
+                $sheet->garbageCollect();
+                $batchCount = 0;
+            }
         }
     }
 
@@ -166,50 +162,30 @@ try {
 
     $writer = new Xlsx($spreadsheet);
     $fileName = 'attendance_report_' . date('Ymd_His') . '.xlsx';
-    $filePath = __DIR__ . '/' . $fileName;
+    $filePath = tempnam(sys_get_temp_dir(), 'xlsx_');
     
-    // Use a temporary file for writing
-    $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
-    $writer->save($tempFile);
+    $writer->save($filePath);
     
-    if (!file_exists($tempFile)) {
-        throw new Exception("Failed to create temporary file.");
+    if (!file_exists($filePath) || filesize($filePath) == 0) {
+        throw new Exception("Failed to create Excel file or file is empty.");
     }
-    
-    // Copy the temp file to the desired location
-    if (!copy($tempFile, $filePath)) {
-        throw new Exception("Failed to copy temporary file to final destination.");
-    }
-    
-    // Verify file size
-    $fileSize = filesize($filePath);
-    if ($fileSize === false || $fileSize == 0) {
-        throw new Exception("Generated file is empty or unreadable.");
-    }
-
-    handle_error("Spreadsheet object created: " . ($spreadsheet instanceof Spreadsheet ? 'Yes' : 'No'));
-    handle_error("Writer object created: " . ($writer instanceof Xlsx ? 'Yes' : 'No'));
-    handle_error("Temporary file path: " . $tempFile);
-    handle_error("Final file path: " . $filePath);
-    handle_error("File size: " . $fileSize . " bytes");
 
     // Set headers for file download
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment;filename="' . $fileName . '"');
     header('Cache-Control: max-age=0');
-    header('Content-Length: ' . $fileSize);
+    header('Content-Length: ' . filesize($filePath));
     
     // Output file contents
     readfile($filePath);
 
     // Clean up
-    unlink($tempFile);
     unlink($filePath);
 
     exit;
 } catch (Exception $e) {
     handle_error("Error generating Excel file: " . $e->getMessage());
-    // You might want to redirect to an error page or display a user-friendly message here
+    header("HTTP/1.1 500 Internal Server Error");
+    echo "An error occurred while generating the Excel file. Please try again later.";
     exit;
 }
-?>
