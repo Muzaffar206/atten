@@ -160,7 +160,6 @@ $conn->close();
                                                 <th>Full Name</th>
                                                 <th>Email</th>
                                                 <th>Phone Number</th>
-                                                <th>Passport Size Photo</th>
                                                 <th>Role</th>
                                                 <th>Department</th>
                                                 <th>Action</th>
@@ -175,16 +174,6 @@ $conn->close();
                                                         <td><?php echo htmlspecialchars($row['full_name'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($row['email'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($row['phone_number'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td>
-                                                            <?php
-                                                            $imagePath = htmlspecialchars($row['passport_size_photo'], ENT_QUOTES, 'UTF-8');
-                                                            if (file_exists($imagePath) && !empty($imagePath)) {
-                                                                echo '<img src="' . $imagePath . '" width="50" height="50">';
-                                                            } else {
-                                                                echo 'NA';
-                                                            }
-                                                            ?>
-                                                        </td>
                                                         <td><?php echo htmlspecialchars($row['role'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($row['department'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td>
@@ -195,7 +184,7 @@ $conn->close();
                                                 <?php endwhile; ?>
                                             <?php else : ?>
                                                 <tr>
-                                                    <td colspan="10">No users found.</td>
+                                                    <td colspan="8">No users found.</td>
                                                 </tr>
                                             <?php endif; ?>
                                         </tbody>

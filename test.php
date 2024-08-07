@@ -1,17 +1,14 @@
 <?php
 session_start();
 session_regenerate_id(true);
-
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
     exit();
 }
-
 if ($_SESSION['role'] !== 'admin') {
     header("Location: ../home.php");
     exit();
 }
-
 include("../assest/connection/config.php");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -21,29 +18,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $full_name = htmlspecialchars($_POST['full_name']);
     $email = htmlspecialchars($_POST['email']);
     $phone_number = htmlspecialchars($_POST['phone_number']);
-    $department = htmlspecialchars($_POST['department']);
-    $role = htmlspecialchars($_POST['role']); // Handle role as a string
+    $department = $_POST['department'];
+    $role = $_POST['role'];
 
-    // Check if password is provided
-    $password = !empty($_POST['password']) ? password_hash(htmlspecialchars($_POST['password']), PASSWORD_DEFAULT) : null;
+    // Track which fields were updated
+    $updated_fields = [];
+    $updates = [];
 
-    // Prepare SQL statement based on whether password is provided
-    if ($password) {
+    // Prepare SQL query
+    if (!empty($_POST['password'])) {
+        $password = password_hash(htmlspecialchars($_POST['password']), PASSWORD_DEFAULT);
         $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, password=?, department=?, role=? WHERE id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("sissssssi", $username, $employer_id, $full_name, $email, $phone_number, $password, $department, $role, $id);
+        // Mark password field as updated
+        $updates[] = 'Password';
     } else {
         $sql = "UPDATE users SET username=?, employer_id=?, full_name=?, email=?, phone_number=?, department=?, role=? WHERE id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sisssssi", $username, $employer_id, $full_name, $email, $phone_number, $department, $role, $id);
+        $stmt->bind_param("sissssii", $username, $employer_id, $full_name, $email, $phone_number, $department, $role, $id);
     }
 
-    // Debugging to check the prepared statement and parameters
-    echo "SQL: $sql<br>";
-    echo "Bound Params: $username, $employer_id, $full_name, $email, $phone_number, $department, $role, $id<br>";
-    
+    // Execute SQL statement
     if ($stmt->execute()) {
-        $_SESSION['message'] = "User updated successfully!";
+        // Add updated fields to message
+        $updated_fields = implode(', ', $updates);
+        $_SESSION['message'] = "User updated successfully! Updated fields: $updated_fields";
         header("Location: users.php");
         exit();
     } else {
@@ -72,11 +72,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <?php include("include/sidebar.php"); ?>
 
 <div class="content-wrapper">
+  <!-- Content Header (Page header) -->
   <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>Edit User: <?php echo htmlspecialchars($user['username']); ?></h1>
+          <h1>Edit User: <?php echo $user['username']; ?></h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
@@ -88,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </div><!-- /.container-fluid -->
   </section>
 
+  <!-- Main content -->
   <section class="content">
     <div class="container-fluid">
       <div class="row">
@@ -96,12 +98,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="card-header">
               <h3 class="card-title">Edit User Details</h3>
             </div>
+            <!-- /.card-header -->
+            <!-- form start -->
             <form method="post" action="">
-              <input type="hidden" name="id" value="<?php echo htmlspecialchars($user['id']); ?>">
+              <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
               <div class="card-body">
                 <div class="form-group">
                   <label>Username</label>
-                  <input type="text" class="form-control" name="username" value="<?php echo htmlspecialchars($user['username']); ?>" required>
+                  <input type="text" class="form-control" name="username" value="<?php echo $user['username']; ?>" required>
                 </div>
                 <div class="form-group">
                   <label>Password</label>
@@ -110,25 +114,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
                 <div class="form-group">
                   <label>Employee ID</label>
-                  <input type="text" class="form-control" name="employer_id" value="<?php echo htmlspecialchars($user['employer_id']); ?>">
+                  <input type="text" class="form-control" name="employer_id" value="<?php echo $user['employer_id']; ?>">
                 </div>
                 <div class="form-group">
                   <label>Full Name</label>
-                  <input type="text" class="form-control" name="full_name" value="<?php echo htmlspecialchars($user['full_name']); ?>">
+                  <input type="text" class="form-control" name="full_name" value="<?php echo $user['full_name']; ?>">
                 </div>
                 <div class="form-group">
                   <label>Email</label>
-                  <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
+                  <input type="email" class="form-control" name="email" value="<?php echo $user['email']; ?>">
                 </div>
                 <div class="form-group">
                   <label>Phone Number</label>
-                  <input type="text" class="form-control" name="phone_number" value="<?php echo htmlspecialchars($user['phone_number']); ?>">
+                  <input type="text" class="form-control" name="phone_number" value="<?php echo $user['phone_number']; ?>">
                 </div>
                 <div class="form-group">
                   <label>Select Department</label>
                   <select name="department" class="form-control">
                     <option value="">Select department</option>
-                    <!-- List of departments -->
                     <option value="Education" <?php echo ($user['department'] == 'Education') ? 'selected' : ''; ?>>Education</option>
                     <option value="Medical" <?php echo ($user['department'] == 'Medical') ? 'selected' : ''; ?>>Medical</option>
                     <option value="ROP" <?php echo ($user['department'] == 'ROP') ? 'selected' : ''; ?>>ROP</option>
@@ -150,6 +153,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   </select>
                 </div>
               </div>
+              <!-- /.card-body -->
+
               <div class="card-footer">
                 <button type="submit" class="btn btn-primary">Update User</button>
               </div>
@@ -159,5 +164,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
     </div><!-- /.container-fluid -->
   </section>
+  <!-- /.content -->
 </div>
 <?php include("include/footer.php"); ?>
+//

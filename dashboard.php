@@ -18,6 +18,9 @@ $username = "";
 // Fetch username from database
 $sql = "SELECT username FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
+if ($stmt === false) {
+    die("Error preparing statement: " . $conn->error);
+}
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $stmt->bind_result($username);
@@ -28,7 +31,7 @@ $stmt->close();
 $from_date = isset($_GET['from_date']) ? htmlspecialchars($_GET['from_date']) : date('Y-m-d');
 $to_date = isset($_GET['to_date']) ? htmlspecialchars($_GET['to_date']) : date('Y-m-d');
 
-// Fetch aggregated attendance data based on user ID and date range
+// Base query
 $attendance_query = "SELECT 
                         users.id AS user_id, 
                         users.username, 
@@ -49,25 +52,64 @@ $attendance_query = "SELECT
                     LEFT JOIN attendance ON attendance.user_id = users.id AND DATE(attendance.in_time) = DATE(final_attendance.first_in) 
                     WHERE users.id = ?";
 
-// Modify query based on filter conditions
 if (!empty($from_date) && !empty($to_date)) {
     $attendance_query .= " AND DATE(final_attendance.first_in) BETWEEN ? AND ?";
-    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
+    $attendance_query .= " GROUP BY 
+                            users.id, 
+                            users.username, 
+                            users.employer_id, 
+                            users.full_name, 
+                            DATE(final_attendance.first_in), 
+                            users.department,
+                            final_attendance.total_hours";
     $stmt_attendance = $conn->prepare($attendance_query);
+    if ($stmt_attendance === false) {
+        die("Error preparing statement: " . $conn->error);
+    }
     $stmt_attendance->bind_param("iss", $user_id, $from_date, $to_date);
 } elseif (!empty($from_date)) {
     $attendance_query .= " AND DATE(final_attendance.first_in) >= ?";
-    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
+    $attendance_query .= " GROUP BY 
+                            users.id, 
+                            users.username, 
+                            users.employer_id, 
+                            users.full_name, 
+                            DATE(final_attendance.first_in), 
+                            users.department,
+                            final_attendance.total_hours";
     $stmt_attendance = $conn->prepare($attendance_query);
+    if ($stmt_attendance === false) {
+        die("Error preparing statement: " . $conn->error);
+    }
     $stmt_attendance->bind_param("is", $user_id, $from_date);
 } elseif (!empty($to_date)) {
     $attendance_query .= " AND DATE(final_attendance.first_in) <= ?";
-    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
+    $attendance_query .= " GROUP BY 
+                            users.id, 
+                            users.username, 
+                            users.employer_id, 
+                            users.full_name, 
+                            DATE(final_attendance.first_in), 
+                            users.department,
+                            final_attendance.total_hours";
     $stmt_attendance = $conn->prepare($attendance_query);
+    if ($stmt_attendance === false) {
+        die("Error preparing statement: " . $conn->error);
+    }
     $stmt_attendance->bind_param("is", $user_id, $to_date);
 } else {
-    $attendance_query .= " GROUP BY DATE(final_attendance.first_in)";
+    $attendance_query .= " GROUP BY 
+                            users.id, 
+                            users.username, 
+                            users.employer_id, 
+                            users.full_name, 
+                            DATE(final_attendance.first_in), 
+                            users.department,
+                            final_attendance.total_hours";
     $stmt_attendance = $conn->prepare($attendance_query);
+    if ($stmt_attendance === false) {
+        die("Error preparing statement: " . $conn->error);
+    }
     $stmt_attendance->bind_param("i", $user_id);
 }
 
@@ -87,6 +129,7 @@ $result = $stmt_attendance->get_result();
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <?php include("include/header.php"); ?>
 </head>
 
@@ -160,7 +203,7 @@ $result = $stmt_attendance->get_result();
         </div>
 
         <div class="text-center">
-            <button class="btn btn-danger" onclick="document.location='logout.php'">Logout</button>
+            <button class="btn btn-primary" onclick="document.location='home.php'">Get to Home</button>
         </div>
     </div>
 
@@ -172,11 +215,11 @@ $result = $stmt_attendance->get_result();
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
     <script>
-        window.onload = function() {
+window.onload = function() {
             // Hide the preloader
             document.querySelector(".preloader").style.display = "none";
         }
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('#attendanceTable').DataTable({
                 "paging": true,
                 "lengthChange": true,
@@ -184,10 +227,16 @@ $result = $stmt_attendance->get_result();
                 "ordering": true,
                 "info": true,
                 "autoWidth": false,
-                "responsive": true // Enable responsiveness
+                "responsive": true,
+                "pageLength": 25 // Default number of rows per page
             });
         });
     </script>
 </body>
 
 </html>
+
+<?php
+$stmt_attendance->close();
+$conn->close();
+?>

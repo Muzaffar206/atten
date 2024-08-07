@@ -39,8 +39,7 @@ $objPHPExcel->setActiveSheetIndex(0)
     ->setCellValue('E1', 'Email')
     ->setCellValue('F1', 'Phone Number')
     ->setCellValue('H1', 'Role')
-    ->setCellValue('I1', 'Department')
-    ->setCellValue('J1', 'Passport Size Photo');
+    ->setCellValue('I1', 'Department');
 
 // Set default filter values
 $filter_department = isset($_GET['department']) ? $_GET['department'] : '';
@@ -81,24 +80,6 @@ while ($row_export = $result_export->fetch_assoc()) {
         ->setCellValue('F' . $rowCount, $row_export['phone_number'])
         ->setCellValue('H' . $rowCount, $row_export['role'])
         ->setCellValue('I' . $rowCount, $row_export['department']);
-
-    // Add image if available
-    $imagePath = $row_export['passport_size_photo'];
-    if (!empty($imagePath) && file_exists($imagePath)) {
-        $drawing = new Drawing();
-        $drawing->setName('Passport Size Photo');
-        $drawing->setDescription('Passport Size Photo');
-        $drawing->setPath($imagePath);
-        $drawing->setCoordinates('J' . $rowCount);
-        $drawing->setOffsetX(5);
-        $drawing->setOffsetY(5);
-        $drawing->setWidth(100); // Adjust width as needed
-        $drawing->setHeight(100); // Adjust height as needed
-        $drawing->setWorksheet($objPHPExcel->getActiveSheet());
-
-        // Adjust row height to fit the photo
-        $objPHPExcel->getActiveSheet()->getRowDimension($rowCount)->setRowHeight(110); // Adjust row height
-    }
 
     // Auto-size columns based on content length
     foreach (range('A', 'J') as $col) {

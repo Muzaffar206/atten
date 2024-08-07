@@ -1,7 +1,10 @@
 <?php
+ob_start();
 session_start();
-session_regenerate_id(true); // Regenerate session ID to prevent session fixation
-
+session_regenerate_id(true);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 include("assest/connection/config.php");
 
 if (!isset($_SESSION['user_id'])) {
@@ -9,105 +12,143 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-date_default_timezone_set('Asia/Kolkata'); // Set default timezone to IST
+date_default_timezone_set('Asia/Kolkata');
 
 $user_id = $_SESSION['user_id'];
-$mode = filter_input(INPUT_POST, 'mode', FILTER_SANITIZE_STRING);
-$scanType = filter_input(INPUT_POST, 'scanType', FILTER_SANITIZE_STRING);
-$timestamp = date('Y-m-d H:i:s'); // IST timezone timestamp
-$date = date('Y-m-d'); // Current date
+$mode = isset($_POST['mode']) ? htmlspecialchars($_POST['mode'], ENT_QUOTES, 'UTF-8') : '';
+$scanType = isset($_POST['scanType']) ? htmlspecialchars($_POST['scanType'], ENT_QUOTES, 'UTF-8') : '';
+$timestamp = date('Y-m-d H:i:s');
+$date = date('Y-m-d');
 
 $selfie_in_path = null;
 $selfie_out_path = null;
 
+// Define upload directories within allowed paths
+$upload_dir = 'C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/';
+$temp_dir = 'C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/tmp/';
+if (!file_exists($upload_dir)) {
+    mkdir($upload_dir, 0777, true);
+}
+if (!file_exists($temp_dir)) {
+    mkdir($temp_dir, 0777, true);
+}
+
+function sendJsonResponse($status, $message) {
+    header('Content-Type: application/json');
+    echo json_encode(array('status' => $status, 'message' => $message));
+    exit;
+}
+
+$allowedExtensions = ['jpg', 'jpeg', 'png'];
+$allowedMimeTypes = ['image/jpeg', 'image/png'];
+
+function validateFile($file, $allowedExtensions, $allowedMimeTypes) {
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        throw new Exception("File upload error: " . $file['error']);
+    }
+
+    $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $fileMimeType = $file['type'];
+    
+    if (!in_array($fileExtension, $allowedExtensions)) {
+        throw new Exception("Invalid file extension.");
+    }
+
+    if (!in_array($fileMimeType, $allowedMimeTypes)) {
+        throw new Exception("Invalid file type: " . $fileMimeType);
+    }
+
+    return $fileExtension;
+}
+
+function optimizeImage($filePath, $maxWidth = 800, $maxHeight = 800) {
+    list($width, $height) = getimagesize($filePath);
+    $aspectRatio = $width / $height;
+
+    if ($width > $maxWidth || $height > $maxHeight) {
+        if ($width / $height > $aspectRatio) {
+            $newWidth = $maxWidth;
+            $newHeight = $maxWidth / $aspectRatio;
+        } else {
+            $newWidth = $maxHeight * $aspectRatio;
+            $newHeight = $maxHeight;
+        }
+
+        $imageResized = imagecreatetruecolor($newWidth, $newHeight);
+
+        $fileMimeType = mime_content_type($filePath);
+        switch ($fileMimeType) {
+            case 'image/jpeg':
+                $image = imagecreatefromjpeg($filePath);
+                break;
+            case 'image/png':
+                $image = imagecreatefrompng($filePath);
+                break;
+            default:
+                throw new Exception("Unsupported image type: " . $fileMimeType);
+        }
+
+        imagecopyresampled($imageResized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+        switch ($fileMimeType) {
+            case 'image/jpeg':
+                imagejpeg($imageResized, $filePath, 75);
+                break;
+            case 'image/png':
+                imagepng($imageResized, $filePath, 6);
+                break;
+        }
+
+        imagedestroy($image);
+        imagedestroy($imageResized);
+    }
+}
+
+function moveFileToUserDir($tempFilePath, $username, $fileExtension, $mode) {
+    $userDir = 'C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/' . basename($username) . '/';
+    if (!is_dir($userDir)) {
+        mkdir($userDir, 0777, true);
+    }
+
+    $filename = $username . '_' . $mode . date('Ymd_His') . '.' . $fileExtension;
+    $filePath = $userDir . $filename;
+
+    if (!rename($tempFilePath, $filePath)) {
+        throw new Exception("Failed to move file to final directory.");
+    }
+
+    return $filePath;
+}
+
 try {
-    // Assuming username is stored in session
     $username = $_SESSION['username'];
 
-    // Directory to store selfies (ensure this directory is protected)
-    $userDir = 'admin/Selfies_in&out/' . basename($username) . '/';
+    $userDir = $upload_dir . basename($username) . '/';
     if (!is_dir($userDir)) {
-        mkdir($userDir, 0700, true); // Use safer permissions
-    }
-
-    // File validation and handling
-    $allowedExtensions = ['jpg', 'jpeg', 'png'];
-    $allowedMimeTypes = ['image/jpeg', 'image/png'];
-
-    function validateFile($file, $allowedExtensions, $allowedMimeTypes) {
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception("File upload error.");
-        }
-
-        $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $fileMimeType = mime_content_type($file['tmp_name']);
-
-        if (!in_array($fileExtension, $allowedExtensions) || !in_array($fileMimeType, $allowedMimeTypes)) {
-            throw new Exception("Invalid file type.");
-        }
-
-        return $fileExtension;
-    }
-
-    function optimizeImage($filePath, $maxWidth = 800, $maxHeight = 800) {
-        list($width, $height) = getimagesize($filePath);
-        $aspectRatio = $width / $height;
-
-        if ($width > $maxWidth || $height > $maxHeight) {
-            if ($width / $height > $aspectRatio) {
-                $newWidth = $maxWidth;
-                $newHeight = $maxWidth / $aspectRatio;
-            } else {
-                $newWidth = $maxHeight * $aspectRatio;
-                $newHeight = $maxHeight;
-            }
-
-            $imageResized = imagecreatetruecolor($newWidth, $newHeight);
-
-            switch (mime_content_type($filePath)) {
-                case 'image/jpeg':
-                    $image = imagecreatefromjpeg($filePath);
-                    break;
-                case 'image/png':
-                    $image = imagecreatefrompng($filePath);
-                    break;
-                default:
-                    throw new Exception("Unsupported image type.");
-            }
-
-            imagecopyresampled($imageResized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-            switch (mime_content_type($filePath)) {
-                case 'image/jpeg':
-                    imagejpeg($imageResized, $filePath, 75);
-                    break;
-                case 'image/png':
-                    imagepng($imageResized, $filePath, 6);
-                    break;
-            }
-
-            imagedestroy($image);
-            imagedestroy($imageResized);
-        }
+        mkdir($userDir, 0777, true);
     }
 
     if (isset($_FILES['selfie_in']) && $_FILES['selfie_in']['error'] === UPLOAD_ERR_OK) {
         $fileExtension = validateFile($_FILES['selfie_in'], $allowedExtensions, $allowedMimeTypes);
-        $selfie_in_filename = $username . '_in_' . $mode . date('Ymd_His') . '.' . $fileExtension;
-        $selfie_in_path = $userDir . $selfie_in_filename;
-        move_uploaded_file($_FILES['selfie_in']['tmp_name'], $selfie_in_path);
-        optimizeImage($selfie_in_path); // Optimize image
+        $tempFilePath = $temp_dir . uniqid('selfie_in_', true) . '.' . $fileExtension;
+        if (!move_uploaded_file($_FILES['selfie_in']['tmp_name'], $tempFilePath)) {
+            throw new Exception("Failed to move uploaded file to temporary directory.");
+        }
+        optimizeImage($tempFilePath);
+        $selfie_in_path = moveFileToUserDir($tempFilePath, $username, $fileExtension, 'in_' . $mode);
     }
 
     if (isset($_FILES['selfie_out']) && $_FILES['selfie_out']['error'] === UPLOAD_ERR_OK) {
         $fileExtension = validateFile($_FILES['selfie_out'], $allowedExtensions, $allowedMimeTypes);
-        $selfie_out_filename = $username . '_out_' . $mode . date('Ymd_His') . '.' . $fileExtension;
-        $selfie_out_path = $userDir . $selfie_out_filename;
-        move_uploaded_file($_FILES['selfie_out']['tmp_name'], $selfie_out_path);
-        optimizeImage($selfie_out_path); // Optimize image
+        $tempFilePath = $temp_dir . uniqid('selfie_out_', true) . '.' . $fileExtension;
+        if (!move_uploaded_file($_FILES['selfie_out']['tmp_name'], $tempFilePath)) {
+            throw new Exception("Failed to move uploaded file to temporary directory.");
+        }
+        optimizeImage($tempFilePath);
+        $selfie_out_path = moveFileToUserDir($tempFilePath, $username, $fileExtension, 'out_' . $mode);
     }
 
     if ($mode === 'Office') {
-        $data1 = filter_input(INPUT_POST, 'data1', FILTER_SANITIZE_STRING);
+        $data1 = isset($_POST['data1']) ? htmlspecialchars($_POST['data1'], ENT_QUOTES, 'UTF-8') : '';
 
         if ($scanType === "In") {
             $sql = "INSERT INTO attendance (user_id, mode, data, in_time, selfie_in) VALUES (?, ?, ?, ?, ?)
@@ -115,25 +156,20 @@ try {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("issss", $user_id, $mode, $data1, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
-            // Check if there's an existing record for the same day
-            $checkSql = "SELECT COUNT(*) FROM attendance WHERE user_id = ? AND data = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            $checkSql = "SELECT id FROM attendance WHERE user_id = ? AND data = ? AND mode = ? AND DATE(in_time) = DATE(?)";
             $checkStmt = $conn->prepare($checkSql);
             $checkStmt->bind_param("isss", $user_id, $data1, $mode, $date);
             $checkStmt->execute();
-            $checkStmt->bind_result($count);
+            $checkStmt->bind_result($attendance_id);
             $checkStmt->fetch();
             $checkStmt->close();
 
-            if ($count > 0) {
-                // Update existing record
-                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND data = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            if ($attendance_id) {
+                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssisss", $timestamp, $selfie_out_path, $user_id, $data1, $mode, $date);
+                $stmt->bind_param("ssi", $timestamp, $selfie_out_path, $attendance_id);
             } else {
-                // Insert new record if no existing record for today
-                $sql = "INSERT INTO attendance (user_id, mode, data, in_time, selfie_in, out_time, selfie_out) VALUES (?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("issssss", $user_id, $mode, $data1, $timestamp, $selfie_in_path, $timestamp, $selfie_out_path);
+                sendJsonResponse('error', 'You are not in same Office.');
             }
         } else {
             throw new Exception("Invalid scan type.");
@@ -148,27 +184,22 @@ try {
             $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, in_time, selfie_in) VALUES (?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isddss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path);
+            $stmt->bind_param("isssss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
-            // Check if there's an existing record for the same day
-            $checkSql = "SELECT COUNT(*) FROM attendance WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            $checkSql = "SELECT id FROM attendance WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND DATE(in_time) = DATE(?)";
             $checkStmt = $conn->prepare($checkSql);
-            $checkStmt->bind_param("iddss", $user_id, $latitude, $longitude, $mode, $date);
+            $checkStmt->bind_param("issss", $user_id, $latitude, $longitude, $mode, $date);
             $checkStmt->execute();
-            $checkStmt->bind_result($count);
+            $checkStmt->bind_result($attendance_id);
             $checkStmt->fetch();
             $checkStmt->close();
 
-            if ($count > 0) {
-                // Update existing record
-                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            if ($attendance_id) {
+                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssiddss", $timestamp, $selfie_out_path, $user_id, $latitude, $longitude, $mode, $date);
+                $stmt->bind_param("ssi", $timestamp, $selfie_out_path, $attendance_id);
             } else {
-                // Insert new record if no existing record for today
-                $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, in_time, selfie_in, out_time, selfie_out) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("isddssss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path, $timestamp, $selfie_out_path);
+                sendJsonResponse('error', 'Please provide attendance for "In" before marking "Out".');
             }
         } else {
             throw new Exception("Invalid scan type.");
@@ -176,7 +207,6 @@ try {
     } else {
         throw new Exception("Invalid mode.");
     }
-
     if ($stmt->execute()) {
         // Update final_attendance table
         if ($scanType === 'In') {
@@ -230,10 +260,9 @@ try {
             $updateFinalStmt->bind_param("dis", $total_hours, $user_id, $date);
 
             if ($updateFinalStmt->execute()) {
-                $response = array('status' => 'success', 'message' => 'Attendance successfully.');
-                echo json_encode($response);
+                sendJsonResponse('success', 'Attendance recorded successfully.');
             } else {
-                throw new Exception("Failed to update total hours.");
+                sendJsonResponse('error', 'Failed to update total hours.');
             }
         } else {
             throw new Exception("Failed to record final attendance.");
@@ -242,14 +271,13 @@ try {
         throw new Exception("Failed to record attendance.");
     }
 
+    $stmt->execute();
     $stmt->close();
     $finalStmt->close();
     $conn->close();
-    
+
 } catch (Exception $e) {
     error_log($e->getMessage());
-    $response = array('status' => 'error', 'message' => 'Error: ' . $e->getMessage());
-    echo json_encode($response);
+    sendJsonResponse('error', 'Error: ' . $e->getMessage());
 }
-
 ?>

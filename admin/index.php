@@ -1,19 +1,31 @@
 <?php
-session_start();
-session_regenerate_id(true);
+// Check if a session hasn't been started yet
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Regenerate session ID if needed
+if (!isset($_SESSION['last_regeneration']) || time() - $_SESSION['last_regeneration'] >= 60) {
+    session_regenerate_id(true);
+    $_SESSION['last_regeneration'] = time();
+}
+
+// Rest of your session checks
 if (!isset($_SESSION['user_id'])) {
-  header("Location: ../login.php");
-  exit();
+    header("Location: ../login.php");
+    exit();
 }
 if ($_SESSION['role'] !== 'admin') {
-  header("Location: ../home.php");
-  exit();
+    header("Location: ../home.php");
+    exit();
 }
-include("../assest/connection/config.php");
-include("include/header.php");
-include("include/topbar.php");
+
+// Include other files and continue with your script
+include_once("../assest/connection/config.php");
+include_once("include/header.php");
+include_once("include/topbar.php");
 $activePage = 'home';
-include("include/sidebar.php");
+include_once("include/sidebar.php");
 
 // Total employees
 $totalEmployeesQuery = "SELECT COUNT(*) AS total_employees FROM users WHERE role = 'user'";
@@ -31,10 +43,14 @@ FROM (
 ) AS daily_attendance";
 $averageAttendanceResult = $conn->query($averageAttendanceQuery);
 $averageAttendanceRow = $averageAttendanceResult->fetch_assoc();
-$averageAttendance = $averageAttendanceRow['average_attendance'];
+$averageAttendance = isset($averageAttendanceRow['average_attendance']) ? $averageAttendanceRow['average_attendance'] : 0;
 
 // Today's total present
-$totalPresentTodayQuery = "SELECT COUNT(*) AS total_present_today FROM attendance WHERE DATE(in_time) = CURDATE()";
+$totalPresentTodayQuery = "
+    SELECT COUNT(DISTINCT user_id) AS total_present_today
+    FROM final_attendance
+    WHERE DATE(first_in) = CURDATE()
+";
 $totalPresentTodayResult = $conn->query($totalPresentTodayQuery);
 $totalPresentTodayRow = $totalPresentTodayResult->fetch_assoc();
 $totalPresentToday = $totalPresentTodayRow['total_present_today'];
@@ -44,11 +60,13 @@ $totalAbsentToday = $totalEmployees - $totalPresentToday;
 
 // Monthly attendance data
 $monthlyAttendanceData = array();
-$monthlyAttendanceQuery = "SELECT DATE_FORMAT(in_time, '%Y-%m') AS month_year, 
-                                  COUNT(*) AS attendance_count
-                           FROM attendance
-                           WHERE in_time IS NOT NULL
-                           GROUP BY DATE_FORMAT(in_time, '%Y-%m')";
+$monthlyAttendanceQuery = "
+    SELECT DATE_FORMAT(in_time, '%Y-%m') AS month_year, 
+           COUNT(DISTINCT DATE(in_time)) AS attendance_count
+    FROM attendance
+    WHERE in_time IS NOT NULL
+    GROUP BY DATE_FORMAT(in_time, '%Y-%m')
+";
 $monthlyAttendanceResult = $conn->query($monthlyAttendanceQuery);
 while ($row = $monthlyAttendanceResult->fetch_assoc()) {
   $monthlyAttendanceData[$row['month_year']] = $row['attendance_count'];
@@ -77,15 +95,15 @@ while ($row = $yearlyAttendanceResult->fetch_assoc()) {
 
 $daysAgo = 15; // Updated to 15 days
 $recentAttendanceQuery = "
-    SELECT DATE(in_time) AS date, 
-           COUNT(*) AS present_count,
+    SELECT DATE(first_in) AS date, 
+           COUNT(DISTINCT user_id) AS present_count,
            (SELECT COUNT(*) 
             FROM users 
-            WHERE role = 'user') - COUNT(*) AS absent_count
-    FROM attendance
-    WHERE DATE(in_time) >= CURDATE() - INTERVAL $daysAgo DAY
-    GROUP BY DATE(in_time)
-    ORDER BY DATE(in_time) DESC
+            WHERE role = 'user') - COUNT(DISTINCT user_id) AS absent_count
+    FROM final_attendance
+    WHERE DATE(first_in) >= CURDATE() - INTERVAL $daysAgo DAY
+    GROUP BY DATE(first_in)
+    ORDER BY DATE(first_in) DESC
 ";
 $recentAttendanceResult = $conn->query($recentAttendanceQuery);
 
@@ -96,7 +114,6 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
         'absent_count' => $row['absent_count']
     );
 }
-
 ?>
 
 <div class="content-wrapper">
@@ -190,22 +207,6 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
             <canvas id="barChart" style="height: 380px;"></canvas>
           </div>
         </div>
-       
-     <!-- Main row -->
-<div class="row">
-  <section class="col-12 connectedSortable">
-    <!-- Line chart -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">Yearly Attendance</h3>
-      </div>
-      <div class="card-body">
-        <canvas id="lineChart" style="height: 300px; width: 100%;"></canvas>
-      </div>
-    </div>
-  </section>
-</div>
-      <!-- /.row (main row) -->
     </div><!-- /.container-fluid -->
   </section>
   <!-- /.content -->
@@ -233,15 +234,6 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
     var months = Object.keys(monthlyData);
     var monthlyCounts = Object.values(monthlyData);
 
-    // Yearly data
-    var yearlyMonths = Object.keys(yearlyData);
-    var presentCounts = yearlyMonths.map(function(month) {
-      return yearlyData[month]['present_count'];
-    });
-    var absentCounts = yearlyMonths.map(function(month) {
-      return yearlyData[month]['absent_count'];
-    });
-
     // Last 5 Days data
     var recentDates = Object.keys(recentData);
     var recentPresents = recentDates.map(function(date) {
@@ -249,52 +241,6 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
     });
     var recentAbsents = recentDates.map(function(date) {
       return recentData[date]['absent_count'];
-    });
-
-    // Yearly Attendance Chart
-    var ctxLine = document.getElementById('lineChart').getContext('2d');
-    var lineChart = new Chart(ctxLine, {
-      type: 'line',
-      data: {
-        labels: yearlyMonths,
-        datasets: [{
-            label: 'Present',
-            data: presentCounts,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1,
-            fill: false
-          },
-          {
-            label: 'Absent',
-            data: absentCounts,
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1,
-            fill: false
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          xAxes: [{
-            display: true,
-            scaleLabel: {
-              display: true,
-              labelString: 'Month'
-            }
-          }],
-          yAxes: [{
-            display: true,
-            scaleLabel: {
-              display: true,
-              labelString: 'Attendance Count'
-            }
-          }]
-        }
-      }
     });
 
     // Last 5 Days Attendance Chart

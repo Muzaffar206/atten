@@ -165,13 +165,36 @@ $stmt_users->close();
                                                 $total_absents = 0;
                                                 $total_half_days = 0;
                                                 $total_full_days = 0;
+
+                                                // Fetch all 'data' entries for this user within the date range
+                                                $data_query = "SELECT DATE(a.in_time) as date, a.data 
+                       FROM attendance a 
+                       WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
+                                                $stmt_data = $conn->prepare($data_query);
+                                                $stmt_data->bind_param("iss", $user['id'], $from_date, $to_date_adjusted);
+                                                $stmt_data->execute();
+                                                $data_result = $stmt_data->get_result();
+
+                                                $user_data = [];
+                                                while ($data_row = $data_result->fetch_assoc()) {
+                                                    $user_data[date('d-m-Y', strtotime($data_row['date']))] = $data_row['data'];
+                                                }
+                                                $stmt_data->close();
+
                                                 foreach ($dates as $date) :
                                                     $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
                                                     $day_of_week = $attendance_date->format('w');
                                                 ?>
                                                     <td <?php if ($day_of_week == 0) echo 'style="background-color: #f0f0f0;"'; ?>>
                                                         <?php
-                                                        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present, a.data 
+                                                        // Display the 'data' for this date if it exists
+                                                        if (isset($user_data[$date])) {
+                                                            echo $user_data[$date] . "<br>";
+                                                        } else {
+                                                            echo "";
+                                                        }
+
+                                                        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present 
                     FROM final_attendance fa
                     LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
                     WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
@@ -183,7 +206,6 @@ $stmt_users->close();
 
                                                         if ($attendance_result->num_rows > 0) {
                                                             $attendance_data = $attendance_result->fetch_assoc();
-                                                            echo $user['data'] . "<br>";
                                                             echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
                                                             echo "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "<br>";
                                                             echo "First Mode: " . $attendance_data['first_mode'] . "<br>";

@@ -11,14 +11,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Define the cutoff time for old selfies
-$twoMinutesAgo = date('Y-m-d H:i:s', strtotime('-2 minutes'));
+// Define the cutoff time for old selfies (24 hours ago)
+$twentyFourHoursAgo = date('Y-m-d H:i:s', strtotime('-24 hours'));
 
 // Display alert for old selfies
 function displayAlert() {
     if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
         echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Reminder!</strong> Please delete selfies older than 2 minutes.
+                <strong>Reminder!</strong> Please delete selfies older than 24 hours.
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -36,7 +36,7 @@ if (!$stmt) {
     echo "An error occurred. Please try again later.";
     exit();
 }
-$stmt->bind_param('ss', $twoMinutesAgo, $twoMinutesAgo);
+$stmt->bind_param('ss', $twentyFourHoursAgo, $twentyFourHoursAgo);
 if (!$stmt->execute()) {
     echo "An error occurred. Please try again later.";
     exit();
@@ -60,16 +60,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     }
 
     // Function to recursively delete old files
-    function deleteOldFiles($dir, $twoMinutesAgo, &$deletedSelfiesCount) {
+    function deleteOldFiles($dir, $twentyFourHoursAgo, &$deletedSelfiesCount) {
         $files = scandir($dir);
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') continue;
             $filePath = $dir . $file;
             if (is_dir($filePath)) {
-                deleteOldFiles($filePath . '/', $twoMinutesAgo, $deletedSelfiesCount);
+                deleteOldFiles($filePath . '/', $twentyFourHoursAgo, $deletedSelfiesCount);
             } else {
                 $fileModTime = filemtime($filePath);
-                if ($fileModTime < strtotime($twoMinutesAgo)) {
+                if ($fileModTime < strtotime($twentyFourHoursAgo)) {
                     if (unlink($filePath)) {
                         $deletedSelfiesCount++;
                     } else {
@@ -81,9 +81,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
     }
 
     // Delete old files from the file system
-    deleteOldFiles($selfiesDir, $twoMinutesAgo, $deletedSelfiesCount);
+    deleteOldFiles($selfiesDir, $twentyFourHoursAgo, $deletedSelfiesCount);
 
-    // Update database to NULL only for selfies older than 2 minutes
+    // Update database to NULL only for selfies older than 24 hours
     $sqlUpdate = "UPDATE attendance 
                   SET selfie_in = CASE 
                         WHEN selfie_in IS NOT NULL AND in_time < ? THEN NULL 
@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete_selfies'])) {
         echo "An error occurred. Please try again later.";
         exit();
     }
-    $stmtUpdate->bind_param('ssss', $twoMinutesAgo, $twoMinutesAgo, $twoMinutesAgo, $twoMinutesAgo);
+    $stmtUpdate->bind_param('ssss', $twentyFourHoursAgo, $twentyFourHoursAgo, $twentyFourHoursAgo, $twentyFourHoursAgo);
     if (!$stmtUpdate->execute()) {
         echo "An error occurred. Please try again later.";
         exit();

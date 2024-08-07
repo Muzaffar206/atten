@@ -83,20 +83,15 @@ $conn->close();
 
                 </div>
                 <!-- Camera Section -->
-                <div class="camera-container">
-                    <div id="camera" class="camera" style="display: none;">
-                        <!-- Placeholder for camera display -->
-                    </div>
-                    <div id="cameraSelfie" class="camera" style="display: none;">
-                        <video id="video" width="500" height="400" autoplay></video>
-                        <canvas id="canvas" width="500" height="400" style="display: none;"></canvas>
-                        <button class="button123" onclick="captureSelfie()">Capture Selfie</button>
-                    </div>
+                <div id="camera" style="display:none;"></div>
+                <div class="camera-container" style="display:none;">
+                    <video id="video" width="320" height="240" autoplay></video>
+                    <canvas id="canvas" style="display:none;"></canvas>
                 </div>
-
+                
 
                 <div class="container-login100-form-btn">
-                    <button class="button123" onclick="document.location='logout.php'"><span>Logout!</span></button>
+                    <button class="btn btn-danger" onclick="document.location='logout.php'"><span>Logout!</span></button>
                 </div>
 
                 <div class="container-login100-form-btn">

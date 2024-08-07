@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 30, 2024 at 09:57 PM
+-- Generation Time: Jul 31, 2024 at 09:00 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -79,12 +79,13 @@ INSERT INTO `attendance` (`id`, `user_id`, `mode`, `latitude`, `longitude`, `sel
 (163, 2, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-27 00:35:30', '2024-07-27 00:35:49', 1, NULL, NULL),
 (164, 5, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-29 21:05:20', '2024-07-29 23:58:57', 0, NULL, NULL),
 (165, 5, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-29 21:25:24', '2024-07-29 23:58:57', 1, NULL, NULL),
-(166, 5, 'Outdoor', 19.07480000, 72.88560000, 'admin/Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240730_000249.jpg', 'In', '2024-07-30 00:02:49', '2024-07-30 22:58:05', 1, 'admin/Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240730_225805.jpg', NULL),
-(167, 5, 'Outdoor', 19.07480000, 72.88560000, 'admin/Selfies_in&out/Mesco Admin/Mesco Admin_in_Outdoor20240730_000253.jpg', 'In', '2024-07-30 00:02:53', '2024-07-30 22:58:05', 1, 'admin/Selfies_in&out/Mesco Admin/Mesco Admin_out_Outdoor20240730_225805.jpg', NULL),
-(168, 2, 'Office', NULL, NULL, 'admin/Selfies_in&out/admin1/admin1_in_Office20240730_223534.jpg', 'In', '2024-07-30 22:35:34', NULL, 1, NULL, 'http://en.m.wikipedia.org'),
-(169, 2, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-30 23:20:11', '2024-07-30 23:20:11', 0, 'admin/Selfies_in&out/admin1/admin1_out_Outdoor20240730_232011.jpg', NULL),
-(170, 9, 'Outdoor', 19.07480000, 72.88560000, 'admin/Selfies_in&out/vasi/vasi_in_Outdoor20240730_233102.jpg', 'In', '2024-07-30 23:31:02', NULL, 1, NULL, NULL),
-(171, 9, 'Outdoor', 19.07480000, 72.88560000, 'admin/Selfies_in&out/vasi/vasi_in_Outdoor20240731_002500.jpg', 'In', '2024-07-31 00:25:00', '2024-07-31 00:25:05', 1, 'admin/Selfies_in&out/vasi/vasi_out_Outdoor20240731_002505.jpg', NULL);
+(166, 5, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-30 00:02:49', '2024-07-30 22:58:05', 1, NULL, NULL),
+(167, 5, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-30 00:02:53', '2024-07-30 22:58:05', 1, NULL, NULL),
+(168, 2, 'Office', NULL, NULL, NULL, 'In', '2024-07-30 22:35:34', NULL, 1, NULL, 'http://en.m.wikipedia.org'),
+(169, 2, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-30 23:20:11', '2024-07-30 23:20:11', 0, NULL, NULL),
+(170, 9, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-30 23:31:02', NULL, 1, NULL, NULL),
+(171, 9, 'Outdoor', 19.07480000, 72.88560000, NULL, 'In', '2024-07-31 00:25:00', '2024-07-31 00:25:05', 1, NULL, NULL),
+(172, 2, 'Outdoor', 19.07480000, 72.88560000, 'admin/Selfies_in&out/admin1/admin1_in_Outdoor20240801_001344.jpg', 'In', '2024-08-01 00:13:44', NULL, 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -121,7 +122,8 @@ INSERT INTO `deletion_log` (`id`, `last_deletion`) VALUES
 (17, '2024-07-29 23:27:41'),
 (18, '2024-07-29 23:29:30'),
 (19, '2024-07-29 23:58:31'),
-(20, '2024-07-30 00:00:59');
+(20, '2024-07-30 00:00:59'),
+(21, '2024-07-31 22:55:02');
 
 -- --------------------------------------------------------
 
@@ -162,7 +164,8 @@ INSERT INTO `final_attendance` (`id`, `user_id`, `date`, `first_in`, `last_out`,
 (116, 5, '2024-07-30', '2024-07-30 00:02:49', '2024-07-30 22:58:05', 'Outdoor', 'Outdoor', 22.92),
 (119, 2, '2024-07-30', '2024-07-30 22:35:34', '2024-07-30 23:20:11', 'Office', 'Outdoor', 0.73),
 (124, 9, '2024-07-30', '2024-07-30 23:31:02', NULL, 'Outdoor', NULL, NULL),
-(125, 9, '2024-07-31', '2024-07-31 00:25:00', '2024-07-31 00:25:05', 'Outdoor', 'Outdoor', 0.00);
+(125, 9, '2024-07-31', '2024-07-31 00:25:00', '2024-07-31 00:25:05', 'Outdoor', 'Outdoor', 0.00),
+(127, 2, '2024-08-01', '2024-08-01 00:13:44', NULL, 'Outdoor', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -180,7 +183,6 @@ CREATE TABLE `users` (
   `email` varchar(255) DEFAULT NULL,
   `phone_number` varchar(20) DEFAULT NULL,
   `passport_size_photo` varchar(255) DEFAULT NULL,
-  `address` text DEFAULT NULL,
   `department` varchar(50) DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -189,20 +191,20 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `role`, `employer_id`, `full_name`, `email`, `phone_number`, `passport_size_photo`, `address`, `department`, `deleted_at`) VALUES
-(1, 'admin', '$2y$10$UXmq0ZlDumehBETVIybuqu6tL2QwoUXV76UGNe79cgJoL/SOQbJ2K', 'admin', 8554, 'afedsvhyku', 'alsb@gmail.com', '87998844', NULL, 'ewrdfvd', 'RC Mahim', NULL),
-(2, 'admin1', '$2y$10$6zHXLg8aX8Z43itLNEclIOXTnedgoQ.Pgo/hUIs/aum9F4VGcUPIa', 'user', 96546, 'admin herfedv', 'admin1523@gmail.com', '9136241545', NULL, 'rgevsdf', 'ROP', NULL),
-(3, 'admin2', '$2y$10$ga2WIAVzkDf8OpvfWsdovuDwpA8aEgZbbb48IqcsdMVjfQRYWVCbe', 'user', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(5, 'Mesco Admin', '$2y$10$rQohNR7CGWGen9iV9pXEEuwhwfa6Vy1Qt1d4HayiDfbo2L6SE.hvy', 'admin', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(7, 'Alfiya', '$2y$10$MQYU2mhsyuxVTvpWVMn/vOgAYgLPksxUJDxq1RwQB048pUWC2S1Iy', 'user', 82, 'Shaikh Alfiya', 'alfiya@gmail.com', '9136207148', 'uploads/1718910747_2 women.jpeg', 'Mumbai 400019', 'Education', NULL),
-(8, 'muzaffar', '$2y$10$JiCdkJA/MmrE07eqKQ0Xk.KhaNciCWQrKECO6C//4mY1p.MWuTGYO', 'user', 46, 'Muzaffar Shaikh', 'muzaffar@gmail.com', '9136207140', 'uploads/1718910911_taylor s.jpeg', 'Mumbai 400039', 'Admin', NULL),
-(9, 'vasi', '$2y$10$gNW6w1rokyP8P8qMc2Bhceqf65Z4ZPHVUXoPLTt.YlpIC9mQEirey', 'user', 69, 'Vasi Sayyed', 'Vasisayed09421@gmail.com', '8104771784', 'uploads/1718984381_5 women.jpeg', 'Kamla nagar', NULL, NULL),
-(10, 'test', '$2y$10$VA9tbKFjeIakK6PRAEOc7ObHUUnHXyVUsojiFCTt1j4eCtz1xYWqq', 'user', 58, 'Test Jhon', 'test@gmail.com', '9136542025', 'uploads/1719329921_WhatsApp Image 2023-09-21 at 10.59.42 PM.jpeg', 'Near mahim', NULL, '2024-07-17 09:47:11'),
-(11, 'new', '$2y$10$8GAcV17MJfXhg6.IJRQAte8hFXr46CQjTjZFkKrU8W6s/Ng4MwFIS', 'user', 12, 'new', 'new@gmail.com', '465464646', 'uploads/1719418665_hairr.png', 'nea new he', '0', NULL),
-(12, 'hehe', '$2y$10$Taw44Z26Pd/duOtznFLc7.yMtLlpMeAXzSz3nyxUJOroSNjFSsgtq', 'user', 45, 'hehe', 'hehe@gmail.com', '5465454534', 'uploads/1719419506_1691778874508.jpg', '', 'Education', '2024-07-17 09:48:01'),
-(14, 'xyz', '$2y$10$ynchnS7ONOnyCAP6bvFWvOSska1fHV9Lur17kPTiiPkNcOwvD5xJy', 'user', 52, 'xyx', 'xyz@gmail.com', '486864684', '../uploads/1719769769_taylor s.jpeg', 'edrgrfd', 'Medical', NULL),
-(15, 'Zeeshan', '$2y$10$.TTBeh5GEwO72pQ9mw05WOkAt5RcFTla6h1Bf/vOyytWAw13/RJPC', 'user', 854, 'zeeshan Shaikh', 'zee@gmail.com', '6874684684', '../uploads/1720863668_hair.png', '&lt;script&gt;alert(&quot;Hello there&quot;);&lt;/script&gt;', 'Education', NULL),
-(16, 'alfu', '$2y$10$cz5ymuwvhCrs48X6euMZZ.gTkPCLLflUe1gnD74GhEtu0UXEsphJu', 'user', 6654, 'alfu', 'alfu@mail.com', '546546546', '../uploads/1720864045_2 women.jpeg', '&lt;script&gt;alert(&quot;Hello&quot;);&lt;/script&gt;', 'Admin', NULL);
+INSERT INTO `users` (`id`, `username`, `password`, `role`, `employer_id`, `full_name`, `email`, `phone_number`, `passport_size_photo`, `department`, `deleted_at`) VALUES
+(1, 'admin', '$2y$10$UXmq0ZlDumehBETVIybuqu6tL2QwoUXV76UGNe79cgJoL/SOQbJ2K', 'admin', 85, 'afedsvhyku', 'alsb@gmail.com', '87998844', '../uploads/a1188771acfb6ecfd92c955939ff4840.jpeg', '', NULL),
+(2, 'admin1', '$2y$10$6zHXLg8aX8Z43itLNEclIOXTnedgoQ.Pgo/hUIs/aum9F4VGcUPIa', 'user', 96546, 'admin herfedv', 'admin1523@gmail.com', '9136241545', NULL, 'ROP', NULL),
+(3, 'admin2', '$2y$10$ga2WIAVzkDf8OpvfWsdovuDwpA8aEgZbbb48IqcsdMVjfQRYWVCbe', 'user', 0, '', '', '', NULL, 'Medical', NULL),
+(5, 'Mesco Admin', '$2y$10$rQohNR7CGWGen9iV9pXEEuwhwfa6Vy1Qt1d4HayiDfbo2L6SE.hvy', 'admin', 0, 'MAin admin', '', '', NULL, '', NULL),
+(7, 'Alfiya', '$2y$10$MQYU2mhsyuxVTvpWVMn/vOgAYgLPksxUJDxq1RwQB048pUWC2S1Iy', 'user', 82, 'Shaikh Alfiya', 'alfiya@gmail.com', '9136207148', 'uploads/1718910747_2 women.jpeg', 'Education', '2024-07-31 17:30:48'),
+(8, 'muzaffar', '$2y$10$JiCdkJA/MmrE07eqKQ0Xk.KhaNciCWQrKECO6C//4mY1p.MWuTGYO', 'user', 46, 'Muzaffar Shaikh', 'muzaffar@gmail.com', '9136207140', 'uploads/1718910911_taylor s.jpeg', 'Admin', NULL),
+(9, 'vasi', '$2y$10$gNW6w1rokyP8P8qMc2Bhceqf65Z4ZPHVUXoPLTt.YlpIC9mQEirey', 'user', 69, 'Vasi Sayyed', 'Vasisayed09421@gmail.com', '8104771784', 'uploads/1718984381_5 women.jpeg', NULL, NULL),
+(10, 'test', '$2y$10$VA9tbKFjeIakK6PRAEOc7ObHUUnHXyVUsojiFCTt1j4eCtz1xYWqq', 'user', 58, 'Test Jhon', 'test@gmail.com', '9136542025', 'uploads/1719329921_WhatsApp Image 2023-09-21 at 10.59.42 PM.jpeg', NULL, '2024-07-17 09:47:11'),
+(11, 'new', '$2y$10$8GAcV17MJfXhg6.IJRQAte8hFXr46CQjTjZFkKrU8W6s/Ng4MwFIS', 'user', 12, 'new', 'new@gmail.com', '465464646', 'uploads/1719418665_hairr.png', '0', '2024-07-31 17:26:25'),
+(12, 'hehe', '$2y$10$Taw44Z26Pd/duOtznFLc7.yMtLlpMeAXzSz3nyxUJOroSNjFSsgtq', 'user', 45, 'hehe', 'hehe@gmail.com', '5465454534', 'uploads/1719419506_1691778874508.jpg', 'Education', '2024-07-17 09:48:01'),
+(14, 'xyz', '$2y$10$ynchnS7ONOnyCAP6bvFWvOSska1fHV9Lur17kPTiiPkNcOwvD5xJy', 'user', 52, 'xyx', 'xyz@gmail.com', '486864684', '../uploads/1719769769_taylor s.jpeg', 'Medical', '2024-07-31 17:28:45'),
+(15, 'Zeeshan', '$2y$10$.TTBeh5GEwO72pQ9mw05WOkAt5RcFTla6h1Bf/vOyytWAw13/RJPC', 'user', 854, 'zeeshan Shaikh', 'zee@gmail.com', '6874684684', '../uploads/1720863668_hair.png', 'Education', NULL),
+(16, 'alfu', '$2y$10$cz5ymuwvhCrs48X6euMZZ.gTkPCLLflUe1gnD74GhEtu0UXEsphJu', 'user', 6654, 'alfu', 'alfu@mail.com', '546546546', '../uploads/1720864045_2 women.jpeg', 'Admin', NULL);
 
 --
 -- Indexes for dumped tables
@@ -243,19 +245,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT for table `deletion_log`
 --
 ALTER TABLE `deletion_log`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `final_attendance`
 --
 ALTER TABLE `final_attendance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT for table `users`

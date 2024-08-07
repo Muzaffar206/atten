@@ -60,40 +60,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = 'Passwords do not match. Please re-enter passwords.';
     }
 
-    // Check file uploads and accumulate errors
-    $uploadOk = 1;
-    if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0) {
-        // File upload
-        $target_dir = "../uploads/";
-        $target_file = $target_dir . time() . '_' . basename($_FILES["passport_size_photo"]["name"]);
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-        // Check if image file is an actual image or fake image
-        $check = getimagesize($_FILES["passport_size_photo"]["tmp_name"]);
-        if ($check === false) {
-            $errors[] = 'File is not an image.';
-            $uploadOk = 0;
-        }
-
-        // Check if file already exists
-        if (file_exists($target_file)) {
-            $errors[] = 'Sorry, file already exists.';
-            $uploadOk = 0;
-        }
-
-        // Check file size (limit to 5MB)
-        if ($_FILES["passport_size_photo"]["size"] > 5000000) {
-            $errors[] = 'Sorry, your file is too large.';
-            $uploadOk = 0;
-        }
-
-        // Allow certain file formats
-        if (!in_array($imageFileType, ["jpg", "jpeg", "png", "gif"])) {
-            $errors[] = 'Sorry, only JPG, JPEG, PNG & GIF files are allowed.';
-            $uploadOk = 0;
-        }
-    }
-
     // If there are errors, display them in a single alert message
     if (!empty($errors)) {
         $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
@@ -106,25 +72,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           </div>';
     } else {
         // No errors, proceed with user registration
-        $passport_size_photo = null;
-        if (isset($_FILES["passport_size_photo"]) && $_FILES["passport_size_photo"]["error"] == 0 && $uploadOk == 1) {
-            // Handle file upload
-            if (move_uploaded_file($_FILES["passport_size_photo"]["tmp_name"], $target_file)) {
-                $passport_size_photo = $target_file;
-            } else {
-                $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        Sorry, there was an error uploading your file.
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>';
-            }
-        }
-
         // Insert user data into the database
-        $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, passport_size_photo, department, role) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $sql->bind_param("ssisssssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $passport_size_photo, $department, $role);
+        $sql = $conn->prepare("INSERT INTO users (username, password, employer_id, full_name, email, phone_number, department, role) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $sql->bind_param("ssisssss", $username, $password, $employer_id, $full_name, $email, $phone_number, $department, $role);
 
         if ($sql->execute() === TRUE) {
             $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -219,19 +170,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="exampleInputFile">File input</label>
-                                    <div class="input-group">
-                                        <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="exampleInputFile" name="passport_size_photo" accept="image/*">
-                                            <label class="custom-file-label" for="exampleInputFile">Choose file</label>
-                                        </div>
-                                        <div class="input-group-append">
-                                            <span class="input-group-text">Upload</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
                                     <label>Select Department</label>
                                     <select name="department" id="department" class="form-control select2" style="width: 100%;" required>
                                         <option value="">Select department</option>
@@ -239,12 +177,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <option value="Medical">Medical</option>
                                         <option value="ROP">ROP</option>
                                         <option value="Admin">Admin</option>
-                                        <option value="Admin">Accounts</option>
-                                        <option value="Admin">FRD</option>
-                                        <option value="Admin">Newspaper</option>
-                                        <option value="Admin">RC Mahim</option>
-                                        <option value="Admin">Study centre</option>
+                                        <option value="Accounts">Accounts</option>
+                                        <option value="FRD">FRD</option>
+                                        <option value="Newspaper">Newspaper</option>
+                                        <option value="RC Mahim">RC Mahim</option>
+                                        <option value="Study centre">Study centre</option>
                                         <option value="Clinics">Clinics</option>
+                                        <option value="EO">EO</option>
                                     </select>
                                 </div>
 
@@ -272,7 +211,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </div>
 <!-- /.content-wrapper -->
 
-
 <?php include("include/footer.php"); ?>
 
 <script>
@@ -280,18 +218,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
 
-    togglePassword.addEventListener('click', function() {
+    togglePassword.addEventListener('click', function (e) {
+        // Toggle the type attribute
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
+        // Toggle the eye icon
         this.classList.toggle('fa-eye-slash');
     });
 
-    // Show selected file name in input field
-    const inputFile = document.getElementById('exampleInputFile');
-    const inputLabel = document.querySelector('.custom-file-label');
+    const confirmTogglePassword = document.getElementById('toggleConfirmPassword');
+    const confirmPassword = document.getElementById('confirm_password');
 
-    inputFile.addEventListener('change', function() {
-        const fileName = this.files[0].name;
-        inputLabel.textContent = fileName;
+    confirmTogglePassword.addEventListener('click', function (e) {
+        const type = confirmPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPassword.setAttribute('type', type);
+        this.classList.toggle('fa-eye-slash');
     });
 </script>

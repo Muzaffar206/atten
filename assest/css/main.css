@@ -607,68 +607,35 @@ iframe {
   font-weight: 600;
 }
 
-.button123 {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 10px 15px;
-  background-color: #212121;
-  border: none;
-  font: inherit;
-  color: #e8e8e8;
-  font-size: 15px;
-  font-weight: 300;
-  border-radius: 50px;
-  cursor: not-allowed;
-  overflow: hidden;
-  transition: all 0.3s ease cubic-bezier(0.23, 1, 0.320, 1);
-}
 
-.button123 span {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-}
 
-.button123::before {
-  position: absolute;
-  content: '';
+.camera-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  translate: 0 105%;
-  background-color: #F53844;
-  transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
 
-.button123:hover {
-  animation: shake 0.2s linear 1;
+.button-container {
+  text-align: center;
 }
 
-.button123:hover::before {
-  translate: 0 0;
+.capture-button {
+  padding: 10px 20px;
+  font-size: 24px;
+  background-color: #9152f8;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 20px;
 }
-
-@keyframes shake {
-  0% {
-    rotate: 0deg;
-  }
-
-  33% {
-    rotate: 10deg;
-  }
-
-  66% {
-    rotate: -10deg;
-  }
-
-  100% {
-    rotate: 10deg;
-  }
-}
-
 
 /* Preloader */
 
