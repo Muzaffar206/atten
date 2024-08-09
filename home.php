@@ -46,7 +46,10 @@ $conn->close();
 
                 <span class="login100-form-title p-b-34 p-t-27">
                     Welcome <?php echo htmlspecialchars($username); ?>
+                    <div class="reminder">
+                    <p class="reminder-note">If you have marked as <b>"In"</b>, please remember<br> to mark as <b>"Out"</b> before leaving.</p></div>
                 </span>
+                
 
                 <div class="wrap-input100">
                     <div class="radio-inputs">
