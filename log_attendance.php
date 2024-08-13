@@ -175,29 +175,31 @@ try {
             throw new Exception("Invalid scan type.");
         }
     } else if ($mode === 'Outdoor') {
-        $coords = filter_input(INPUT_POST, 'data1', FILTER_SANITIZE_STRING);
+        $coords = htmlspecialchars($_POST['data1'], ENT_QUOTES, 'UTF-8');
         $coords = explode(',', $coords);
         $latitude = filter_var($coords[0], FILTER_VALIDATE_FLOAT);
         $longitude = filter_var($coords[1], FILTER_VALIDATE_FLOAT);
-
+    
         if ($scanType === "In") {
             $sql = "INSERT INTO attendance (user_id, mode, latitude, longitude, in_time, selfie_in) VALUES (?, ?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("isssss", $user_id, $mode, $latitude, $longitude, $timestamp, $selfie_in_path);
         } else if ($scanType === "Out") {
-            $checkSql = "SELECT id FROM attendance WHERE user_id = ? AND latitude = ? AND longitude = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            $checkSql = "SELECT id FROM attendance WHERE user_id = ? AND mode = ? AND DATE(in_time) = ?";
             $checkStmt = $conn->prepare($checkSql);
-            $checkStmt->bind_param("issss", $user_id, $latitude, $longitude, $mode, $date);
+            $date = date('Y-m-d', strtotime($timestamp));  // Ensure $date is in 'Y-m-d' format
+            $checkStmt->bind_param("iss", $user_id, $mode, $date);
             $checkStmt->execute();
             $checkStmt->bind_result($attendance_id);
             $checkStmt->fetch();
             $checkStmt->close();
-
+    
             if ($attendance_id) {
                 $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ssi", $timestamp, $selfie_out_path, $attendance_id);
+                $stmt->execute();
             } else {
                 sendJsonResponse('error', 'Please provide attendance for "In" before marking "Out".');
             }
@@ -207,6 +209,7 @@ try {
     } else {
         throw new Exception("Invalid mode.");
     }
+    
     if ($stmt->execute()) {
         // Update final_attendance table
         if ($scanType === 'In') {

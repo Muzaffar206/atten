@@ -11,24 +11,28 @@ function enableAttendance() {
     alert("Please select In or Out.");
     return;
   }
-  // Create overlay
-  const overlay = document.createElement("div");
-  overlay.id = "attendance-overlay";
-  overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-  overlay.style.backdropFilter = "blur(5px)";
-  overlay.style.zIndex = "1000";
-  overlay.style.display = "flex";
-  overlay.style.justifyContent = "center";
-  overlay.style.alignItems = "center";
-  document.body.appendChild(overlay);
 
 
-  // Create container for camera
+
+
+  if (mode === "office") {
+
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.id = "attendance-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+    overlay.style.backdropFilter = "blur(5px)";
+    overlay.style.zIndex = "1000";
+    overlay.style.display = "flex";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    document.body.appendChild(overlay);
+     // Create container for camera
   const cameraContainer = document.createElement("div");
   cameraContainer.id = "camera-container";
   cameraContainer.style.width = "80%";
@@ -38,10 +42,9 @@ function enableAttendance() {
   cameraContainer.style.borderRadius = "10px";
   cameraContainer.style.overflow = "hidden";
   overlay.appendChild(cameraContainer);
+    // Move the camera element inside the new container
+    cameraContainer.appendChild(cameraElement);
 
-  // Move the camera element inside the new container
-  cameraContainer.appendChild(cameraElement);
-  if (mode === "office") {
     getLocationForOffice(type);
   } else if (mode === "outdoor") {
     getLocationForOutdoor(type);
@@ -220,7 +223,7 @@ function startCamera(scanType) {
   };
 
   const config = {
-    fps: 30,
+    fps: 20,
     qrbox: { width: 250, height: 250 },
     aspectRatio: 1.0,
     disableFlip: false,
@@ -325,14 +328,37 @@ function logAttendance(mode, data1, data2, selfie, scanType) {
       hideLoadingScreen();
       try {
         const response = JSON.parse(xhr.responseText.trim());
-        alert(response.status === "success" ? response.message : "Error: " + response.message);
+        if (response.status === "success") {
+          showSuccessIcon();
+        } else {
+          showErrorIcon();
+        }        
+        
       } catch (e) {
         console.error("Error parsing response:", e);
-        alert("An error occurred. Please try again.");
+        showErrorIcon(); 
       }
     }
   };
 
+  function showSuccessIcon() {
+    const overlay = document.getElementById("successOverlay");
+    overlay.style.display = "block";
+  
+    setTimeout(() => {
+      overlay.style.display = "none";
+    }, 2000);
+  }
+  
+  function showErrorIcon() {
+    const overlay = document.getElementById("errorOverlay");
+    overlay.style.display = "block";
+  
+    setTimeout(() => {
+      overlay.style.display = "none";
+    }, 2000);
+  }
+  
   const formData = new FormData();
   formData.append("mode", mode);
   formData.append("data1", data1);

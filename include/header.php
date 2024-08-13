@@ -3,6 +3,7 @@
     <link rel="stylesheet" href="assest/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="assest/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
 	<link rel="stylesheet" type="text/css" href="assest/fonts/iconic/css/material-design-iconic-font.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 	<link rel="stylesheet" type="text/css" href="assest/css/util.css">
 	<link rel="stylesheet" type="text/css" href="assest/css/main.css">
 </head>

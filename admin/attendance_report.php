@@ -27,6 +27,11 @@ $entriesPerPage = isset($_GET['entries_per_page']) ? (int)$_GET['entries_per_pag
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $entriesPerPage;
 
+// Set default date to today if not specified
+if (empty($startDate) && empty($endDate)) {
+    $startDate = $endDate = date('Y-m-d');
+}
+
 // Fetch departments dynamically
 $departmentsQuery = "SELECT DISTINCT department FROM users";
 $departmentsResult = $conn->query($departmentsQuery);
@@ -141,6 +146,25 @@ include("include/topbar.php");
 $activePage = 'attendance_report';
 include("include/sidebar.php");
 ?>
+<style>
+    .table-container {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+    }
+    .table-scroll {
+        overflow-x: auto;
+        margin-bottom: 15px;
+    }
+    .top-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+        height: 20px;
+    }
+    .top-scroll-inner {
+        height: 20px;
+    }
+</style>
 <div class="content-wrapper">
     <section class="content-header">
         <div class="container-fluid">
@@ -167,7 +191,6 @@ include("include/sidebar.php");
 
                         <div class="card-body">
                             <div class="mb-3">
-
                                 <form method="GET" action="" class="mb-3">
                                     <div class="row">
                                         <div class="col-md-3">
@@ -270,102 +293,111 @@ include("include/sidebar.php");
                                 ?>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-bordered table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Employee ID</th>
-                                            <th>Username</th>
-                                            <th>Full Name</th>
-                                            <th>Department</th>
-                                            <th>Mode</th>
-                                            <th>Where</th>
-                                            <th>Latitude</th>
-                                            <th>Longitude</th>
-                                            <th>In Time</th>
-                                            <th>Out Time</th>
-                                            <th>Selfie In</th>
-                                            <th>Selfie Out</th>
-                                            <th>Map</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        if ($result->num_rows > 0) {
-                                            while ($row = $result->fetch_assoc()) {
-                                                $latitude = !empty($row['latitude']) ? $row['latitude'] : 'NA';
-                                                $longitude = !empty($row['longitude']) ? $row['longitude'] : 'NA';
-                                        ?>
-                                                <tr>
-                                                    <td><?php echo $row['attendance_id']; ?></td>
-                                                    <td><?php echo $row['employer_id']; ?></td>
-                                                    <td><?php echo $row['username']; ?></td>
-                                                    <td><?php echo $row['full_name']; ?></td>
-                                                    <td><?php echo $row['department']; ?></td>
-                                                    <td><?php echo $row['mode']; ?></td>
-                                                    <td><?php echo $row['data']; ?></td>
-                                                    <td><?php echo $latitude; ?></td>
-                                                    <td><?php echo $longitude; ?></td>
-                                                    <td><?php echo $row['in_time']; ?></td>
-                                                    <td><?php echo $row['out_time']; ?></td>
-                                                    <td>
+                                <div style="width: 100%; overflow-x: auto;">
+                                    <div class="table-container">
+                                        <div class="top-scroll">
+                                            <div class="top-scroll-inner"></div>
+                                        </div>
+                                        <div class="table-scroll">
+                                    <div style="width: 1000px;"> <!-- Adjust this width as needed -->
+                                                <table class="table table-bordered table-striped table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Employee ID</th>
+                                                            <th>Username</th>
+                                                            <th>Full Name</th>
+                                                            <th>Department</th>
+                                                            <th>Mode</th>
+                                                            <th>Where</th>
+                                                            <th>Latitude</th>
+                                                            <th>Longitude</th>
+                                                            <th>In Time</th>
+                                                            <th>Out Time</th>
+                                                            <th>Selfie In</th>
+                                                            <th>Selfie Out</th>
+                                                            <th>Map</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
                                                         <?php
-                                                        $selfieInPath = $row['selfie_in'];
-                                                        $relativeSelfieInPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieInPath);
-                                                        $imageInSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieInPath);
-                                                        if (file_exists($imageInSrc)) : ?>
-                                                            <img src="<?php echo $imageInSrc; ?>" alt="Selfie In" width="70" height="70">
-                                                        <?php else : ?>
-                                                            N/A
-                                                        <?php endif; ?>
-                                                    </td>
-                                                    <td>
+                                                        if ($result->num_rows > 0) {
+                                                            while ($row = $result->fetch_assoc()) {
+                                                                $latitude = !empty($row['latitude']) ? $row['latitude'] : 'NA';
+                                                                $longitude = !empty($row['longitude']) ? $row['longitude'] : 'NA';
+                                                        ?>
+                                                                <tr>
+                                                                    <td><?php echo $row['attendance_id']; ?></td>
+                                                                    <td><?php echo $row['employer_id']; ?></td>
+                                                                    <td><?php echo $row['username']; ?></td>
+                                                                    <td><?php echo $row['full_name']; ?></td>
+                                                                    <td><?php echo $row['department']; ?></td>
+                                                                    <td><?php echo $row['mode']; ?></td>
+                                                                    <td><?php echo $row['data']; ?></td>
+                                                                    <td><?php echo $latitude; ?></td>
+                                                                    <td><?php echo $longitude; ?></td>
+                                                                    <td><?php echo $row['in_time']; ?></td>
+                                                                    <td><?php echo $row['out_time']; ?></td>
+                                                                    <td>
+                                                                        <?php
+                                                                        $selfieInPath = $row['selfie_in'];
+                                                                        $relativeSelfieInPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieInPath);
+                                                                        $imageInSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieInPath);
+                                                                        if (file_exists($imageInSrc)) : ?>
+                                                                            <img src="<?php echo $imageInSrc; ?>" alt="Selfie In" width="70" height="70">
+                                                                        <?php else : ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php
+                                                                        $selfieOutPath = $row['selfie_out'];
+                                                                        $relativeSelfieOutPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieOutPath);
+                                                                        $imageOutSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieOutPath);
+                                                                        if (file_exists($imageOutSrc)) : ?>
+                                                                            <img src="<?php echo $imageOutSrc; ?>" alt="Selfie Out" width="70" height="70">
+                                                                        <?php else : ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if (!empty($row['latitude']) && !empty($row['longitude'])) : ?>
+                                                                            <a href="https://maps.google.com/?q=<?php echo htmlspecialchars($row['latitude']); ?>,<?php echo htmlspecialchars($row['longitude']); ?>" target="_blank">View Map</a>
+                                                                        <?php else : ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                </tr>
                                                         <?php
-                                                        $selfieOutPath = $row['selfie_out'];
-                                                        $relativeSelfieOutPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieOutPath);
-                                                        $imageOutSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieOutPath);
-                                                        if (file_exists($imageOutSrc)) : ?>
-                                                            <img src="<?php echo $imageOutSrc; ?>" alt="Selfie Out" width="70" height="70">
-                                                        <?php else : ?>
-                                                            N/A
-                                                        <?php endif; ?>
-                                                    </td>
-
-                                                    <td>
-                                                        <?php if (!empty($row['latitude']) && !empty($row['longitude'])) : ?>
-                                                            <a href="https://maps.google.com/?q=<?php echo htmlspecialchars($row['latitude']); ?>,<?php echo htmlspecialchars($row['longitude']); ?>" target="_blank">View Map</a>
-                                                        <?php else : ?>
-                                                            N/A
-                                                        <?php endif; ?>
-                                                    </td>
-
-                                                </tr>
-                                        <?php
-                                            }
-                                        } else {
-                                            echo '<tr><td colspan="12">No records found</td></tr>';
-                                        }
-                                        ?>
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Employee ID</th>
-                                            <th>Username</th>
-                                            <th>Full Name</th>
-                                            <th>Department</th>
-                                            <th>Mode</th>
-                                            <th>Where</th>
-                                            <th>Latitude</th>
-                                            <th>Longitude</th>
-                                            <th>In Time</th>
-                                            <th>Out Time</th>
-                                            <th>Selfie In</th>
-                                            <th>Selfie Out</th>
-                                            <th>Map</th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                                                            }
+                                                        } else {
+                                                            echo '<tr><td colspan="14">No records found</td></tr>';
+                                                        }
+                                                        ?>
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Employee ID</th>
+                                                            <th>Username</th>
+                                                            <th>Full Name</th>
+                                                            <th>Department</th>
+                                                            <th>Mode</th>
+                                                            <th>Where</th>
+                                                            <th>Latitude</th>
+                                                            <th>Longitude</th>
+                                                            <th>In Time</th>
+                                                            <th>Out Time</th>
+                                                            <th>Selfie In</th>
+                                                            <th>Selfie Out</th>
+                                                            <th>Map</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="pagination">
                                 <!-- Pagination -->
@@ -381,16 +413,41 @@ include("include/sidebar.php");
                                 ]);
 
                                 echo '<nav aria-label="Page navigation">';
-                                echo '<ul class="pagination">';
+                                echo '<ul class="pagination justify-content-center">';
+
+                                // Previous button
                                 if ($page > 1) {
                                     echo '<li class="page-item"><a class="page-link" href="' . $baseUrl . 'page=' . ($page - 1) . '&' . $filterParams . '">Previous</a></li>';
                                 }
-                                for ($i = 1; $i <= $totalPages; $i++) {
+
+                                // First two pages
+                                for ($i = 1; $i <= min(2, $totalPages); $i++) {
                                     echo '<li class="page-item ' . ($page == $i ? 'active' : '') . '"><a class="page-link" href="' . $baseUrl . 'page=' . $i . '&' . $filterParams . '">' . $i . '</a></li>';
                                 }
+
+                                // Ellipsis and current page (if not in first two or last two)
+                                if ($page > 3 && $page < $totalPages - 2) {
+                                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                                    echo '<li class="page-item active"><a class="page-link" href="' . $baseUrl . 'page=' . $page . '&' . $filterParams . '">' . $page . '</a></li>';
+                                }
+
+                                // Ellipsis (if there are more than 4 pages)
+                                if ($totalPages > 4 && $page < $totalPages - 2) {
+                                    echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                                }
+
+                                // Last two pages
+                                for ($i = max($totalPages - 1, 3); $i <= $totalPages; $i++) {
+                                    if ($i > 2) {
+                                        echo '<li class="page-item ' . ($page == $i ? 'active' : '') . '"><a class="page-link" href="' . $baseUrl . 'page=' . $i . '&' . $filterParams . '">' . $i . '</a></li>';
+                                    }
+                                }
+
+                                // Next button
                                 if ($page < $totalPages) {
                                     echo '<li class="page-item"><a class="page-link" href="' . $baseUrl . 'page=' . ($page + 1) . '&' . $filterParams . '">Next</a></li>';
                                 }
+
                                 echo '</ul>';
                                 echo '</nav>';
                                 ?>
@@ -409,4 +466,22 @@ include("include/sidebar.php");
 <?php
 include("include/footer.php");
 ?>
-//
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    var tableScroll = document.querySelector('.table-scroll');
+    var topScroll = document.querySelector('.top-scroll');
+    var topScrollInner = document.querySelector('.top-scroll-inner');
+
+    // Set the width of the top scroll inner div to match the table width
+    topScrollInner.style.width = tableScroll.scrollWidth + 'px';
+
+    // Synchronize the scrolling
+    tableScroll.addEventListener('scroll', function() {
+        topScroll.scrollLeft = tableScroll.scrollLeft;
+    });
+
+    topScroll.addEventListener('scroll', function() {
+        tableScroll.scrollLeft = topScroll.scrollLeft;
+    });
+});
+</script>

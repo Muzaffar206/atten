@@ -135,13 +135,12 @@ $stmt_users->close();
                                     <input type="hidden" name="department" value="<?php echo $department; ?>">
                                     <input type="hidden" name="from_date" value="<?php echo $from_date; ?>">
                                     <input type="hidden" name="to_date" value="<?php echo $to_date; ?>">
-                                    <button type="submit" class="btn btn-success">Download XLS</button>
+                                    <button type="submit" class="btn btn-success">Download CSV</button>
                                 </form>
                             <?php endif; ?>
                         </div>
                         <!-- /.card-header -->
-
-                        <div class="card-body">
+                         <div class="card-body">
                             <div class="table-responsive">
                                 <table id="attendanceTable" class="table table-bordered table-hover">
                                     <thead id="sticky-header">
@@ -150,7 +149,7 @@ $stmt_users->close();
                                             <th>Employee Code</th>
                                             <th>Employee Name</th>
                                             <?php foreach ($dates as $date) : ?>
-                                                <th style="min-width: 45px;"><?php echo $date; ?></th>
+                                                <th style="min-width: 150px;"><?php echo $date; ?></th>
                                             <?php endforeach; ?>
                                             <th>Attendance Summary</th>
                                         </tr>
@@ -165,45 +164,30 @@ $stmt_users->close();
                                                 $total_absents = 0;
                                                 $total_half_days = 0;
                                                 $total_full_days = 0;
-
-                                                // Fetch all 'data' entries for this user within the date range
-                                                $data_query = "SELECT DATE(a.in_time) as date, a.data 
-                       FROM attendance a 
-                       WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
-                                                $stmt_data = $conn->prepare($data_query);
-                                                $stmt_data->bind_param("iss", $user['id'], $from_date, $to_date_adjusted);
-                                                $stmt_data->execute();
-                                                $data_result = $stmt_data->get_result();
-
-                                                $user_data = [];
-                                                while ($data_row = $data_result->fetch_assoc()) {
-                                                    $user_data[date('d-m-Y', strtotime($data_row['date']))] = $data_row['data'];
-                                                }
-                                                $stmt_data->close();
-
+                                                $total_late_count = 0;
+                                                
                                                 foreach ($dates as $date) :
                                                     $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
                                                     $day_of_week = $attendance_date->format('w');
                                                 ?>
                                                     <td <?php if ($day_of_week == 0) echo 'style="background-color: #f0f0f0;"'; ?>>
                                                         <?php
-                                                        // Display the 'data' for this date if it exists
                                                         if (isset($user_data[$date])) {
                                                             echo $user_data[$date] . "<br>";
                                                         } else {
                                                             echo "";
                                                         }
-
+                                                
                                                         $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present 
-                    FROM final_attendance fa
-                    LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-                    WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
+                                                            FROM final_attendance fa
+                                                            LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+                                                            WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
                                                         $stmt_attendance = $conn->prepare($attendance_query);
                                                         $formatted_date = date('Y-m-d', strtotime($date));
                                                         $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
                                                         $stmt_attendance->execute();
                                                         $attendance_result = $stmt_attendance->get_result();
-
+                                                
                                                         if ($attendance_result->num_rows > 0) {
                                                             $attendance_data = $attendance_result->fetch_assoc();
                                                             echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
@@ -216,10 +200,17 @@ $stmt_users->close();
                                                             } else {
                                                                 echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
                                                             }
-
+                                                
                                                             $first_in_time = new DateTime($attendance_data['first_in']);
                                                             $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
+                                                            $office_start_time = new DateTime($formatted_date . ' 09:00:00');
+                                                
                                                             if ($first_in_time > $cutoff_time) {
+                                                                // Employee arrived after 10:30, count as half day
+                                                                $total_half_days += 0.5;
+                                                                $total_full_days += 0.5;
+                                                            } elseif ($first_in_time > $office_start_time && ++$total_late_count > 3) {
+                                                                // Employee arrived after 9:00 but before 10:30, and late more than 3 times
                                                                 $total_half_days += 0.5;
                                                                 $total_full_days += 0.5;
                                                             } else {
@@ -247,6 +238,7 @@ $stmt_users->close();
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
                             <!-- /.table-responsive -->
                         </div>
