@@ -1,4 +1,4 @@
-<?php
+<?php 
 session_start();
 session_regenerate_id(true);
 
@@ -23,7 +23,9 @@ $filterDepartment = isset($_GET['department']) ? $_GET['department'] : '';
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $searchQuery = isset($_GET['search']) ? $_GET['search'] : '';
-$entriesPerPage = isset($_GET['entries_per_page']) ? (int)$_GET['entries_per_page'] : 10;
+$filterMode = isset($_GET['mode']) ? $_GET['mode'] : '';
+$filterWhere = isset($_GET['where']) ? $_GET['where'] : '';
+$entriesPerPage = isset($_GET['entries_per_page']) ? (int)$_GET['entries_per_page'] : 25;
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $entriesPerPage;
 
@@ -35,6 +37,14 @@ if (empty($startDate) && empty($endDate)) {
 // Fetch departments dynamically
 $departmentsQuery = "SELECT DISTINCT department FROM users";
 $departmentsResult = $conn->query($departmentsQuery);
+
+// Fetch modes dynamically
+$modesQuery = "SELECT DISTINCT mode FROM attendance";
+$modesResult = $conn->query($modesQuery);
+
+// Fetch locations (where) dynamically
+$whereQuery = "SELECT DISTINCT data FROM attendance";
+$whereResult = $conn->query($whereQuery);
 
 // Prepare SQL query for total records
 $totalCountQuery = "SELECT COUNT(*) AS total 
@@ -69,7 +79,16 @@ if (!empty($searchQuery)) {
     $params[] = $searchQuery;
     $types .= 'sss';
 }
-
+if (!empty($filterMode)) {
+    $totalCountQuery .= " AND attendance.mode = ?";
+    $params[] = $filterMode;
+    $types .= 's';
+}
+if (!empty($filterWhere)) {
+    $totalCountQuery .= " AND attendance.data LIKE ?";
+    $params[] = '%' . $filterWhere . '%';
+    $types .= 's';
+}
 // Prepare and execute the total count query
 $totalCountStmt = $conn->prepare($totalCountQuery);
 if ($types) {
@@ -89,8 +108,10 @@ $sql = "SELECT
             users.full_name,
             users.department,
             attendance.mode,
-            attendance.latitude,
-            attendance.longitude,
+            attendance.in_latitude,
+            attendance.in_longitude,
+            attendance.out_latitude,
+            attendance.out_longitude,
             attendance.in_time,
             attendance.out_time,
             attendance.selfie_in,
@@ -128,6 +149,18 @@ if (!empty($searchQuery)) {
     $types .= 'sss';
 }
 
+if (!empty($filterMode)) {
+    $sql .= " AND attendance.mode = ?";
+    $params[] = $filterMode;
+    $types .= 's';
+}
+
+if (!empty($filterWhere)) {
+    $sql .= " AND attendance.data LIKE ?";
+    $params[] = '%' . $filterWhere . '%';
+    $types .= 's';
+}
+
 $sql .= " ORDER BY attendance.id DESC LIMIT ? OFFSET ?";
 
 // Prepare and execute the paginated query
@@ -152,15 +185,18 @@ include("include/sidebar.php");
         width: 100%;
         overflow: hidden;
     }
+
     .table-scroll {
         overflow-x: auto;
         margin-bottom: 15px;
     }
+
     .top-scroll {
         overflow-x: auto;
         overflow-y: hidden;
         height: 20px;
     }
+
     .top-scroll-inner {
         height: 20px;
     }
@@ -193,7 +229,7 @@ include("include/sidebar.php");
                             <div class="mb-3">
                                 <form method="GET" action="" class="mb-3">
                                     <div class="row">
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="department">Department:</label>
                                                 <select name="department" id="department" class="form-control">
@@ -206,19 +242,19 @@ include("include/sidebar.php");
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="start_date">Start Date:</label>
                                                 <input type="date" name="start_date" id="start_date" class="form-control" value="<?php echo $startDate; ?>">
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="end_date">End Date:</label>
                                                 <input type="date" name="end_date" id="end_date" class="form-control" value="<?php echo $endDate; ?>">
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="entries_per_page">Entries per Page:</label>
                                                 <select name="entries_per_page" id="entries_per_page" class="form-control">
@@ -229,30 +265,47 @@ include("include/sidebar.php");
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
-                                            <div class="form-group">
-                                                <label>&nbsp;</label><br>
-                                                <button type="submit" class="btn btn-primary">Apply Date Filters</button>
+                                        <div class="col-md-2">
+                                        <div class="form-group">
+                                                <label for="mode">Mode:</label>
+                                                <select name="mode" id="mode" class="form-control">
+                                                    <option value="">All Modes</option>
+                                                    <?php while ($modeRow = $modesResult->fetch_assoc()) { ?>
+                                                        <option value="<?php echo $modeRow['mode']; ?>" <?php echo ($filterMode == $modeRow['mode']) ? 'selected' : ''; ?>>
+                                                            <?php echo $modeRow['mode']; ?>
+                                                        </option>
+                                                    <?php } ?>
+                                                </select>
                                             </div>
                                         </div>
-                                    </div>
-                                </form>
-                                <form method="GET" action="">
-                                    <div class="row">
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
+                                        <div class="form-group">
+                                                <label for="where">Where:</label>
+                                                <select name="where" id="where" class="form-control">
+                                                    <option value="">All Locations</option>
+                                                    <?php while ($whereRow = $whereResult->fetch_assoc()) { ?>
+                                                        <option value="<?php echo $whereRow['data']; ?>" <?php echo ($filterWhere == $whereRow['data']) ? 'selected' : ''; ?>>
+                                                            <?php echo $whereRow['data']; ?>
+                                                        </option>
+                                                    <?php } ?>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label for="search">Search:</label>
                                                 <input type="text" name="search" id="search" class="form-control" value="<?php echo $searchQuery; ?>">
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-2">
                                             <div class="form-group">
                                                 <label>&nbsp;</label><br>
-                                                <button type="submit" class="btn btn-primary">Search</button>
+                                                <button type="submit" class="btn btn-primary">Apply Filters</button>
                                             </div>
                                         </div>
                                     </div>
                                 </form>
+                                
 
                                 <?php displayAlert(); ?>
                                 <div class="row">
@@ -260,7 +313,7 @@ include("include/sidebar.php");
                                         <!-- Delete Selfies Form -->
                                         <form id="deleteSelfiesForm" method="POST" action="">
                                             <input type="hidden" name="delete_selfies" value="true">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 2 minutes?')">Delete Selfies</button>
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 24 hours?')">Delete Selfies</button>
                                         </form>
                                     </div>
                                     <div class="col-auto">
@@ -299,24 +352,22 @@ include("include/sidebar.php");
                                             <div class="top-scroll-inner"></div>
                                         </div>
                                         <div class="table-scroll">
-                                    <div style="width: 1000px;"> <!-- Adjust this width as needed -->
+                                            <div style="width: 1000px;"> <!-- Adjust this width as needed -->
                                                 <table class="table table-bordered table-striped table-hover">
                                                     <thead>
                                                         <tr>
-                                                            <th>ID</th>
-                                                            <th>Employee ID</th>
                                                             <th>Username</th>
+                                                            <th>Employee ID</th>
                                                             <th>Full Name</th>
                                                             <th>Department</th>
                                                             <th>Mode</th>
                                                             <th>Where</th>
-                                                            <th>Latitude</th>
-                                                            <th>Longitude</th>
                                                             <th>In Time</th>
                                                             <th>Out Time</th>
                                                             <th>Selfie In</th>
                                                             <th>Selfie Out</th>
-                                                            <th>Map</th>
+                                                            <th>Map In</th>
+                                                            <th>Map Out</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -327,15 +378,12 @@ include("include/sidebar.php");
                                                                 $longitude = !empty($row['longitude']) ? $row['longitude'] : 'NA';
                                                         ?>
                                                                 <tr>
-                                                                    <td><?php echo $row['attendance_id']; ?></td>
-                                                                    <td><?php echo $row['employer_id']; ?></td>
                                                                     <td><?php echo $row['username']; ?></td>
+                                                                    <td><?php echo $row['employer_id']; ?></td>
                                                                     <td><?php echo $row['full_name']; ?></td>
                                                                     <td><?php echo $row['department']; ?></td>
                                                                     <td><?php echo $row['mode']; ?></td>
                                                                     <td><?php echo $row['data']; ?></td>
-                                                                    <td><?php echo $latitude; ?></td>
-                                                                    <td><?php echo $longitude; ?></td>
                                                                     <td><?php echo $row['in_time']; ?></td>
                                                                     <td><?php echo $row['out_time']; ?></td>
                                                                     <td>
@@ -361,8 +409,15 @@ include("include/sidebar.php");
                                                                         <?php endif; ?>
                                                                     </td>
                                                                     <td>
-                                                                        <?php if (!empty($row['latitude']) && !empty($row['longitude'])) : ?>
-                                                                            <a href="https://maps.google.com/?q=<?php echo htmlspecialchars($row['latitude']); ?>,<?php echo htmlspecialchars($row['longitude']); ?>" target="_blank">View Map</a>
+                                                                        <?php if (!empty($row['in_latitude']) && !empty($row['in_longitude'])) : ?>
+                                                                            <a href="https://maps.google.com/?q=<?php echo htmlspecialchars($row['in_latitude']); ?>,<?php echo htmlspecialchars($row['in_longitude']); ?>" target="_blank">View Map In</a>
+                                                                        <?php else : ?>
+                                                                            N/A
+                                                                        <?php endif; ?>
+                                                                    </td>
+                                                                    <td>
+                                                                        <?php if (!empty($row['out_latitude']) && !empty($row['out_longitude'])) : ?>
+                                                                            <a href="https://maps.google.com/?q=<?php echo htmlspecialchars($row['out_latitude']); ?>,<?php echo htmlspecialchars($row['out_longitude']); ?>" target="_blank">View Map Out</a>
                                                                         <?php else : ?>
                                                                             N/A
                                                                         <?php endif; ?>
@@ -377,20 +432,18 @@ include("include/sidebar.php");
                                                     </tbody>
                                                     <tfoot>
                                                         <tr>
-                                                            <th>ID</th>
-                                                            <th>Employee ID</th>
                                                             <th>Username</th>
+                                                            <th>Employee ID</th>
                                                             <th>Full Name</th>
                                                             <th>Department</th>
                                                             <th>Mode</th>
                                                             <th>Where</th>
-                                                            <th>Latitude</th>
-                                                            <th>Longitude</th>
                                                             <th>In Time</th>
                                                             <th>Out Time</th>
                                                             <th>Selfie In</th>
                                                             <th>Selfie Out</th>
-                                                            <th>Map</th>
+                                                            <th>Map In</th>
+                                                            <th>Map Out</th>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -468,20 +521,20 @@ include("include/footer.php");
 ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-    var tableScroll = document.querySelector('.table-scroll');
-    var topScroll = document.querySelector('.top-scroll');
-    var topScrollInner = document.querySelector('.top-scroll-inner');
+        var tableScroll = document.querySelector('.table-scroll');
+        var topScroll = document.querySelector('.top-scroll');
+        var topScrollInner = document.querySelector('.top-scroll-inner');
 
-    // Set the width of the top scroll inner div to match the table width
-    topScrollInner.style.width = tableScroll.scrollWidth + 'px';
+        // Set the width of the top scroll inner div to match the table width
+        topScrollInner.style.width = tableScroll.scrollWidth + 'px';
 
-    // Synchronize the scrolling
-    tableScroll.addEventListener('scroll', function() {
-        topScroll.scrollLeft = tableScroll.scrollLeft;
+        // Synchronize the scrolling
+        tableScroll.addEventListener('scroll', function() {
+            topScroll.scrollLeft = tableScroll.scrollLeft;
+        });
+
+        topScroll.addEventListener('scroll', function() {
+            tableScroll.scrollLeft = topScroll.scrollLeft;
+        });
     });
-
-    topScroll.addEventListener('scroll', function() {
-        tableScroll.scrollLeft = topScroll.scrollLeft;
-    });
-});
 </script>

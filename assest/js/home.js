@@ -4,6 +4,7 @@ const videoElement = document.createElement("video");
 const canvasElement = document.createElement("canvas");
 const context = canvasElement.getContext("2d");
 
+
 function enableAttendance() {
   const mode = document.querySelector('input[name="attendance_mode"]:checked')?.value;
   const type = document.querySelector('input[name="scheme"]:checked')?.value;
@@ -11,12 +12,7 @@ function enableAttendance() {
     alert("Please select In or Out.");
     return;
   }
-
-
-
-
   if (mode === "office") {
-
     // Create overlay
     const overlay = document.createElement("div");
     overlay.id = "attendance-overlay";
@@ -44,13 +40,11 @@ function enableAttendance() {
   overlay.appendChild(cameraContainer);
     // Move the camera element inside the new container
     cameraContainer.appendChild(cameraElement);
-
     getLocationForOffice(type);
   } else if (mode === "outdoor") {
     getLocationForOutdoor(type);
   }
 }
-
 
 function showLoadingScreen() {
   if (!document.querySelector(".loading-overlay")) {
@@ -118,7 +112,6 @@ function showPositionForOffice(position, scanType) {
     alert("You are not in any of the specified office locations.");
   }
 }
-
 function showNotification(message) {
   // Create the notification element
   const notification = document.createElement("div");
@@ -145,7 +138,8 @@ function getLocationForOutdoor(scanType) {
       (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        showSelfieButton("Outdoor", `${lat},${lon}`, scanType);
+        const coordString = `${lat},${lon}`;
+        showSelfieButton("Outdoor", coordString, scanType);
       },
       showError
     );
@@ -188,7 +182,6 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
-
 function startCamera(scanType) {
   hideLoadingScreen();
   const cameraContainer = document.getElementById("camera-container");
@@ -196,79 +189,66 @@ function startCamera(scanType) {
   cameraElement.style.width = "100%";
   cameraElement.style.height = "100%";
 
+  // Add a status message element
+  const statusMessage = document.createElement("div");
+  statusMessage.style.position = "absolute";
+  statusMessage.style.bottom = "50px";
+  statusMessage.style.left = "50%";
+  statusMessage.style.transform = "translateX(-50%)";
+  statusMessage.style.color = "white";
+  statusMessage.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+  statusMessage.style.padding = "10px";
+  statusMessage.style.borderRadius = "5px";
+  cameraContainer.appendChild(statusMessage);
+
+  function updateStatus(message) {
+    statusMessage.textContent = message;
+  }
+
   const html5QrCode = new Html5Qrcode("camera");
 
-  // Flashlight button
-  const flashlightButton = document.createElement("button");
-  flashlightButton.textContent = "Toggle Flashlight";
-  flashlightButton.style.position = "absolute";
-  flashlightButton.style.bottom = "20px";
-  flashlightButton.style.left = "50%";
-  flashlightButton.style.transform = "translateX(-50%)";
-  flashlightButton.style.zIndex = "1001";
-  flashlightButton.style.display = "none";
-  cameraContainer.appendChild(flashlightButton);
-
-  let flashlightOn = false;
-
-  flashlightButton.onclick = () => {
-    const track = html5QrCode.getRunningTrack();
-    if (track) {
-      const capabilities = track.getCapabilities();
-      if (capabilities.torch) {
-        flashlightOn = !flashlightOn;
-        track.applyConstraints({ advanced: [{ torch: flashlightOn }] });
-      }
-    }
-  };
-
-  const config = {
-    fps: 20,
-    qrbox: { width: 250, height: 250 },
-    aspectRatio: 1.0,
-    disableFlip: false,
-    experimentalFeatures: {
-      useBarCodeDetectorIfSupported: true
-    }
-  };
-
-  html5QrCode.start(
-    { facingMode: "environment" },
-    config,
-    (qrCodeMessage) => {
-      // QR Code detected
-      const overlay = document.getElementById("attendance-overlay");
-      const qrDetectedMessage = document.createElement("div");
-      qrDetectedMessage.textContent = `QR Code detected: ${qrCodeMessage}`;
-      qrDetectedMessage.style.backgroundColor = "white";
-      qrDetectedMessage.style.padding = "20px";
-      qrDetectedMessage.style.borderRadius = "10px";
-      qrDetectedMessage.style.position = "absolute";
-      qrDetectedMessage.style.top = "20px";
-      qrDetectedMessage.style.left = "50%";
-      qrDetectedMessage.style.transform = "translateX(-50%)";
-      overlay.appendChild(qrDetectedMessage);
+  html5QrCode
+    .start(
       
-      setTimeout(() => {
-        html5QrCode.stop().then(() => {
-          overlay.remove();
-          showSelfieButton("Office", qrCodeMessage, scanType);
-        }).catch(err => console.log("Unable to stop scanning.", err));
-      }, 1000);
-    },
-    (errorMessage) => {
-      console.log(`QR Code no longer in front of camera: ${errorMessage}`);
-    }
-  ).then(() => {
-    // Check if flashlight is available
-    const track = html5QrCode.getRunningTrack();
-    if (track) {
-      const capabilities = track.getCapabilities();
-      if (capabilities.torch) {
-        flashlightButton.style.display = "block";
+      { facingMode: "environment" },
+      { fps: 10,qrbox: { width: 250, height: 250 }, aspectRatio: 1.0,
+      disableFlip: false,
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true
+      } },
+      (qrCodeMessage) => {
+        // QR Code detected
+        updateStatus("QR Code detected!");
+        const overlay = document.getElementById("attendance-overlay");
+        const qrDetectedMessage = document.createElement("div");
+        qrDetectedMessage.textContent = `QR Code detected: ${qrCodeMessage}`;
+        qrDetectedMessage.style.backgroundColor = "white";
+        qrDetectedMessage.style.padding = "20px";
+        qrDetectedMessage.style.borderRadius = "10px";
+        qrDetectedMessage.style.position = "absolute";
+        qrDetectedMessage.style.top = "20px";
+        qrDetectedMessage.style.left = "50%";
+        qrDetectedMessage.style.transform = "translateX(-50%)";
+        overlay.appendChild(qrDetectedMessage);
+        
+
+        setTimeout(() => {
+          html5QrCode.stop().then(() => {
+            overlay.remove();
+            showSelfieButton("Office", qrCodeMessage, scanType);
+          }).catch(err => console.log("Unable to stop scanning.", err));
+        }, 1000);
+      },
+      (errorMessage) => {
+        // Handle error if necessary
       }
-    }
-  }).catch(err => console.log(`Unable to start scanning, error: ${err}`));
+    )
+    .catch(err => {
+      console.log(`Unable to start scanning, error: ${err}`);
+      updateStatus("Error starting camera");
+    });
+
+  updateStatus("Scanning for QR code...");
 }
 
 function showSelfieButton(mode, data1, scanType) {
@@ -330,16 +310,20 @@ function logAttendance(mode, data1, data2, selfie, scanType) {
         const response = JSON.parse(xhr.responseText.trim());
         if (response.status === "success") {
           showSuccessIcon();
+          playSuccessSound();
         } else {
           showErrorIcon();
         }        
-        
       } catch (e) {
         console.error("Error parsing response:", e);
-        showErrorIcon(); 
+        alert("An error occurred. Please try again.");
       }
     }
   };
+  function playSuccessSound() {
+    const audio = document.getElementById("successSound");
+    audio.play();
+  }
 
   function showSuccessIcon() {
     const overlay = document.getElementById("successOverlay");
@@ -358,7 +342,6 @@ function logAttendance(mode, data1, data2, selfie, scanType) {
       overlay.style.display = "none";
     }, 2000);
   }
-  
   const formData = new FormData();
   formData.append("mode", mode);
   formData.append("data1", data1);

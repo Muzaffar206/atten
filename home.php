@@ -123,6 +123,7 @@ $conn->close();
                         </div>
                     </div>
                 </div>
+                <audio id="successSound" src="assest/sounds/success.mp3"></audio>
 
                 <div id="errorOverlay" style="display: none;">
                     <div class="overlay"></div>
