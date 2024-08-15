@@ -134,9 +134,30 @@ $result = $stmt_attendance->get_result();
 </head>
 
 <body>
+<nav class="navbar navbar-expand-md navbar navbar-light">
+        <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <img src="assest/images/MESCO.png" width="100" height="40" class="d-inline-block align-top" alt="">
+                    Attendance
+                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.php"><i class="fas fa-clock"></i> Check your Attendance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-user"></i> My Profile</a>
+                    </li>
+                    <button type="button" class="btn btn-danger" onclick="document.location='logout.php'">Logout</button>
+                </ul>
+            </div>
+        </div>
+    </nav>
     <div class="container-fluid">
         <div class="text-center my-4">
-            <img src="assest/images/MESCO.png" alt="MESCO LOGO" width="100px" class="my-3">
             <h2>Welcome <?php echo htmlspecialchars($username); ?></h2>
         </div>
 
@@ -214,6 +235,7 @@ $result = $stmt_attendance->get_result();
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+    <?php include("include/footer.php"); ?>
     <script>
 window.onload = function() {
             // Hide the preloader

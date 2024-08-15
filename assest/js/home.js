@@ -101,7 +101,7 @@ function hideLoadingScreen() {
 }
 
 function getLocationForOffice(scanType) {
-  showLoadingScreen();
+  showLoadingScreen("Please wait checking your location");
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => showPositionForOffice(position, scanType),

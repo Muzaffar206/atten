@@ -38,6 +38,7 @@
 }
 
 body, html {
+  padding-top: 7px;
 	height: 100%;
 	font-family: Poppins-Regular, sans-serif;
 }
