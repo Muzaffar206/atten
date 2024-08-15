@@ -11,6 +11,10 @@ class ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3
         array (
             'ZipStream\\' => 10,
         ),
+        'R' => 
+        array (
+            'RobThree\\Auth\\' => 14,
+        ),
         'P' => 
         array (
             'Psr\\SimpleCache\\' => 16,
@@ -32,6 +36,10 @@ class ComposerStaticInita85e1f048fc984de5cde3b6ff2e817a3
         'ZipStream\\' => 
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
+        ),
+        'RobThree\\Auth\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/robthree/twofactorauth/lib',
         ),
         'Psr\\SimpleCache\\' => 
         array (

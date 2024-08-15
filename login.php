@@ -1,51 +1,73 @@
 <?php
 session_start();
 session_regenerate_id(true);
-date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+date_default_timezone_set('Asia/Kolkata');
 
 include("assest/connection/config.php");
 
+// CSRF token generation
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // CSRF token validation
+    if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token validation failed");
+    }
+
     $username = trim(mysqli_real_escape_string($conn, $_POST['username']));
     $password = trim(mysqli_real_escape_string($conn, $_POST['password']));
-    $rememberMe = isset($_POST['remember_me']);
 
     $sql = "SELECT * FROM users WHERE username = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
-    $alert = '';
 
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        if (password_verify($password, $row['password'])) {
-            // Set session variables
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
-            $_SESSION['role'] = $row['role'];
 
-            // Set secure cookie if 'Remember Me' is checked
-            if ($rememberMe) {
-                $cookie_value = base64_encode(json_encode([
-                    'username' => $username,
-                    'token' => bin2hex(random_bytes(16)), // Token for additional security
-                ]));
-                setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/", "", true, true); // 30 days, HttpOnly, Secure
-            }
-
-            // Redirect based on user role
-            if ($row['role'] === 'admin') {
-                header("Location: admin/index.php");
-            } else {
-                header("Location: home.php");
-            }
-            exit();
+        // Check if account is locked
+        if ($row['lockout_time'] && strtotime($row['lockout_time']) > time()) {
+            $alert = '<div class="alert alert-danger">Account locked due to too many failed attempts. Please try again later.</div>';
         } else {
-            $alert .= '<div class="alert alert-danger" role="alert">Wrong username or password</div>';
+            // Verify the password
+            if (password_verify($password, $row['password'])) {
+                // Reset failed attempts and lockout time
+                $sql_reset = "UPDATE users SET failed_attempts = 0, lockout_time = NULL WHERE username = ?";
+                $stmt_reset = $conn->prepare($sql_reset);
+                $stmt_reset->bind_param("s", $username);
+                $stmt_reset->execute();
+
+                // Set session variables
+                $_SESSION['user_id'] = $row['id'];
+                $_SESSION['username'] = $row['username'];
+                $_SESSION['role'] = $row['role'];
+                session_regenerate_id(true);
+
+                // Redirect based on role
+                if ($row['role'] === 'admin') {
+                    header("Location: admin/index.php");
+                } else {
+                    header("Location: home.php");
+                }
+                exit();
+            } else {
+                // Increment failed attempts
+                $failed_attempts = $row['failed_attempts'] + 1;
+                $lockout_time = $failed_attempts >= 5 ? date("Y-m-d H:i:s", strtotime("+15 minutes")) : NULL;
+
+                $sql_update = "UPDATE users SET failed_attempts = ?, lockout_time = ? WHERE username = ?";
+                $stmt_update = $conn->prepare($sql_update);
+                $stmt_update->bind_param("iss", $failed_attempts, $lockout_time, $username);
+                $stmt_update->execute();
+
+                $alert = '<div class="alert alert-danger">Wrong username or password</div>';
+            }
         }
     } else {
-        $alert .= '<div class="alert alert-danger" role="alert">No users found</div>';
+        $alert = '<div class="alert alert-danger">No users found</div>';
     }
 
     $conn->close();
@@ -94,6 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <div class="date" id="date"></div>
                 <div class="clock" id="clock"></div>
                 <form method="post" action="" class="login100-form validate-form">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                     <span class="login100-form-logo">
                         <img src="assest/images/MESCO.png" alt="MESCO LOGO" width="100px">
                     </span>

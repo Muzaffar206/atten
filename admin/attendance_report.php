@@ -317,12 +317,6 @@ include("include/sidebar.php");
                                         </form>
                                     </div>
                                     <div class="col-auto">
-                                        <!-- Export HTML -->
-                                        <form action="export_html.php" method="post">
-                                            <button type="submit" class="btn btn-success">Export to HTML</button>
-                                        </form>
-                                    </div>
-                                    <div class="col-auto">
                                         <!-- Export CSV -->
                                         <form action="export_csv_atten.php" method="get">
                                             <input type="hidden" name="department" value="<?php echo $filterDepartment; ?>">

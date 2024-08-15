@@ -1,42 +1,36 @@
 <?php
 session_start();
-session_regenerate_id(true);
-
-date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+date_default_timezone_set('Asia/Kolkata');
 
 // Redirect if user is not logged in or is not an admin
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
-    exit();
-}
-
-if ($_SESSION['role'] !== 'admin') {
-    header("Location: ../home.php");
     exit();
 }
 
 include("../assest/connection/config.php");
 
-// Fetch filter parameters from GET request
+// Get filter parameters
 $filterDepartment = isset($_GET['department']) ? $_GET['department'] : '';
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $searchQuery = isset($_GET['search']) ? $_GET['search'] : '';
+$filterMode = isset($_GET['mode']) ? $_GET['mode'] : '';
+$filterWhere = isset($_GET['where']) ? $_GET['where'] : '';
 
-// Prepare SQL query for fetching data based on filters
+// Prepare SQL query for exporting data
 $sql = "SELECT 
-            attendance.id AS attendance_id,
             users.employer_id,
             users.username,
             users.full_name,
             users.department,
             attendance.mode,
-            attendance.latitude,
-            attendance.longitude,
-            attendance.in_time,
+            attendance.in_latitude, 
+            attendance.in_longitude, 
+            attendance.out_latitude, 
+            attendance.out_longitude, 
+            attendance.in_time, 
             attendance.out_time,
-            attendance.selfie_in,
-            attendance.selfie_out,
             attendance.data
         FROM attendance
         JOIN users ON attendance.user_id = users.id
@@ -68,10 +62,19 @@ if (!empty($searchQuery)) {
     $params[] = $searchQuery;
     $types .= 'sss';
 }
+if (!empty($filterMode)) {
+    $sql .= " AND attendance.mode = ?";
+    $params[] = $filterMode;
+    $types .= 's';
+}
+if (!empty($filterWhere)) {
+    $sql .= " AND attendance.data LIKE ?";
+    $params[] = '%' . $filterWhere . '%';
+    $types .= 's';
+}
 
 $sql .= " ORDER BY attendance.id DESC";
 
-// Prepare and execute the query
 $stmt = $conn->prepare($sql);
 if ($types) {
     $stmt->bind_param($types, ...$params);
@@ -79,45 +82,33 @@ if ($types) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Set headers to download file
-header('Content-Type: text/csv; charset=utf-8');
-header('Content-Disposition: attachment; filename=attendance.csv');
+// Set CSV headers
+header('Content-Type: text/csv');
+header('Content-Disposition: attachment;filename=attendance_export.csv');
+
+// Output CSV column headers
 $output = fopen('php://output', 'w');
+fputcsv($output, ['Employer ID', 'Username', 'Full Name', 'Department', 'Mode', 'Map In', 'Map Out', 'In Time', 'Out Time', 'Location']);
 
-// Output the column headings
-fputcsv($output, array('ID', 'Employer ID', 'Username', 'Full Name', 'Department', 'Mode', 'Where', 'Latitude', 'Longitude', 'In Time', 'Out Time', 'Selfie In', 'Selfie Out', 'Map'));
-
-// Fetch and output each row of data
+// Output CSV rows
 while ($row = $result->fetch_assoc()) {
-    $latitude = !empty($row['latitude']) ? $row['latitude'] : 'NA';
-    $longitude = !empty($row['longitude']) ? $row['longitude'] : 'NA';
-    $selfieInPath = $row['selfie_in'];
-    $relativeSelfieInPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieInPath);
-    $imageInSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieInPath);
-    $selfieOutPath = $row['selfie_out'];
-    $relativeSelfieOutPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieOutPath);
-    $imageOutSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieOutPath);
-
-    $data = [
-        $row['attendance_id'],
-        $row['employer_id'],
-        $row['username'],
-        $row['full_name'],
-        $row['department'],
-        $row['mode'],
-        $row['data'],
-        $latitude,
-        $longitude,
-        $row['in_time'],
-        $row['out_time'],
-        file_exists($imageInSrc) ? $imageInSrc : 'N/A',
-        file_exists($imageOutSrc) ? $imageOutSrc : 'N/A',
-        (!empty($row['latitude']) && !empty($row['longitude'])) ? "https://maps.google.com/?q={$row['latitude']},{$row['longitude']}" : 'N/A'
-    ];
-
-    fputcsv($output, $data);
+    $mapIn = $row['in_latitude'] . ',' . $row['in_longitude'];
+    $mapOut = $row['out_latitude'] . ',' . $row['out_longitude'];
+    fputcsv($output, [
+        $row['employer_id'], 
+        $row['username'], 
+        $row['full_name'], 
+        $row['department'], 
+        $row['mode'], 
+        $mapIn, 
+        $mapOut, 
+        $row['in_time'], 
+        $row['out_time'], 
+        $row['data']
+    ]);
 }
 
 fclose($output);
-exit();
+$stmt->close();
+$conn->close();
 ?>

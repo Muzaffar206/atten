@@ -2,6 +2,8 @@
 session_start();
 session_regenerate_id(true);
 
+date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+
 // Redirect if user is not logged in or is not an admin
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../login.php");
@@ -15,22 +17,20 @@ if ($_SESSION['role'] !== 'admin') {
 
 include("../assest/connection/config.php");
 
-// Get filter parameters
-$filterDepartment = isset($_GET['department']) ? $_GET['department'] : '';
-$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
-$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
-$searchQuery = isset($_GET['search']) ? $_GET['search'] : '';
+// Get filter and pagination parameters
+$filterDepartment = isset($_POST['department']) ? $_POST['department'] : '';
+$startDate = isset($_POST['start_date']) ? $_POST['start_date'] : '';
+$endDate = isset($_POST['end_date']) ? $_POST['end_date'] : '';
+$filterMode = isset($_POST['mode']) ? $_POST['mode'] : '';
+$filterWhere = isset($_POST['where']) ? $_POST['where'] : '';
 
-// Prepare SQL query based on filters
+// Prepare SQL query for filtered results
 $sql = "SELECT 
-            attendance.id AS attendance_id,
             users.employer_id,
             users.username,
             users.full_name,
             users.department,
             attendance.mode,
-            attendance.latitude,
-            attendance.longitude,
             attendance.in_time,
             attendance.out_time,
             attendance.selfie_in,
@@ -40,6 +40,7 @@ $sql = "SELECT
         JOIN users ON attendance.user_id = users.id
         WHERE users.role <> 'admin'";
 
+// Prepare the query dynamically based on filters
 $params = [];
 $types = '';
 
@@ -58,13 +59,15 @@ if (!empty($startDate) && !empty($endDate)) {
     $params[] = $startDate;
     $types .= 's';
 }
-if (!empty($searchQuery)) {
-    $sql .= " AND (users.username LIKE ? OR users.full_name LIKE ? OR attendance.mode LIKE ?)";
-    $searchQuery = "%$searchQuery%";
-    $params[] = $searchQuery;
-    $params[] = $searchQuery;
-    $params[] = $searchQuery;
-    $types .= 'sss';
+if (!empty($filterMode)) {
+    $sql .= " AND attendance.mode = ?";
+    $params[] = $filterMode;
+    $types .= 's';
+}
+if (!empty($filterWhere)) {
+    $sql .= " AND attendance.data LIKE ?";
+    $params[] = '%' . $filterWhere . '%';
+    $types .= 's';
 }
 
 // Execute the query
@@ -75,30 +78,20 @@ if ($types) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Start HTML output
-header('Content-Type: text/html; charset=utf-8');
-header('Content-Disposition: attachment; filename="attendance_report.html"');
-?>
-<!DOCTYPE html>
-<html lang="en">
+// Start HTML export
+$htmlContent = "
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Attendance Report</title>
     <style>
-        /* Add your custom CSS styles for the HTML report here */
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
         }
-        table, th, td {
-            border: 1px solid #000;
+        th, td {
+            border: 1px solid black;
             padding: 8px;
-            text-align: center;
+            text-align: left;
         }
         th {
             background-color: #f2f2f2;
@@ -110,88 +103,46 @@ header('Content-Disposition: attachment; filename="attendance_report.html"');
     </style>
 </head>
 <body>
-    <h2>Attendance Report</h2>
+    <h1>Attendance Report</h1>
     <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Employer ID</th>
-                <th>Username</th>
-                <th>Full Name</th>
-                <th>Department</th>
-                <th>Mode</th>
-                <th>Where</th>
-                <th>Latitude</th>
-                <th>Longitude</th>
-                <th>In Time</th>
-                <th>Out Time</th>
-                <th>Selfie In</th>
-                <th>Selfie Out</th>
-                <th>Map</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            while ($row = $result->fetch_assoc()) {
-                $latitude = !empty($row['latitude']) ? $row['latitude'] : 'NA';
-                $longitude = !empty($row['longitude']) ? $row['longitude'] : 'NA';
-            ?>
-                <tr>
-                    <td><?php echo $row['attendance_id']; ?></td>
-                    <td><?php echo $row['employer_id']; ?></td>
-                    <td><?php echo $row['username']; ?></td>
-                    <td><?php echo $row['full_name']; ?></td>
-                    <td><?php echo $row['department']; ?></td>
-                    <td><?php echo $row['mode']; ?></td>
-                    <td><?php echo $row['data']; ?></td>
-                    <td><?php echo $latitude; ?></td>
-                    <td><?php echo $longitude; ?></td>
-                    <td><?php echo $row['in_time']; ?></td>
-                    <td><?php echo $row['out_time']; ?></td>
-                    <td>
-                        <?php
-                        $selfieInPath = $row['selfie_in'];
-                        if (!empty($selfieInPath)) {
-                            $relativeSelfieInPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieInPath);
-                            $imageInSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieInPath);
-                            if (file_exists($imageInSrc)) {
-                                echo '<img src="' . $imageInSrc . '" alt="Selfie In">';
-                            } else {
-                                echo 'N/A';
-                            }
-                        } else {
-                            echo 'N/A';
-                        }
-                        ?>
-                    </td>
-                    <td>
-                        <?php
-                        $selfieOutPath = $row['selfie_out'];
-                        if (!empty($selfieOutPath)) {
-                            $relativeSelfieOutPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieOutPath);
-                            $imageOutSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieOutPath);
-                            if (file_exists($imageOutSrc)) {
-                                echo '<img src="' . $imageOutSrc . '" alt="Selfie Out">';
-                            } else {
-                                echo 'N/A';
-                            }
-                        } else {
-                            echo 'N/A';
-                        }
-                        ?>
-                    </td>
-                    <td>
-                        <?php
-                        if (!empty($row['latitude']) && !empty($row['longitude'])) {
-                            echo '<a href="https://maps.google.com/?q=' . htmlspecialchars($row['latitude']) . ',' . htmlspecialchars($row['longitude']) . '" target="_blank">View Map</a>';
-                        } else {
-                            echo 'N/A';
-                        }
-                        ?>
-                    </td>
-                </tr>
-            <?php } ?>
-        </tbody>
+        <tr>
+            <th>Employer ID</th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Department</th>
+            <th>Mode</th>
+            <th>In Time</th>
+            <th>Out Time</th>
+            <th>Selfie In</th>
+            <th>Selfie Out</th>
+            <th>Location</th>
+        </tr>";
+
+// Loop through the results and populate the HTML table
+while ($row = $result->fetch_assoc()) {
+    $htmlContent .= "
+        <tr>
+            <td>{$row['employer_id']}</td>
+            <td>{$row['username']}</td>
+            <td>{$row['full_name']}</td>
+            <td>{$row['department']}</td>
+            <td>{$row['mode']}</td>
+            <td>{$row['in_time']}</td>
+            <td>{$row['out_time']}</td>
+            <td><img src='../uploads/Selfies_in&out/{$row['selfie_in']}' alt='Selfie In'></td>
+            <td><img src='../uploads/Selfies_in&out/{$row['selfie_out']}' alt='Selfie Out'></td>
+            <td>{$row['data']}</td>
+        </tr>";
+}
+
+$htmlContent .= "
     </table>
 </body>
-</html>
+</html>";
+
+// Output the HTML content for download
+header("Content-Type: text/html");
+header("Content-Disposition: attachment; filename=attendance_report.html");
+echo $htmlContent;
+exit();
+?>

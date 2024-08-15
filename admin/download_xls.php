@@ -13,27 +13,29 @@ if ($_SESSION['role'] !== 'admin') {
 }
 
 include("../assest/connection/config.php");
-require '../vendor/autoload.php';
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-
+// Set default values for filters
 $department = isset($_POST['department']) ? $_POST['department'] : 'All';
 $from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
 $to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
 
 $to_date_adjusted = date('Y-m-d', strtotime($to_date . ' +1 day'));
 
+// Prepare SQL query based on department filter
 $users_query = ($department === 'All') ?
-    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(fa.first_in) AS latest_first_in, MAX(a.data) AS data
+    "SELECT u.id, u.employer_id, u.full_name, u.department, 
+            MAX(fa.first_in) AS latest_first_in, 
+            MAX(a.data) AS data,
+            MAX(fa.total_hours) AS total_hours
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
      WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
      GROUP BY u.id" :
-    "SELECT u.id, u.employer_id, u.full_name, u.department, MAX(fa.first_in) AS latest_first_in, MAX(a.data) AS data
+    "SELECT u.id, u.employer_id, u.full_name, u.department, 
+            MAX(fa.first_in) AS latest_first_in, 
+            MAX(a.data) AS data,
+            MAX(fa.total_hours) AS total_hours
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
@@ -49,6 +51,7 @@ if ($department === 'All') {
 $stmt_users->execute();
 $users_result = $stmt_users->get_result();
 
+// Generate list of dates for the report
 $dates = [];
 $current_date = strtotime($from_date);
 $end_date = strtotime($to_date);
@@ -60,160 +63,116 @@ while ($current_date <= $end_date) {
 
 $stmt_users->close();
 
-$spreadsheet = new Spreadsheet();
-$sheet = $spreadsheet->getActiveSheet();
+// Prepare CSV output
+header('Content-Type: text/csv');
+header('Content-Disposition: attachment;filename="attendance_report.csv"');
 
-// Set headers
-$sheet->setCellValue('A1', 'Department');
-$sheet->setCellValue('B1', 'Employer Code');
-$sheet->setCellValue('C1', 'Employer Name');
+// Open output stream for writing CSV data
+$output = fopen('php://output', 'w');
 
-$column = 'D';
-$column_count = 0;
+// Set headers for the CSV
+$header_row = ['Department', 'Employee Code', 'Employee Name'];
 foreach ($dates as $date) {
-    $sheet->setCellValue($column . '1', $date);
-    $column++;
-    $column_count++;
+    $header_row[] = $date;
 }
+$header_row[] = 'Attendance Summary';
+fputcsv($output, $header_row);
 
-// Add new column for Attendance Summary
-$summary_column = $column;
-$sheet->setCellValue($summary_column . '1', 'Attendance Summary');
-
-// Apply border to the first row
-$styleArray = [
-    'borders' => [
-        'outline' => [
-            'borderStyle' => Border::BORDER_THIN,
-            'color' => ['argb' => 'FF000000'],
-        ],
-    ],
-];
-$sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray($styleArray);
-
-// Center align headers and content
-$sheet->getStyle('A1:' . $sheet->getHighestColumn() . $sheet->getHighestRow())
-    ->getAlignment()
-    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-    ->setVertical(Alignment::VERTICAL_CENTER);
-
-// Initialize row number
-$row_num = 2;
-
+// Add user data to CSV
 while ($user = $users_result->fetch_assoc()) {
-    $column = 'D';
-    $sheet->setCellValue('A' . $row_num, $user['department']);
-    $sheet->setCellValue('B' . $row_num, $user['employer_id']);
-    $sheet->setCellValue('C' . $row_num, $user['full_name']);
+    $row = [
+        $user['department'],
+        $user['employer_id'],
+        $user['full_name']
+    ];
 
     $total_absents = 0;
     $total_half_days = 0;
     $total_full_days = 0;
+    $holiday = 0;
 
-    for ($i = 0; $i < $column_count; $i++) {
-        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, a.is_present, a.data 
+    // Fetch all 'data' entries for this user within the date range
+    $data_query = "SELECT DATE(a.in_time) as date, a.data 
+                   FROM attendance a 
+                   WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
+    $stmt_data = $conn->prepare($data_query);
+    $stmt_data->bind_param("iss", $user['id'], $from_date, $to_date_adjusted);
+    $stmt_data->execute();
+    $data_result = $stmt_data->get_result();
+
+    $user_data = [];
+    while ($data_row = $data_result->fetch_assoc()) {
+        $user_data[date('d-m-Y', strtotime($data_row['date']))] = $data_row['data'];
+    }
+    $stmt_data->close();
+
+    foreach ($dates as $date) {
+        $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
+        $day_of_week = $attendance_date->format('w');
+        $formatted_date = $attendance_date->format('Y-m-d');
+
+        $cell_value = "";
+
+        // Display the 'data' for this date if it exists
+        if (isset($user_data[$date])) {
+            $cell_value .= $user_data[$date] . "\n";
+        }
+
+        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present 
                              FROM final_attendance fa
                              LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
                              WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
         $stmt_attendance = $conn->prepare($attendance_query);
-        $formatted_date = date('Y-m-d', strtotime($dates[$i]));
         $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
         $stmt_attendance->execute();
         $attendance_result = $stmt_attendance->get_result();
-    
-        $is_sunday = (date('w', strtotime($formatted_date)) == 0);
-    
+
         if ($attendance_result->num_rows > 0) {
             $attendance_data = $attendance_result->fetch_assoc();
-            $cell_value = $user['data'] . "\n" .
-                          "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "\n" .
-                          "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "\n" .
-                          "First Mode: " . $attendance_data['first_mode'] . "\n";
+            $cell_value .= "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "\n";
+            $cell_value .= "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "\n";
+            $cell_value .= "First Mode: " . $attendance_data['first_mode'] . "\n";
             if ($attendance_data['last_out'] != null) {
-                $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n" .
-                               "Last Mode: " . $attendance_data['last_mode'];
-            
-                // Calculate total hours worked
-                $first_in = new DateTime($attendance_data['first_in']);
-                $last_out = new DateTime($attendance_data['last_out']);
-                $interval = $first_in->diff($last_out);
-                $total_hours = $interval->format('%h:%i:%s');
-            
-                $cell_value .= "\nTotal Hours Worked: " . $total_hours;
-            
-                // Check if it's a half day or full day
-                $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
-                if ($first_in > $cutoff_time) {
-                    $total_half_days += 0.5;
-                    $total_full_days += 0.5;
-                } else {
+                $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n";
+                $cell_value .= "Last Mode: " . $attendance_data['last_mode'] . "\n";
+                $cell_value .= "Total hours: " . $attendance_data['total_hours'] . "\n";
+                
+                // Calculate attendance status based on total hours
+                if ($attendance_data['total_hours'] >= 6.5) {
                     $total_full_days += 1;
+                } elseif ($attendance_data['total_hours'] < 5 && $attendance_data['total_hours'] > 0) {
+                    $total_half_days += 0.5;
+                } else {
+                    $total_absents += 1;
                 }
             } else {
-                $cell_value .= "No Last Out data";
-                // Set yellow background for missing last_out data
-                $sheet->getStyle($column . $row_num)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFFF00');
-                $total_half_days += 0.5;
-                $total_full_days += 0.5;
+                $cell_value .= "**No Last Out data**\n";
+                $total_absents += 1;
             }
         } else {
-            if ($is_sunday) {
-                $cell_value = "Holiday";
-                // Set light gray background for holidays
-                $sheet->getStyle($column . $row_num)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0');
+            if ($day_of_week == 0) {
+                $cell_value .= "Holiday";
+                $holiday +=1;
             } else {
-                $cell_value = "Absent";
+                $cell_value .= "Absent";
                 $total_absents += 1;
             }
         }
-        $total_days_lwp = $total_absents + $total_half_days;
-    
-        $sheet->setCellValue($column . $row_num, $cell_value);
-        // Set wrap text and align center
-        $sheet->getStyle($column . $row_num)
-            ->getAlignment()
-            ->setWrapText(true)
-            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-            ->setVertical(Alignment::VERTICAL_CENTER);
-    
         $stmt_attendance->close();
-        $column++;
+
+        $row[] = $cell_value;
     }
+
     // Add Attendance Summary
     $summary_value = "Absents: " . $total_absents . "\n" .
                      "Half Days: " . $total_half_days . "\n" .
-                     "Total Days Present: " . $total_full_days . "\n" .
-                     "Total Days Absent: " . $total_days_lwp;
-    $sheet->setCellValue($summary_column . $row_num, $summary_value);
-    $sheet->getStyle($summary_column . $row_num)
-        ->getAlignment()
-        ->setWrapText(true)
-        ->setHorizontal(Alignment::HORIZONTAL_CENTER)
-        ->setVertical(Alignment::VERTICAL_CENTER);
-    $row_num++;
+                     "Total Days Present: " . ($total_full_days + $holiday) . "\n" .
+                     "Total Days Absent: " . ($total_absents + $total_half_days);
+    $row[] = $summary_value;
+
+    fputcsv($output, $row);
 }
 
-// Adjust column widths
-$highestColumn = $sheet->getHighestColumn();
-$highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
-
-for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-    $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
-    $sheet->getColumnDimension($colLetter)->setWidth(20);
-}
-
-// Adjust row heights to 100 px
-$rowCount = $sheet->getHighestRow();
-for ($row = 1; $row <= $rowCount; $row++) {
-    $sheet->getRowDimension($row)->setRowHeight(135);
-}
-
-// Output the file
-header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-header('Content-Disposition: attachment;filename="attendance_report.xlsx"');
-header('Cache-Control: max-age=0');
-
-$writer = new Xlsx($spreadsheet);
-$writer->save('php://output');
+fclose($output);
 exit();
 ?>

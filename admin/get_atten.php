@@ -164,7 +164,7 @@ $stmt_users->close();
                                                 $total_absents = 0;
                                                 $total_half_days = 0;
                                                 $total_full_days = 0;
-                                                $total_late_count = 0;
+                                                $holiday = 0;
                                                 
                                                 foreach ($dates as $date) :
                                                     $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
@@ -191,33 +191,29 @@ $stmt_users->close();
                                                         if ($attendance_result->num_rows > 0) {
                                                             $attendance_data = $attendance_result->fetch_assoc();
                                                             echo "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "<br>";
-                                                            echo "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "<br>";
-                                                            echo "First Mode: " . $attendance_data['first_mode'] . "<br>";
+                                                            echo "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "," . $attendance_data['first_mode'] ."<br>";
                                                             if ($attendance_data['last_out'] != null) {
-                                                                echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
-                                                                echo "Last Mode: " . $attendance_data['last_mode'] . "<br>";
-                                                                echo "Total hours: " . $attendance_data['total_hours'] . "<br>";
+                                                                echo "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) .",". $attendance_data['last_mode']. "<br>";
+                                                                
+                                                                // Calculate attendance status based on total hours
+                                                                if ($attendance_data['total_hours'] >= 6.5) {
+                                                                    $total_full_days += 1; // Full day marked as 1
+                                                                    echo "Full Day: ";
+                                                                } elseif ($attendance_data['total_hours'] < 5 && $attendance_data['total_hours'] > 0) {
+                                                                    $total_half_days += 0.5; // Half day marked as 0.5
+                                                                    echo "Half Day: ";
+                                                                } else {
+                                                                    $total_absents += 1; // Absent marked as 0 (though added to absent count)
+                                                                    echo "Absent: ";
+                                                                }
                                                             } else {
                                                                 echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
-                                                            }
+                                                                $total_absents += 1;
+                                                            }echo "Total hours: " . $attendance_data['total_hours'] ;
                                                 
-                                                            $first_in_time = new DateTime($attendance_data['first_in']);
-                                                            $cutoff_time = new DateTime($formatted_date . ' 10:30:00');
-                                                            $office_start_time = new DateTime($formatted_date . ' 09:00:00');
-                                                
-                                                            if ($first_in_time > $cutoff_time) {
-                                                                // Employee arrived after 10:30, count as half day
-                                                                $total_half_days += 0.5;
-                                                                $total_full_days += 0.5;
-                                                            } elseif ($first_in_time > $office_start_time && ++$total_late_count > 3) {
-                                                                // Employee arrived after 9:00 but before 10:30, and late more than 3 times
-                                                                $total_half_days += 0.5;
-                                                                $total_full_days += 0.5;
-                                                            } else {
-                                                                $total_full_days += 1;
-                                                            }
                                                         } else {
                                                             if ($day_of_week == 0) {
+                                                                $holiday +=1;
                                                                 echo "Holiday";
                                                             } else {
                                                                 echo "Absent";
@@ -228,10 +224,11 @@ $stmt_users->close();
                                                         ?>
                                                     </td>
                                                 <?php endforeach; ?>
+                                                
                                                 <td>
                                                     Absents: <?php echo $total_absents; ?><br>
                                                     Half Days: <?php echo $total_half_days; ?><br>
-                                                    Total Days Present: <?php echo $total_full_days; ?><br>
+                                                    Total Days Present: <?php echo $total_full_days + $holiday; ?><br>
                                                     Total Days Absent: <?php echo $total_absents + $total_half_days; ?><br>
                                                 </td>
                                             </tr>

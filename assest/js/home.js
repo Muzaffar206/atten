@@ -12,6 +12,30 @@ function enableAttendance() {
     alert("Please select In or Out.");
     return;
   }
+
+  if (type === "In") {
+    // Check for existing attendance
+    fetch('check_attendance.php')
+      .then(response => response.json())
+      .then(data => {
+        if (data.exists) {
+          if (confirm("You have already given attendance for today. Do you want to give attendance again?")) {
+            proceedWithAttendance(mode, type);
+          }
+        } else {
+          proceedWithAttendance(mode, type);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert("An error occurred while checking attendance. Please try again.");
+      });
+  } else {
+    proceedWithAttendance(mode, type);
+  }
+}
+
+function proceedWithAttendance(mode, type) {
   if (mode === "office") {
     // Create overlay
     const overlay = document.createElement("div");
@@ -28,16 +52,18 @@ function enableAttendance() {
     overlay.style.justifyContent = "center";
     overlay.style.alignItems = "center";
     document.body.appendChild(overlay);
-     // Create container for camera
-  const cameraContainer = document.createElement("div");
-  cameraContainer.id = "camera-container";
-  cameraContainer.style.width = "80%";
-  cameraContainer.style.maxWidth = "500px";
-  cameraContainer.style.aspectRatio = "1";
-  cameraContainer.style.backgroundColor = "#000";
-  cameraContainer.style.borderRadius = "10px";
-  cameraContainer.style.overflow = "hidden";
-  overlay.appendChild(cameraContainer);
+
+    // Create container for camera
+    const cameraContainer = document.createElement("div");
+    cameraContainer.id = "camera-container";
+    cameraContainer.style.width = "80%";
+    cameraContainer.style.maxWidth = "500px";
+    cameraContainer.style.aspectRatio = "1";
+    cameraContainer.style.backgroundColor = "#000";
+    cameraContainer.style.borderRadius = "10px";
+    cameraContainer.style.overflow = "hidden";
+    overlay.appendChild(cameraContainer);
+
     // Move the camera element inside the new container
     cameraContainer.appendChild(cameraElement);
     getLocationForOffice(type);
@@ -46,15 +72,24 @@ function enableAttendance() {
   }
 }
 
-function showLoadingScreen() {
-  if (!document.querySelector(".loading-overlay")) {
-    const overlay = document.createElement("div");
-    overlay.className = "loading-overlay";
-    overlay.innerHTML = `
-      <div class="loading-text">Loading...</div>
+function showLoadingScreen(message = "Loading...") {
+  const overlay = document.createElement("div");
+  overlay.className = "loading-overlay";
+  overlay.innerHTML = `
+      <div class="loading-text">${message}</div>
       <div class="loading-message"></div>
-    `;
-    document.body.appendChild(overlay);
+  `;
+  document.body.appendChild(overlay);
+}
+
+function updateLoadingScreen(message, percentage) {
+  const overlay = document.querySelector(".loading-overlay");
+  if (overlay) {
+      const textElement = overlay.querySelector(".loading-text");
+      const messageElement = overlay.querySelector(".loading-message");
+      
+      textElement.textContent = message;
+      messageElement.style.width = `${percentage}%`;
   }
 }
 
@@ -278,7 +313,7 @@ function showSelfieButton(mode, data1, scanType) {
 }
 
 function captureSelfieAndLogAttendance(mode, data1, scanType) {
-  showLoadingScreen();
+  showLoadingScreen("Initializing camera...");
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then(stream => {
       videoElement.srcObject = stream;
@@ -286,9 +321,11 @@ function captureSelfieAndLogAttendance(mode, data1, scanType) {
         videoElement.play();
         canvasElement.width = videoElement.videoWidth;
         canvasElement.height = videoElement.videoHeight;
+        updateLoadingScreen("Capturing selfie...", 20);
         setTimeout(() => {
           context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
           const selfie = canvasElement.toDataURL("image/png");
+          updateLoadingScreen("Processing image...", 40);
           logAttendance(mode, data1, null, selfie, scanType);
           stream.getTracks().forEach(track => track.stop());
         }, 300); // capture after 1 second
@@ -301,6 +338,7 @@ function captureSelfieAndLogAttendance(mode, data1, scanType) {
 }
 
 function logAttendance(mode, data1, data2, selfie, scanType) {
+  updateLoadingScreen("Sending data to server...", 60);
   const xhr = new XMLHttpRequest();
   xhr.open("POST", "log_attendance.php", true);
   xhr.onreadystatechange = function () {
@@ -311,6 +349,7 @@ function logAttendance(mode, data1, data2, selfie, scanType) {
         if (response.status === "success") {
           showSuccessIcon();
           playSuccessSound();
+          vibrate();
         } else {
           showErrorIcon();
         }        
@@ -341,6 +380,14 @@ function logAttendance(mode, data1, data2, selfie, scanType) {
     setTimeout(() => {
       overlay.style.display = "none";
     }, 2000);
+  }
+  function vibrate() {
+    if ("vibrate" in navigator) {
+      // Vibrate for 200ms
+      navigator.vibrate(200);
+    } else {
+      console.log("Vibration not supported on this device");
+    }
   }
   const formData = new FormData();
   formData.append("mode", mode);
