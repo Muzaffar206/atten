@@ -67,7 +67,7 @@ $conn->close();
                     Welcome <?php echo htmlspecialchars($username); ?>
                 </span>
 
-
+                <div class="main_rap">
                 <div class="wrap-input1000">
                     <div class="radio-inputs">
                         <label class="radio">
@@ -96,6 +96,7 @@ $conn->close();
                             <span class="name">Outdoor</span>
                         </label>
                     </div>
+                </div>
                 </div>
 
 

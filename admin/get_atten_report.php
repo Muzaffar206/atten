@@ -4,7 +4,7 @@ session_regenerate_id(true);
 include("../assest/connection/config.php");
 include("include/header.php");
 include("include/topbar.php");
-$activePage = 'monthly_attendance';
+$activePage = 'Report';
 include("include/sidebar.php");
 
 if (!isset($_SESSION['user_id'])) {
@@ -124,14 +124,14 @@ $stmt_users->close();
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>&nbsp;</label><br>
-                                            <button type="submit" value="Show Data" class="btn btn-primary">Show data</button>
+                                            <button type="submit" value="Show Data" class="btn btn-primary">Show Data</button>
                                         </div>
                                     </div>
                                 </div>
                             </form>
 
                             <?php if ($users_result->num_rows > 0) : ?>
-                                <form method="post" action="download_xls.php">
+                                <form method="post" action="get_atten_report_csv.php">
                                     <input type="hidden" name="department" value="<?php echo $department; ?>">
                                     <input type="hidden" name="from_date" value="<?php echo $from_date; ?>">
                                     <input type="hidden" name="to_date" value="<?php echo $to_date; ?>">
@@ -140,7 +140,7 @@ $stmt_users->close();
                             <?php endif; ?>
                         </div>
                         <!-- /.card-header -->
-                        <div class="card-body">
+                         <div class="card-body">
                             <div class="table-responsive">
                                 <table id="attendanceTable" class="table table-bordered table-hover">
                                     <thead id="sticky-header">
@@ -149,9 +149,9 @@ $stmt_users->close();
                                             <th>Employee Code</th>
                                             <th>Employee Name</th>
                                             <?php foreach ($dates as $date) : ?>
-                                                <th style="min-width: 150px;"><?php echo $date; ?></th>
+                                                <th style="min-width: 80px;"><?php echo $date; ?></th>
                                             <?php endforeach; ?>
-                                            <th>Attendance Summary</th>
+                                            
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -165,20 +165,7 @@ $stmt_users->close();
                                                 $total_half_days = 0;
                                                 $total_full_days = 0;
                                                 $holiday = 0;
-                                                // Fetch all 'data' entries for this user within the date range
-                                                $data_query = "SELECT DATE(a.in_time) as date, a.data 
-FROM attendance a 
-WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
-                                                $stmt_data = $conn->prepare($data_query);
-                                                $stmt_data->bind_param("iss", $user['id'], $from_date, $to_date_adjusted);
-                                                $stmt_data->execute();
-                                                $data_result = $stmt_data->get_result();
-
-                                                $user_data = [];
-                                                while ($data_row = $data_result->fetch_assoc()) {
-                                                    $user_data[date('d-m-Y', strtotime($data_row['date']))] = $data_row['data'];
-                                                }
-
+                                                
                                                 foreach ($dates as $date) :
                                                     $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
                                                     $day_of_week = $attendance_date->format('w');
@@ -190,7 +177,7 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
                                                         } else {
                                                             echo "";
                                                         }
-
+                                                
                                                         $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present 
                                                             FROM final_attendance fa
                                                             LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
@@ -200,83 +187,55 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
                                                         $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
                                                         $stmt_attendance->execute();
                                                         $attendance_result = $stmt_attendance->get_result();
-
+                                                
                                                         if ($attendance_result->num_rows > 0) {
                                                             $attendance_data = $attendance_result->fetch_assoc();
-                                                            echo "In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "," . $attendance_data['first_mode'] . "<br>";
+                                                            echo "In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "<br>";
                                                             if ($attendance_data['last_out'] != null) {
-                                                                echo "Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "," . $attendance_data['last_mode'] . "<br>";
-
+                                                                echo "Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "<br>";
+                                                                
                                                                 // Calculate attendance status based on total hours
                                                                 if ($attendance_data['total_hours'] >= 6.5) {
                                                                     $total_full_days += 1; // Full day marked as 1
-                                                                    echo "Full Day: ";
-                                                                } elseif ($attendance_data['total_hours'] < 5 && $attendance_data['total_hours'] > 0) {
-                                                                    $total_half_days += 0.5; // Half day marked as 0.5
-                                                                    echo "Half Day: ";
-                                                                } else {
-                                                                    $total_absents += 1; // Absent marked as 0 (though added to absent count)
-                                                                    echo "Absent: ";
+                                                                } else if ($attendance_data['total_hours'] > 0) {
+                                                                    $total_half_days += 1; // Half day marked as 1
                                                                 }
-                                                                // Convert total_hours to hours, minutes, and seconds
-                                                                $total_hours = $attendance_data['total_hours'];
-                                                                $hours = floor($total_hours);
-                                                                $minutes = floor(($total_hours - $hours) * 60);
-                                                                $seconds = floor((($total_hours - $hours) * 60 - $minutes) * 60);
-
-                                                                // Format hours, minutes, and seconds as HH:MM:SS
-                                                                $formatted_time = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
-                                                                echo "Total hours: " . $formatted_time;
                                                             } else {
-                                                                echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
-                                                                $total_absents += 1;
+                                                                echo '<div style="background-color: #FFFF00;">No Out</div>';
+                                                                $total_absents += 1; // Absents marked as 1
                                                             }
                                                         } else {
                                                             if ($day_of_week == 0) {
-                                                                $holiday += 1;
+                                                                $holiday +=1;
                                                                 echo "Holiday";
                                                             } else {
                                                                 echo "Absent";
                                                                 $total_absents += 1;
                                                             }
                                                         }
+                                                
                                                         $stmt_attendance->close();
                                                         ?>
                                                     </td>
                                                 <?php endforeach; ?>
-
-                                                <td>
-                                                    Absents: <?php echo $total_absents; ?><br>
-                                                    Half Days: <?php echo $total_half_days; ?><br>
-                                                    Total Days Present: <?php echo $total_full_days + $holiday; ?><br>
-                                                    Total Days Absent: <?php echo $total_absents + $total_half_days; ?><br>
-                                                </td>
+                                                
                                             </tr>
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <!-- /.table-responsive -->
                     </div>
-                    <!-- /.card-body -->
                 </div>
-                <!-- /.card -->
             </div>
-            <!-- /.col -->
         </div>
-        <!-- /.row -->
+    </section>
 </div>
-<!-- /.container-fluid -->
-</section>
-<!-- /.content -->
-</div>
-<!-- /.content-wrapper -->
 
 <?php
 include("include/footer.php");
-$conn->close();
 ?>
+
 <script>
     $(document).ready(function() {
         $('#attendanceTable').DataTable({

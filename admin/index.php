@@ -55,6 +55,40 @@ $totalPresentTodayResult = $conn->query($totalPresentTodayQuery);
 $totalPresentTodayRow = $totalPresentTodayResult->fetch_assoc();
 $totalPresentToday = $totalPresentTodayRow['total_present_today'];
 
+// Get names of present employees
+$presentEmployeesQuery = "
+    SELECT DISTINCT user_id
+    FROM final_attendance
+    WHERE DATE(first_in) = CURDATE()
+";
+$presentEmployeesResult = $conn->query($presentEmployeesQuery);
+
+$presentEmployees = [];
+while ($row = $presentEmployeesResult->fetch_assoc()) {
+    $userQuery = "SELECT full_name FROM users WHERE id = " . $row['user_id'];
+    $userResult = $conn->query($userQuery);
+    if ($userRow = $userResult->fetch_assoc()) {
+        $presentEmployees[] = $userRow['full_name'];
+    }
+}
+
+
+// Get names of absent employees
+$absentEmployeesQuery = "
+    SELECT full_name
+    FROM users
+    WHERE id NOT IN (
+        SELECT user_id
+        FROM final_attendance
+        WHERE DATE(first_in) = CURDATE()
+    ) AND role = 'user'
+";
+$absentEmployeesResult = $conn->query($absentEmployeesQuery);
+$absentEmployees = [];
+while ($row = $absentEmployeesResult->fetch_assoc()) {
+    $absentEmployees[] = $row['full_name'];
+}
+
 // Total absent today
 $totalAbsentToday = $totalEmployees - $totalPresentToday;
 
@@ -133,71 +167,129 @@ while ($row = $recentAttendanceResult->fetch_assoc()) {
       </div><!-- /.row -->
     </div><!-- /.container-fluid -->
   </div>
-  <!-- /.content-header -->
 
   <!-- Main content -->
   <section class="content">
     <div class="container-fluid">
       <!-- Small boxes (Stat box) -->
       <div class="row">
+        <!-- Total Employees -->
         <div class="col-lg-3 col-6">
           <!-- small box -->
           <div class="small-box bg-info">
             <div class="inner">
               <h3><?php echo $totalEmployees; ?></h3>
-              <p>Total employees</p>
+              <p>Total Employees</p>
             </div>
             <div class="icon">
-              <i class="ion ion-person-add"></i>
+              <i class="ion ion-person"></i>
             </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="users.php" class="small-box-footer">All Employees <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
-        <!-- ./col -->
+
+        <!-- Present Today -->
         <div class="col-lg-3 col-6">
-          <!-- small box -->
           <div class="small-box bg-success">
             <div class="inner">
-              <h3><?php echo $averageAttendance; ?><sup style="font-size: 20px">%</sup></h3>
-              <p>Average attendance</p>
+              <h3><?php echo $totalPresentToday; ?></h3>
+              <p>Present Today</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-checkmark-circled"></i>
+            </div>
+            <a href="#" class="small-box-footer" data-toggle="modal" data-target="#presentEmployeesModal">View Present <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Absent Today -->
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-danger">
+            <div class="inner">
+              <h3><?php echo $totalAbsentToday; ?></h3>
+              <p>Absent Today</p>
+            </div>
+            <div class="icon">
+              <i class="ion ion-close-circled"></i>
+            </div>
+            <a href="#" class="small-box-footer" data-toggle="modal" data-target="#absentEmployeesModal">View Absent <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Average Attendance -->
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3><?php echo $averageAttendance; ?>%</h3>
+              <p>Average Attendance</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
             </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="attendance_report.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
-        <!-- ./col -->
-        <div class="col-lg-3 col-6">
-          <!-- small box -->
-          <div class="small-box bg-warning">
-            <div class="inner">
-              <h3><?php echo $totalPresentToday; ?></h3>
-              <p>Total present today</p>
-            </div>
-            <div class="icon">
-              <i class="fas fa-map-marker"></i>
-            </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-          </div>
-        </div>
-        <!-- ./col -->
-        <div class="col-lg-3 col-6">
-          <!-- small box -->
-          <div class="small-box bg-danger">
-            <div class="inner">
-              <h3><?php echo $totalAbsentToday; ?></h3>
-              <p>Total Absent Today</p>
-            </div>
-            <div class="icon">
-              <i class="fa fa-ban"></i>
-            </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-          </div>
-        </div>
-        <!-- ./col -->
       </div>
       <!-- /.row -->
+    </div><!-- /.container-fluid -->
+  </section>
+
+  <!-- Present Employees Modal -->
+  <div class="modal fade" id="presentEmployeesModal" tabindex="-1" role="dialog" aria-labelledby="presentEmployeesModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="presentEmployeesModalLabel">Present Employees</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <?php if (!empty($presentEmployees)): ?>
+            <ul>
+              <?php foreach ($presentEmployees as $employee): ?>
+                <li><?php echo htmlspecialchars($employee); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php else: ?>
+            <p>No employees are present today.</p>
+          <?php endif; ?>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Absent Employees Modal -->
+  <div class="modal fade" id="absentEmployeesModal" tabindex="-1" role="dialog" aria-labelledby="absentEmployeesModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="absentEmployeesModalLabel">Absent Employees</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <?php if (!empty($absentEmployees)): ?>
+            <ul>
+              <?php foreach ($absentEmployees as $employee): ?>
+                <li><?php echo htmlspecialchars($employee); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php else: ?>
+            <p>All employees are present today.</p>
+          <?php endif; ?>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
       <div class="card">
           <div class="card-header">

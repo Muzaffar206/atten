@@ -128,7 +128,7 @@ function showPositionForOffice(position, scanType) {
     { name: "Study Centre", lat: 19.040176, lon: 72.839605, radius: 0.03 },
     { name: "Clinics", lat: 19.174013, lon: 73.021686, radius: 0.03 },
     { name: "Clinics Physiotherapy", lat: 19.174070, lon: 73.021912, radius: 0.03 },
-    { name: "NP Thane Unit", lat: 19.160409, lon: 73.025730, radius: 0.03 }
+    { name: "NP Thane Unit", lat: 19.159877, lon: 73.026609, radius: 0.03 }
   ];
 
   const withinRange = officeLocations.some(location => {
@@ -144,6 +144,15 @@ function showPositionForOffice(position, scanType) {
 
   if (!withinRange) {
     hideLoadingScreen();
+    const overlay = document.getElementById("attendance-overlay");
+    const cameraContainer = document.createElement("div");
+
+    if (cameraContainer) {
+      cameraContainer.remove();
+    }
+    if (overlay) {
+      overlay.remove();
+    }
     alert("You are not in any of the specified office locations.");
   }
 }
@@ -246,11 +255,7 @@ function startCamera(scanType) {
     .start(
       
       { facingMode: "environment" },
-      { fps: 10,qrbox: { width: 250, height: 250 }, aspectRatio: 1.0,
-      disableFlip: false,
-      experimentalFeatures: {
-        useBarCodeDetectorIfSupported: true
-      } },
+      { fps: 10,qrbox: { width: 250, height: 250 }, },
       (qrCodeMessage) => {
         // QR Code detected
         updateStatus("QR Code detected!");

@@ -250,6 +250,11 @@ iframe {
   border-bottom: 2px solid rgba(255,255,255,0.24);
   margin-bottom: 30px;
 }
+.main_rap{
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+}
 .wrap-input1000 {
   text-align: center;
   justify-content: center;
