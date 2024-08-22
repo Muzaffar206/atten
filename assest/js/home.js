@@ -4,7 +4,6 @@ const videoElement = document.createElement("video");
 const canvasElement = document.createElement("canvas");
 const context = canvasElement.getContext("2d");
 
-
 function enableAttendance() {
   const mode = document.querySelector('input[name="attendance_mode"]:checked')?.value;
   const type = document.querySelector('input[name="scheme"]:checked')?.value;
@@ -72,31 +71,31 @@ function proceedWithAttendance(mode, type) {
   }
 }
 
-function showLoadingScreen(message = "Loading...") {
-  const overlay = document.createElement("div");
-  overlay.className = "loading-overlay";
-  overlay.innerHTML = `
-      <div class="loading-text">${message}</div>
-      <div class="loading-message"></div>
+function showLoadingScreen(message, percentage) {
+  // Create the loading screen element
+  const loadingScreen = document.createElement("div");
+  loadingScreen.className = "loading-screen";
+  loadingScreen.innerHTML = `
+    <div class="loading-message">${message}</div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: ${percentage}%;"></div>
+    </div>
   `;
-  document.body.appendChild(overlay);
+  document.body.appendChild(loadingScreen);
 }
 
 function updateLoadingScreen(message, percentage) {
-  const overlay = document.querySelector(".loading-overlay");
-  if (overlay) {
-      const textElement = overlay.querySelector(".loading-text");
-      const messageElement = overlay.querySelector(".loading-message");
-      
-      textElement.textContent = message;
-      messageElement.style.width = `${percentage}%`;
+  const loadingScreen = document.querySelector(".loading-screen");
+  if (loadingScreen) {
+    loadingScreen.querySelector(".loading-message").textContent = message;
+    loadingScreen.querySelector(".progress-fill").style.width = `${percentage}%`;
   }
 }
 
 function hideLoadingScreen() {
-  const overlay = document.querySelector(".loading-overlay");
-  if (overlay) {
-    document.body.removeChild(overlay);
+  const loadingScreen = document.querySelector(".loading-screen");
+  if (loadingScreen) {
+    document.body.removeChild(loadingScreen);
   }
 }
 
@@ -177,12 +176,14 @@ function showNotification(message) {
 }
 
 function getLocationForOutdoor(scanType) {
+  showLoadingScreen("Please wait checking your location");
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
         const coordString = `${lat},${lon}`;
+        hideLoadingScreen();
         showSelfieButton("Outdoor", coordString, scanType);
       },
       showError
@@ -253,9 +254,8 @@ function startCamera(scanType) {
 
   html5QrCode
     .start(
-      
       { facingMode: "environment" },
-      { fps: 10,qrbox: { width: 250, height: 250 }, },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
       (qrCodeMessage) => {
         // QR Code detected
         updateStatus("QR Code detected!");
@@ -271,7 +271,7 @@ function startCamera(scanType) {
         qrDetectedMessage.style.transform = "translateX(-50%)";
         overlay.appendChild(qrDetectedMessage);
         
-
+        
         setTimeout(() => {
           html5QrCode.stop().then(() => {
             overlay.remove();
@@ -318,22 +318,22 @@ function showSelfieButton(mode, data1, scanType) {
 }
 
 function captureSelfieAndLogAttendance(mode, data1, scanType) {
-  showLoadingScreen("Initializing camera...");
+  showLoadingScreen("Initializing camera...", 20);
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then(stream => {
       videoElement.srcObject = stream;
       videoElement.onloadedmetadata = () => {
         videoElement.play();
-        canvasElement.width = videoElement.videoWidth;
-        canvasElement.height = videoElement.videoHeight;
-        updateLoadingScreen("Capturing selfie...", 20);
+        canvasElement.width = 240; 
+        canvasElement.height = 320;
+        updateLoadingScreen("Capturing selfie...", 40);
         setTimeout(() => {
           context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-          const selfie = canvasElement.toDataURL("image/png");
-          updateLoadingScreen("Processing image...", 40);
+          const selfie = canvasElement.toDataURL("image/jpeg", 0.8); // Compress the image
+          updateLoadingScreen("Processing image...", 60);
           logAttendance(mode, data1, null, selfie, scanType);
           stream.getTracks().forEach(track => track.stop());
-        }, 300); // capture after 1 second
+        }, 100); // Reduced delay to 100ms
       };
     })
     .catch(err => {
@@ -343,65 +343,36 @@ function captureSelfieAndLogAttendance(mode, data1, scanType) {
 }
 
 function logAttendance(mode, data1, data2, selfie, scanType) {
-  updateLoadingScreen("Sending data to server...", 60);
+  updateLoadingScreen("Sending data to server...", 80);
   const xhr = new XMLHttpRequest();
   xhr.open("POST", "log_attendance.php", true);
   xhr.onreadystatechange = function () {
     if (xhr.readyState === XMLHttpRequest.DONE) {
-      hideLoadingScreen();
       try {
         const response = JSON.parse(xhr.responseText.trim());
         if (response.status === "success") {
+          updateLoadingScreen("Finalizing...", 100);
           showSuccessIcon();
           playSuccessSound();
           vibrate();
         } else {
+          updateLoadingScreen("Error occurred", 100);
           showErrorIcon();
-        }        
+        }
+        hideLoadingScreen();
       } catch (e) {
         console.error("Error parsing response:", e);
+        hideLoadingScreen();
         alert("An error occurred. Please try again.");
       }
     }
   };
-  function playSuccessSound() {
-    const audio = document.getElementById("successSound");
-    audio.play();
-  }
 
-  function showSuccessIcon() {
-    const overlay = document.getElementById("successOverlay");
-    overlay.style.display = "block";
-  
-    setTimeout(() => {
-      overlay.style.display = "none";
-    }, 2000);
-  }
-  
-  function showErrorIcon() {
-    const overlay = document.getElementById("errorOverlay");
-    overlay.style.display = "block";
-  
-    setTimeout(() => {
-      overlay.style.display = "none";
-    }, 2000);
-  }
-  function vibrate() {
-    if ("vibrate" in navigator) {
-      // Vibrate for 200ms
-      navigator.vibrate(200);
-    } else {
-      console.log("Vibration not supported on this device");
-    }
-  }
   const formData = new FormData();
   formData.append("mode", mode);
   formData.append("data1", data1);
   formData.append("scanType", scanType);
-  if (selfie) {
-    const blob = dataURLToBlob(selfie);
-    formData.append(scanType === "In" ? "selfie_in" : "selfie_out", blob, scanType === "In" ? "selfie_in.png" : "selfie_out.png");
-  }
+  formData.append(scanType === "In" ? "selfie_in" : "selfie_out", dataURLToBlob(selfie), scanType === "In" ? "selfie_in.jpg" : "selfie_out.jpg");
 
   xhr.send(formData);
 }
@@ -415,4 +386,38 @@ function dataURLToBlob(dataURL) {
     array.push(binary.charCodeAt(i));
   }
   return new Blob([new Uint8Array(array)], { type: mime });
+}
+
+function showSuccessIcon() {
+  const overlay = document.getElementById("successOverlay");
+  overlay.style.display = "block";
+
+  setTimeout(() => {
+    overlay.style.display = "none";
+  }, 2000);
+}
+
+function showErrorIcon() {
+  const overlay = document.getElementById("errorOverlay");
+  overlay.style.display = "block";
+
+  setTimeout(() => {
+    overlay.style.display = "none";
+  }, 2000);
+}
+function playSuccessSound() {
+  const audio = document.createElement("audio");
+  audio.id = "successSound";
+  audio.src = "assest/sounds/success.mp3";
+  document.body.appendChild(audio);
+  audio.play();
+}
+
+function vibrate() {
+  if ("vibrate" in navigator) {
+    // Vibrate for 200ms
+    navigator.vibrate(200);
+  } else {
+    console.log("Vibration not supported on this device");
+  }
 }

@@ -1,4 +1,4 @@
-<?php 
+<?php
 session_start();
 session_regenerate_id(true);
 
@@ -266,7 +266,7 @@ include("include/sidebar.php");
                                             </div>
                                         </div>
                                         <div class="col-md-2">
-                                        <div class="form-group">
+                                            <div class="form-group">
                                                 <label for="mode">Mode:</label>
                                                 <select name="mode" id="mode" class="form-control">
                                                     <option value="">All Modes</option>
@@ -279,7 +279,7 @@ include("include/sidebar.php");
                                             </div>
                                         </div>
                                         <div class="col-md-2">
-                                        <div class="form-group">
+                                            <div class="form-group">
                                                 <label for="where">Where:</label>
                                                 <select name="where" id="where" class="form-control">
                                                     <option value="">All Locations</option>
@@ -305,7 +305,22 @@ include("include/sidebar.php");
                                         </div>
                                     </div>
                                 </form>
-                                
+                                <!-- Modal -->
+                                <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="imageModalLabel">Selfie Image</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <img id="modalImage" src="" alt="Selfie Image" class="img-fluid">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <?php displayAlert(); ?>
                                 <div class="row">
@@ -386,7 +401,7 @@ include("include/sidebar.php");
                                                                         $relativeSelfieInPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieInPath);
                                                                         $imageInSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieInPath);
                                                                         if (file_exists($imageInSrc)) : ?>
-                                                                            <img src="<?php echo $imageInSrc; ?>" alt="Selfie In" width="70" height="70">
+                                                                            <img src="<?php echo $imageInSrc; ?>" alt="Selfie In" width="70" height="70" class="selfie-image">
                                                                         <?php else : ?>
                                                                             N/A
                                                                         <?php endif; ?>
@@ -397,7 +412,7 @@ include("include/sidebar.php");
                                                                         $relativeSelfieOutPath = str_replace('C:/HostingSpaces/mescotrust/attendance.mescotrust.org/wwwroot/admin/Selfies_in&out/', '', $selfieOutPath);
                                                                         $imageOutSrc = 'Selfies_in&out/' . htmlspecialchars($relativeSelfieOutPath);
                                                                         if (file_exists($imageOutSrc)) : ?>
-                                                                            <img src="<?php echo $imageOutSrc; ?>" alt="Selfie Out" width="70" height="70">
+                                                                            <img src="<?php echo $imageOutSrc; ?>" alt="Selfie Out" width="70" height="70" class="selfie-image">
                                                                         <?php else : ?>
                                                                             N/A
                                                                         <?php endif; ?>
@@ -529,6 +544,14 @@ include("include/footer.php");
 
         topScroll.addEventListener('scroll', function() {
             tableScroll.scrollLeft = topScroll.scrollLeft;
+        });
+    });
+    $(document).ready(function() {
+        // Add click event listener to the selfie images
+        $(".selfie-image").click(function() {
+            var imageSrc = $(this).attr("src");
+            $("#modalImage").attr("src", imageSrc);
+            $("#imageModal").modal("show");
         });
     });
 </script>

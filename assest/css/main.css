@@ -619,50 +619,40 @@ iframe {
   font-weight: 600;
 }
 
-.loading-overlay {
+.loading-screen {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.7);
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
-  z-index: 9999;
-}
-
-.loading-text {
-  font-size: 24px;
-  color: rgb(0, 0, 0);
-  margin-bottom: 20px;
-  align-self: center;
+  z-index: 1000;
 }
 
 .loading-message {
-  width: 30%;
-  height: 10px;
-  border-radius: 5px;
-  background-color: rgb(0, 0, 0);
-  animation: loader-bar-animation 2s ease-in-out infinite;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
-@keyframes loader-bar-animation {
-  0% {
-    /* transform: translateX(-100%) rotate(270deg); */
-    transform: translateX(-100%);
-  }
+.progress-bar {
+  width: 80%;
+  height: 20px;
+  background-color: #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
 
-  50% {
-    /* transform: translateX(100%) rotate(-90deg); */
-    transform: translateX(100%);
-  }
-
-  100% {
-    /* transform: translateX(-100%) rotate(270deg); */
-    transform: translateX(-100%);
-  }
+.progress-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.5s ease;
 }
 
 .camera-overlay {
