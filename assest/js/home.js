@@ -7,31 +7,41 @@ const context = canvasElement.getContext("2d");
 function enableAttendance() {
   const mode = document.querySelector('input[name="attendance_mode"]:checked')?.value;
   const type = document.querySelector('input[name="scheme"]:checked')?.value;
-  if (!type) {
-    alert("Please select In or Out.");
+  if (!mode || !type) {
+    alert("Please select both attendance mode and In/Out.");
     return;
   }
 
-  if (type === "In") {
-    // Check for existing attendance
-    fetch('check_attendance.php')
-      .then(response => response.json())
-      .then(data => {
-        if (data.exists) {
-          if (confirm("You have already given attendance for today. Do you want to give attendance again?")) {
-            proceedWithAttendance(mode, type);
-          }
+  checkAttendanceStatus(mode, type);
+}
+
+function checkAttendanceStatus(mode, type) {
+  fetch('check_attendance.php')
+    .then(response => response.json())
+    .then(data => {
+      
+      if (type === "In") {
+        if (data[`${mode}_in`]) {
+          alert(`You have already marked ${mode} attendance for today.`);
+        } else if (data.office_in && data.outdoor_in) {
+          alert("You have already marked both office and outdoor attendance for today.");
         } else {
           proceedWithAttendance(mode, type);
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert("An error occurred while checking attendance. Please try again.");
-      });
-  } else {
-    proceedWithAttendance(mode, type);
-  }
+      } else if (type === "Out") {
+        if (data[`${mode}_out`]) {
+          alert(`You have already marked ${mode} out attendance for today.`);
+        } else if (!data[`${mode}_in`]) {
+          alert(`You need to mark ${mode} in attendance before marking out.`);
+        } else {
+          proceedWithAttendance(mode, type);
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert("An error occurred while checking attendance. Please try again.");
+    });
 }
 
 function proceedWithAttendance(mode, type) {

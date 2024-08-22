@@ -152,24 +152,28 @@ try {
 
         if ($scanType === "In") {
             $sql = "INSERT INTO attendance (user_id, mode, data, in_time, selfie_in) VALUES (?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in)";
+                    ON DUPLICATE KEY UPDATE in_time = VALUES(in_time), selfie_in = VALUES(selfie_in),
+                    data = CONCAT(COALESCE(data, ''), IF(COALESCE(data, '') = '', '', ','), ?)";
+                    
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("issss", $user_id, $mode, $data1, $timestamp, $selfie_in_path);
+            $stmt->bind_param("isssss", $user_id, $mode, $data1, $timestamp, $selfie_in_path, $data1);
+            
         } else if ($scanType === "Out") {
-            $checkSql = "SELECT id FROM attendance WHERE user_id = ? AND data = ? AND mode = ? AND DATE(in_time) = DATE(?)";
+            $checkSql = "SELECT id, data FROM attendance WHERE user_id = ? AND mode = ? AND DATE(in_time) = DATE(?)";
             $checkStmt = $conn->prepare($checkSql);
-            $checkStmt->bind_param("isss", $user_id, $data1, $mode, $date);
+            $checkStmt->bind_param("iss", $user_id, $mode, $date);
             $checkStmt->execute();
-            $checkStmt->bind_result($attendance_id);
+            $checkStmt->bind_result($attendance_id, $existing_data);
             $checkStmt->fetch();
             $checkStmt->close();
 
             if ($attendance_id) {
-                $sql = "UPDATE attendance SET out_time = ?, selfie_out = ? WHERE id = ?";
+                $new_data = $existing_data ? $existing_data . ',' . $data1 : $data1;
+            $sql = "UPDATE attendance SET out_time = ?, selfie_out = ?, data = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssi", $timestamp, $selfie_out_path, $attendance_id);
+                $stmt->bind_param("sssi", $timestamp, $selfie_out_path, $new_data, $attendance_id);
             } else {
-                sendJsonResponse('error', 'You are not in same Office.');
+                sendJsonResponse('error', 'You need to check in before checking out.');
             }
         } else {
             throw new Exception("Invalid scan type.");

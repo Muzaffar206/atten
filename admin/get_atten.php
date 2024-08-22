@@ -15,6 +15,16 @@ if ($_SESSION['role'] !== 'admin') {
     header("Location: ../home.php");
     exit();
 }
+// Pagination
+$entries_per_page = isset($_POST['entries']) ? intval($_POST['entries']) : 10;
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$offset = ($page - 1) * $entries_per_page;
+// Search functionality
+$search = isset($_POST['search']) ? $conn->real_escape_string($_POST['search']) : '';
+$search_condition = '';
+if (!empty($search)) {
+    $search_condition = " AND (u.full_name LIKE '%$search%' OR u.employer_id LIKE '%$search%' OR u.department LIKE '%$search%')";
+}
 
 // Fetch distinct departments from users table
 $departments_query = "SELECT DISTINCT department FROM users";
@@ -39,8 +49,9 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
-     GROUP BY u.id" :
+     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin' $search_condition
+     GROUP BY u.id
+     LIMIT $offset, $entries_per_page" :
     "SELECT u.id, u.employer_id, u.full_name, u.department, 
             MAX(fa.first_in) AS latest_first_in, 
             MAX(a.data) AS data,
@@ -48,8 +59,9 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
-     GROUP BY u.id";
+     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin' $search_condition
+     GROUP BY u.id
+     LIMIT $offset, $entries_per_page";
 
 $stmt_users = $conn->prepare($users_query);
 if ($department === 'All') {
@@ -68,9 +80,72 @@ while ($current_date <= $end_date) {
     $dates[] = date('d-m-Y', $current_date);
     $current_date = strtotime('+1 day', $current_date);
 }
+$count_query = ($department === 'All') ?
+    "SELECT COUNT(DISTINCT u.id) as total FROM users u
+     LEFT JOIN final_attendance fa ON u.id = fa.user_id
+     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin' $search_condition" :
+    "SELECT COUNT(DISTINCT u.id) as total FROM users u
+     LEFT JOIN final_attendance fa ON u.id = fa.user_id
+     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin' $search_condition";
+$stmt_count = $conn->prepare($count_query);
+if ($department === 'All') {
+    $stmt_count->bind_param("ss", $from_date, $to_date_adjusted);
+} else {
+    $stmt_count->bind_param("sss", $department, $from_date, $to_date_adjusted);
+}
+$stmt_count->execute();
+$total_rows = $stmt_count->get_result()->fetch_assoc()['total'];
+$total_pages = ceil($total_rows / $entries_per_page);
 
 $stmt_users->close();
 ?>
+<style>
+    .table-wrapper {
+        position: relative;
+    }
+    .table-scroll {
+        overflow: auto;
+        margin-top: 20px; /* Space for the top scroll bar */
+    }
+    .table-scroll table {
+        width: 100%;
+    }
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: #f8f9fa; /* Adjust color as needed */
+    }
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background-color: #f8f9fa; /* Adjust color as needed */
+    }
+    .sticky-row {
+        position: sticky;
+        top: 48px; /* Adjust this value based on your header height */
+        z-index: 1;
+        background-color: #f8f9fa; /* Adjust color as needed */
+    }
+    .sticky-row .sticky-col {
+        z-index: 3;
+    }
+    /* Custom scrollbar styles */
+    .table-scroll::-webkit-scrollbar {
+        height: 10px;
+        width: 10px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+        background: #888;
+    }
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
 <div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <section class="content-header">
@@ -121,6 +196,23 @@ $stmt_users->close();
                                             <input type="date" id="to_date" name="to_date" class="form-control" value="<?php echo $to_date; ?>">
                                         </div>
                                     </div>
+                                    <div class="col-md-2">
+                <div class="form-group">
+                    <label for="entries">Entries per Page:</label>
+                    <select name="entries" id="entries" class="form-control">
+                        <option value="10" <?php echo $entries_per_page == 10 ? 'selected' : ''; ?>>10</option>
+                        <option value="25" <?php echo $entries_per_page == 25 ? 'selected' : ''; ?>>25</option>
+                        <option value="50" <?php echo $entries_per_page == 50 ? 'selected' : ''; ?>>50</option>
+                        <option value="100" <?php echo $entries_per_page == 100 ? 'selected' : ''; ?>>100</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" name="search" class="form-control" value="<?php echo $search; ?>" placeholder="Search...">
+                </div>
+            </div>
                                     <div class="col-md-3">
                                         <div class="form-group">
                                             <label>&nbsp;</label><br>
@@ -135,6 +227,7 @@ $stmt_users->close();
                                     <input type="hidden" name="department" value="<?php echo $department; ?>">
                                     <input type="hidden" name="from_date" value="<?php echo $from_date; ?>">
                                     <input type="hidden" name="to_date" value="<?php echo $to_date; ?>">
+                                    <input type="hidden" name="search" value="<?php echo $search; ?>">
                                     <button type="submit" class="btn btn-success">Download CSV</button>
                                 </form>
                             <?php endif; ?>
@@ -142,24 +235,30 @@ $stmt_users->close();
                         <!-- /.card-header -->
                         <div class="card-body">
                             <div class="table-responsive">
+                            <div class="table-scroll">
                                 <table id="attendanceTable" class="table table-bordered table-hover">
                                     <thead id="sticky-header">
-                                        <tr>
-                                            <th>Department</th>
-                                            <th>Employee Code</th>
-                                            <th>Employee Name</th>
+                                        <tr class="sticky-top">
+                                        <th class="sticky-col">Department</th>
+                                            <th class="sticky-col">Employee Code</th>
+                                            <th class="sticky-col">Employee Name</th>
                                             <?php foreach ($dates as $date) : ?>
                                                 <th style="min-width: 150px;"><?php echo $date; ?></th>
                                             <?php endforeach; ?>
-                                            <th>Attendance Summary</th>
+                                            <th style="min-width: 200px;">Attendance Summary</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php while ($user = $users_result->fetch_assoc()) : ?>
-                                            <tr>
-                                                <td><?php echo $user['department']; ?></td>
-                                                <td><?php echo $user['employer_id']; ?></td>
-                                                <td><?php echo $user['full_name']; ?></td>
+                                    <?php 
+                    $row_count = 0;
+                    while ($user = $users_result->fetch_assoc()) : 
+                        $row_class = $row_count < 3 ? 'sticky-row' : '';
+                        $row_count++;
+                    ?>
+                        <tr class="<?php echo $row_class; ?>">
+                        <td class="sticky-col"><?php echo $user['department']; ?></td>
+                                                <td class="sticky-col"><?php echo $user['employer_id']; ?></td>
+                                                <td class="sticky-col"><?php echo $user['full_name']; ?></td>
                                                 <?php
                                                 $total_absents = 0;
                                                 $total_half_days = 0;
@@ -259,7 +358,42 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
                         </div>
                         <!-- /.table-responsive -->
                     </div>
+                    <!-- Pagination controls -->
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <?php
+        $start_page = max(1, $page - 1);
+        $end_page = min($total_pages, $start_page + 2);
+        
+        if ($end_page - $start_page < 2) {
+            $start_page = max(1, $end_page - 2);
+        }
+
+        if ($page > 1): ?>
+            <li class="page-item">
+                <a class="page-link" href="?page=<?php echo $page-1; ?>&department=<?php echo $department; ?>&from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>&entries=<?php echo $entries_per_page; ?>&search=<?php echo $search; ?>" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        <?php endif; ?>
+
+        <?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+            <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
+                <a class="page-link" href="?page=<?php echo $i; ?>&department=<?php echo $department; ?>&from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>&entries=<?php echo $entries_per_page; ?>&search=<?php echo $search; ?>"><?php echo $i; ?></a>
+            </li>
+        <?php endfor; ?>
+
+        <?php if ($page < $total_pages): ?>
+            <li class="page-item">
+                <a class="page-link" href="?page=<?php echo $page+1; ?>&department=<?php echo $department; ?>&from_date=<?php echo $from_date; ?>&to_date=<?php echo $to_date; ?>&entries=<?php echo $entries_per_page; ?>&search=<?php echo $search; ?>" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        <?php endif; ?>
+    </ul>
+</nav>
                     <!-- /.card-body -->
+                     <!-- Pagination controls -->
                 </div>
                 <!-- /.card -->
             </div>
@@ -278,16 +412,26 @@ include("include/footer.php");
 $conn->close();
 ?>
 <script>
-    $(document).ready(function() {
-        $('#attendanceTable').DataTable({
-            "scrollX": true,
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    var tableScroll = document.querySelector('.table-scroll');
+    var topScroll = document.createElement('div');
+    topScroll.style.overflowX = 'auto';
+    topScroll.style.overflowY = 'hidden';
+    topScroll.style.width = tableScroll.clientWidth + 'px';
+    
+    var innerDiv = document.createElement('div');
+    innerDiv.style.width = tableScroll.scrollWidth + 'px';
+    innerDiv.style.height = '20px';
+    
+    topScroll.appendChild(innerDiv);
+    tableScroll.parentNode.insertBefore(topScroll, tableScroll);
+    
+    topScroll.addEventListener('scroll', function() {
+        tableScroll.scrollLeft = topScroll.scrollLeft;
     });
+    
+    tableScroll.addEventListener('scroll', function() {
+        topScroll.scrollLeft = tableScroll.scrollLeft;
+    });
+});
 </script>

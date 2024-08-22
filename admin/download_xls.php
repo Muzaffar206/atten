@@ -18,8 +18,14 @@ include("../assest/connection/config.php");
 $department = isset($_POST['department']) ? $_POST['department'] : 'All';
 $from_date = isset($_POST['from_date']) ? $_POST['from_date'] : date('Y-m-01');
 $to_date = isset($_POST['to_date']) ? $_POST['to_date'] : date('Y-m-d');
+$search = isset($_POST['search']) ? $conn->real_escape_string($_POST['search']) : '';
 
 $to_date_adjusted = date('Y-m-d', strtotime($to_date . ' +1 day'));
+
+$search_condition = '';
+if (!empty($search)) {
+    $search_condition = " AND (u.full_name LIKE '%$search%' OR u.employer_id LIKE '%$search%' OR u.department LIKE '%$search%')";
+}
 
 // Prepare SQL query based on department filter
 $users_query = ($department === 'All') ?
@@ -30,7 +36,7 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
+     WHERE fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin' $search_condition
      GROUP BY u.id" :
     "SELECT u.id, u.employer_id, u.full_name, u.department, 
             MAX(fa.first_in) AS latest_first_in, 
