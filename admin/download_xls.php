@@ -27,6 +27,14 @@ if (!empty($search)) {
     $search_condition = " AND (u.full_name LIKE '%$search%' OR u.employer_id LIKE '%$search%' OR u.department LIKE '%$search%')";
 }
 
+// Fetch all holidays
+$holidays_query = "SELECT holiday_date, holiday_name FROM holidays";
+$holidays_result = $conn->query($holidays_query);
+$holidays = [];
+while ($holiday = $holidays_result->fetch_assoc()) {
+    $holidays[date('Y-m-d', strtotime($holiday['holiday_date']))] = $holiday['holiday_name'];
+}
+
 // Prepare SQL query based on department filter
 $users_query = ($department === 'All') ?
     "SELECT u.id, u.employer_id, u.full_name, u.department, 
@@ -45,7 +53,7 @@ $users_query = ($department === 'All') ?
      FROM users u
      LEFT JOIN final_attendance fa ON u.id = fa.user_id
      LEFT JOIN attendance a ON u.id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin'
+     WHERE u.department = ? AND fa.first_in >= ? AND fa.first_in < ? AND u.role <> 'admin' $search_condition
      GROUP BY u.id";
 
 $stmt_users = $conn->prepare($users_query);
@@ -95,7 +103,7 @@ while ($user = $users_result->fetch_assoc()) {
     $total_absents = 0;
     $total_half_days = 0;
     $total_full_days = 0;
-    $holiday = 0;
+    $total_holidays = 0;
 
     // Fetch all 'data' entries for this user within the date range
     $data_query = "SELECT DATE(a.in_time) as date, a.data 
@@ -119,6 +127,9 @@ while ($user = $users_result->fetch_assoc()) {
 
         $cell_value = "";
 
+        $is_holiday = ($day_of_week == 0) || isset($holidays[$formatted_date]);
+        $holiday_name = $day_of_week == 0 ? 'Sunday' : ($holidays[$formatted_date] ?? '');
+
         // Display the 'data' for this date if it exists
         if (isset($user_data[$date])) {
             $cell_value .= $user_data[$date] . "\n";
@@ -135,32 +146,36 @@ while ($user = $users_result->fetch_assoc()) {
 
         if ($attendance_result->num_rows > 0) {
             $attendance_data = $attendance_result->fetch_assoc();
-            $cell_value .= "Status: " . ($attendance_data['is_present'] ? "Present" : "Absent") . "\n";
-            $cell_value .= "First In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "\n";
-            $cell_value .= "First Mode: " . $attendance_data['first_mode'] . "\n";
+            $cell_value .= "In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "," . $attendance_data['first_mode'] . "\n";
             if ($attendance_data['last_out'] != null) {
-                $cell_value .= "Last Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "\n";
-                $cell_value .= "Last Mode: " . $attendance_data['last_mode'] . "\n";
-                $cell_value .= "Total hours: " . $attendance_data['total_hours'] . "\n";
+                $cell_value .= "Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "," . $attendance_data['last_mode'] . "\n";
                 
                 // Calculate attendance status based on total hours
                 if ($attendance_data['total_hours'] >= 6.5) {
                     $total_full_days += 1;
+                    $cell_value .= "Full Day: ";
                 } elseif ($attendance_data['total_hours'] < 5 && $attendance_data['total_hours'] > 0) {
                     $total_half_days += 0.5;
+                    $cell_value .= "Half Day: ";
                 } else {
                     $total_absents += 1;
+                    $cell_value .= "Absent: ";
+                }
+                $cell_value .= "Total hours: " . $attendance_data['total_hours'] . "\n";
+
+                if ($is_holiday) {
+                    $cell_value .= "Worked on Holiday: $holiday_name\n";
                 }
             } else {
-                $cell_value .= "**No Last Out data**\n";
+                $cell_value .= "No Last Out data\n";
                 $total_absents += 1;
             }
         } else {
-            if ($day_of_week == 0) {
-                $cell_value .= "Holiday";
-                $holiday +=1;
+            if ($is_holiday) {
+                $cell_value .= "Holiday: $holiday_name\n";
+                $total_holidays += 1;
             } else {
-                $cell_value .= "Absent";
+                $cell_value .= "Absent\n";
                 $total_absents += 1;
             }
         }
@@ -172,8 +187,9 @@ while ($user = $users_result->fetch_assoc()) {
     // Add Attendance Summary
     $summary_value = "Absents: " . $total_absents . "\n" .
                      "Half Days: " . $total_half_days . "\n" .
-                     "Total Days Present: " . ($total_full_days + $holiday) . "\n" .
-                     "Total Days Absent: " . ($total_absents + $total_half_days);
+                     "Total Days Present: " . ($total_full_days + $total_holidays) . "\n" .
+                     "Total Days Absent: " . ($total_absents + $total_half_days) . "\n" .
+                     "Total Holidays: " . $total_holidays;
     $row[] = $summary_value;
 
     fputcsv($output, $row);

@@ -132,14 +132,52 @@ $result = $stmt_attendance->get_result();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <?php include("include/header.php"); ?>
 </head>
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .navbar-brand img {
+        height: 40px;
+    }
+
+    .table-responsive {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        font-weight: 700;
+    }
+
+    .form-group label {
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .navbar-toggler {
+        border: none;
+    }
+</style>
 
 <body>
-<nav class="navbar navbar-expand-md navbar navbar-light">
+    <nav class="navbar navbar-expand-md navbar navbar-light">
         <div class="container-fluid">
-                <a class="navbar-brand" href="#">
-                    <img src="assest/images/MESCO.png" width="100" height="40" class="d-inline-block align-top" alt="">
-                    Attendance
-                </a>
+            <a class="navbar-brand" href="#">
+                <img src="assest/images/MESCO.png" width="100" height="40" class="d-inline-block align-top" alt="">
+                Attendance
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -178,7 +216,7 @@ $result = $stmt_attendance->get_result();
             <div class="col-md-3">
                 <div class="form-group">
                     <label>&nbsp;</label>
-                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <button type="submit" class="btn btn-primary btn-block">Filter</button>
                 </div>
                 </form>
             </div>
@@ -186,7 +224,7 @@ $result = $stmt_attendance->get_result();
 
         <div class="table-responsive">
             <table id="attendanceTable" class="table table-bordered table-hover">
-                <thead>
+                <thead class="thead-dark">
                     <tr>
                         <th>Username</th>
                         <th>Employer ID</th>
@@ -204,6 +242,11 @@ $result = $stmt_attendance->get_result();
                 <tbody>
                     <?php
                     while ($row = $result->fetch_assoc()) {
+                        $first_in = new DateTime($row['first_in']);
+                        $last_out = new DateTime($row['last_out']);
+                        $interval = $first_in->diff($last_out);
+                        $total_hours = $interval->format('%H:%I:%S');
+
                         echo "<tr>";
                         echo "<td>" . htmlspecialchars($row['username']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['employer_id'] ?? '') . "</td>";
@@ -215,7 +258,7 @@ $result = $stmt_attendance->get_result();
                         echo "<td>" . htmlspecialchars($row['first_in']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['last_out']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['attendance_status']) . "</td>";
-                        echo "<td>" . htmlspecialchars($row['total_hours']) . "</td>";
+                        echo "<td>" . htmlspecialchars($total_hours) . "</td>";
                         echo "</tr>";
                     }
                     ?>
@@ -223,10 +266,11 @@ $result = $stmt_attendance->get_result();
             </table>
         </div>
 
-        <div class="text-center">
-            <button class="btn btn-primary" onclick="document.location='home.php'">Get to Home</button>
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" onclick="document.location='home.php'">Go to Home</button>
         </div>
     </div>
+
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -237,22 +281,10 @@ $result = $stmt_attendance->get_result();
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
     <?php include("include/footer.php"); ?>
     <script>
-window.onload = function() {
+        window.onload = function() {
             // Hide the preloader
             document.querySelector(".preloader").style.display = "none";
         }
-        $(document).ready(function () {
-            $('#attendanceTable').DataTable({
-                "paging": true,
-                "lengthChange": true,
-                "searching": true,
-                "ordering": true,
-                "info": true,
-                "autoWidth": false,
-                "responsive": true,
-                "pageLength": 25 // Default number of rows per page
-            });
-        });
     </script>
 </body>
 

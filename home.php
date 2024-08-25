@@ -21,22 +21,25 @@ $stmt->bind_result($username);
 $stmt->fetch();
 $stmt->close();
 $conn->close();
-
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MESCO | Attendance</title><?php include("include/header.php"); ?>
+    <title>MESCO | Attendance</title>
+    <?php include("include/header.php"); ?>
     <script src="assest/js/notification.js"></script>
+</head>
+
+<body>
     <nav class="navbar navbar-expand-md navbar navbar-light">
         <div class="container-fluid">
-                <a class="navbar-brand" href="#">
-                    <img src="assest/images/MESCO.png" width="100" height="40" class="d-inline-block align-top" alt="">
-                    Attendance
-                </a>
+            <a class="navbar-brand" href="#">
+                <img src="assest/images/MESCO.png" width="100" height="40" class="d-inline-block align-top" alt="">
+                Attendance
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -48,7 +51,12 @@ $conn->close();
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="fas fa-user"></i> My Profile</a>
                     </li>
-                    <button type="button" class="btn btn-danger" onclick="document.location='logout.php'">Logout</button>
+                    <li class="nav-item">
+                        <a class="nav-link" href="User Manual Atten New.pdf" target="_blank"><i class="fas fa-file-pdf"></i> User Manual</a>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="btn btn-danger" onclick="document.location='logout.php'">Logout</button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -59,7 +67,7 @@ $conn->close();
             <div class="wrap-login100">
                 <div class="date" id="date"></div>
                 <div class="clock" id="clock"></div>
-                
+
                 <div class="reminder">
                     <p class="reminder-note">If you have marked as <b>"In"</b>, please remember to mark as <b>"Out"</b> before leaving.</p>
                 </div>
@@ -68,45 +76,43 @@ $conn->close();
                 </span>
 
                 <div class="main_rap">
-                <div class="wrap-input1000">
-                    <div class="radio-inputs">
-                        <label class="radio">
-                            <i class="fas fa-sign-in-alt"></i>
-                            <input type="radio" name="scheme" id="type" value="In" checked="" required>
-                            <span class="name">In</span>
-                        </label>
-                        <label class="radio">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <input type="radio" name="scheme" id="type" value="Out" required>
-                            <span class="name">Out</span>
-                        </label>
+                    <div class="wrap-input1000">
+                        <div class="radio-inputs">
+                            <label class="radio">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <input type="radio" name="scheme" id="type" value="In" checked="" required>
+                                <span class="name">In</span>
+                            </label>
+                            <label class="radio">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <input type="radio" name="scheme" id="type" value="Out" required>
+                                <span class="name">Out</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="wrap-input1000">
+                        <div class="radio-inputs">
+                            <label class="radio">
+                                <i class="fas fa-building"></i>
+                                <input type="radio" name="attendance_mode" value="office" checked="">
+                                <span class="name">Office</span>
+                            </label>
+                            <label class="radio">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <input type="radio" name="attendance_mode" value="outdoor">
+                                <span class="name">Outdoor</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
-
-                <div class="wrap-input1000">
-                    <div class="radio-inputs">
-                        <label class="radio">
-                            <i class="fas fa-building"></i>
-                            <input type="radio" name="attendance_mode" value="office" checked="">
-                            <span class="name">Office</span>
-                        </label>
-                        <label class="radio">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <input type="radio" name="attendance_mode" value="outdoor">
-                            <span class="name">Outdoor</span>
-                        </label>
-                    </div>
-                </div>
-                </div>
-
-
 
                 <div class="container-login100-form-btn">
                     <button onclick="enableAttendance()" class="login100-form-btn">
                         Give attendance
                     </button>
-
                 </div>
+
                 <!-- Camera Section -->
                 <div id="camera" style="display:none;"></div>
                 <div class="camera-container" style="display:none;">
@@ -138,18 +144,13 @@ $conn->close();
                     </div>
                 </div>
 
-
-
             </div>
         </div>
     </div>
 
     <script src="assest/js/home.js"></script>
 
-
-
-
     <?php include("include/footer.php"); ?>
-    </body>
+</body>
 
 </html>

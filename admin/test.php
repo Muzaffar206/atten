@@ -398,4 +398,8 @@ include("include/sidebar.php");
 <?php
 include("include/footer.php");
 ?>
-//
+//CREATE TABLE holidays (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    holiday_date DATE NOT NULL,
+    holiday_name VARCHAR(255) NOT NULL
+);

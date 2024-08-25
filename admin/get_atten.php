@@ -15,6 +15,13 @@ if ($_SESSION['role'] !== 'admin') {
     header("Location: ../home.php");
     exit();
 }
+// Fetch all holidays
+$holidays_query = "SELECT holiday_date, holiday_name FROM holidays";
+$holidays_result = $conn->query($holidays_query);
+$holidays = [];
+while ($holiday = $holidays_result->fetch_assoc()) {
+    $holidays[date('Y-m-d', strtotime($holiday['holiday_date']))] = $holiday['holiday_name'];
+}
 // Pagination
 $entries_per_page = isset($_POST['entries']) ? intval($_POST['entries']) : 10;
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
@@ -280,41 +287,45 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
 
                                                 foreach ($dates as $date) :
                                                     $attendance_date = DateTime::createFromFormat('d-m-Y', $date);
+                                                    $formatted_date = $attendance_date->format('Y-m-d');
                                                     $day_of_week = $attendance_date->format('w');
                                                 ?>
                                                     <td <?php if ($day_of_week == 0) echo 'style="background-color: #f0f0f0;"'; ?>>
                                                         <?php
                                                         if (isset($user_data[$date])) {
                                                             echo $user_data[$date] . "<br>";
-                                                        } else {
-                                                            echo "";
                                                         }
 
-                                                        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present 
-                                                            FROM final_attendance fa
-                                                            LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
-                                                            WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
+                                                        $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present, h.holiday_name
+    FROM final_attendance fa
+    LEFT JOIN attendance a ON fa.user_id = a.user_id AND DATE(fa.first_in) = DATE(a.in_time)
+    LEFT JOIN holidays h ON DATE(fa.first_in) = h.holiday_date
+    WHERE fa.user_id = ? AND DATE(fa.first_in) = ?";
                                                         $stmt_attendance = $conn->prepare($attendance_query);
                                                         $formatted_date = date('Y-m-d', strtotime($date));
                                                         $stmt_attendance->bind_param("is", $user['id'], $formatted_date);
                                                         $stmt_attendance->execute();
                                                         $attendance_result = $stmt_attendance->get_result();
+                                                        $is_holiday = ($day_of_week == 0) || isset($holidays[$formatted_date]);
+        $holiday_name = $day_of_week == 0 ? 'Sunday' : ($holidays[$formatted_date] ?? '');
 
                                                         if ($attendance_result->num_rows > 0) {
                                                             $attendance_data = $attendance_result->fetch_assoc();
+                                                            
+                                                            // Show attendance data if present, even on holidays
                                                             echo "In: " . date('H:i:s', strtotime($attendance_data['first_in'])) . "," . $attendance_data['first_mode'] . "<br>";
                                                             if ($attendance_data['last_out'] != null) {
                                                                 echo "Out: " . date('H:i:s', strtotime($attendance_data['last_out'])) . "," . $attendance_data['last_mode'] . "<br>";
-
+                                                
                                                                 // Calculate attendance status based on total hours
                                                                 if ($attendance_data['total_hours'] >= 6.5) {
-                                                                    $total_full_days += 1; // Full day marked as 1
+                                                                    $total_full_days += 1;
                                                                     echo "Full Day: ";
                                                                 } elseif ($attendance_data['total_hours'] < 5 && $attendance_data['total_hours'] > 0) {
-                                                                    $total_half_days += 0.5; // Half day marked as 0.5
+                                                                    $total_half_days += 0.5;
                                                                     echo "Half Day: ";
                                                                 } else {
-                                                                    $total_absents += 1; // Absent marked as 0 (though added to absent count)
+                                                                    $total_absents += 1;
                                                                     echo "Absent: ";
                                                                 }
                                                                 // Convert total_hours to hours, minutes, and seconds
@@ -322,24 +333,28 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
                                                                 $hours = floor($total_hours);
                                                                 $minutes = floor(($total_hours - $hours) * 60);
                                                                 $seconds = floor((($total_hours - $hours) * 60 - $minutes) * 60);
-
-                                                                // Format hours, minutes, and seconds as HH:MM:SS
+                                                
                                                                 $formatted_time = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
                                                                 echo "Total hours: " . $formatted_time;
+                                                
+                                                                // If it's a holiday and the employee worked, show this information
+                                                                if ($is_holiday) {
+                                                                    echo "<br><span style='color: blue;'>Worked on : $holiday_name</span>";
+                                                                }
                                                             } else {
                                                                 echo '<div style="background-color: #FFFF00;">No Last Out data</div>';
                                                                 $total_absents += 1;
                                                             }
                                                         } else {
-                                                            if ($day_of_week == 0) {
-                                                                $holiday += 1;
-                                                                echo "Holiday";
+                                                            // No attendance record
+                                                            if ($is_holiday) {
+                                                                echo "<span style='color: green;'>$holiday_name</span><br>";
+                                                                $total_full_days += 1;
                                                             } else {
                                                                 echo "Absent";
                                                                 $total_absents += 1;
                                                             }
                                                         }
-                                                        $stmt_attendance->close();
                                                         ?>
                                                     </td>
                                                 <?php endforeach; ?>

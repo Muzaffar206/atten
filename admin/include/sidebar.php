@@ -76,6 +76,12 @@
                                 <p>Report</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="./add_holidays.php" class="nav-link <?php echo ($activePage === 'holiday') ? 'active' : ''; ?>">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Add Holidays</p>
+                            </a>
+                        </li>
                     </ul>
           </li>
           
