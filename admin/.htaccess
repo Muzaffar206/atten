@@ -1,0 +1,27 @@
+# Disable direct access to all files
+Order deny,allow
+Deny from all
+
+# Allow access to PHP scripts
+<FilesMatch "\.(php)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Allow access to specific static resources like CSS, JS, images, icons, and fonts
+<FilesMatch "\.(css|js|ico|svg|woff|woff2|ttf|eot)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Allow access to ZIP files in Selfies_in&out folder
+<FilesMatch "^Selfies_in&out/.*\.zip$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Redirect unauthorized access to an error page
+ErrorDocument 403 /atten/admin/error403.php
+
+# Redirect not found errors to a custom 404 page
+ErrorDocument 404 /atten/admin/error404.php
