@@ -104,18 +104,6 @@
 
 })(jQuery);
 
-function updateClock() {
-    const now = new Date();
-    const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    const timeString = now.toLocaleTimeString('en-GB', options);
-    document.getElementById('clock').textContent = timeString;
-
-    const dateOptions = { timeZone: 'Asia/Kolkata', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateString = now.toLocaleDateString('en-GB', dateOptions);
-    document.getElementById('date').textContent = dateString;
-}
-setInterval(updateClock, 1000);
-updateClock(); // initial call to display the clock immediately
 
 
 window.onload = function(){
@@ -123,15 +111,14 @@ window.onload = function(){
     document.querySelector(".preloader").style.display = "none"; 
 }
 
-document.querySelector('.eye-toggle').addEventListener('click', function() {
-    const passwordField = document.querySelector(this.getAttribute('toggle'));
-    if (passwordField.type === 'password') {
-        passwordField.type = 'text';
-        this.classList.add('fa-eye-slash');
-        this.classList.remove('fa-eye');
-    } else {
-        passwordField.type = 'password';
-        this.classList.remove('fa-eye-slash');
-        this.classList.add('fa-eye');
-    }
+$(document).ready(function() {
+    $(".toggle-password").click(function() {
+        $(this).toggleClass("fa-eye fa-eye-slash");
+        var input = $($(this).attr("toggle"));
+        if (input.attr("type") == "password") {
+            input.attr("type", "text");
+        } else {
+            input.attr("type", "password");
+        }
+    });
 });

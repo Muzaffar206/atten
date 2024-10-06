@@ -10,72 +10,16 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+$last_username = ''; // Initialize the variable
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // CSRF token validation
     if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-        die("CSRF token validation failed");
-    }
-
-    $username = trim(mysqli_real_escape_string($conn, $_POST['username']));
-    $password = trim(mysqli_real_escape_string($conn, $_POST['password']));
-
-    $sql = "SELECT * FROM users WHERE username = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-
-        // Check if account is locked
-        if ($row['lockout_time'] && strtotime($row['lockout_time']) > time()) {
-            $alert = '<div class="alert alert-danger">Account locked due to too many failed attempts. Please try again later.</div>';
-        } else {
-            // Verify the password
-            if (password_verify($password, $row['password'])) {
-                // Reset failed attempts and lockout time
-                $sql_reset = "UPDATE users SET failed_attempts = 0, lockout_time = NULL WHERE username = ?";
-                $stmt_reset = $conn->prepare($sql_reset);
-                $stmt_reset->bind_param("s", $username);
-                $stmt_reset->execute();
-
-                // Set session variables
-                $_SESSION['user_id'] = $row['id'];
-                $_SESSION['username'] = $row['username'];
-                $_SESSION['role'] = $row['role'];
-                session_regenerate_id(true);
-
-                // Redirect based on role
-                if ($row['role'] === 'admin') {
-                    header("Location: admin/index.php");
-                } else {
-                    header("Location: home.php");
-                }
-                exit();
-            } else {
-                // Increment failed attempts
-                $failed_attempts = $row['failed_attempts'] + 1;
-                $lockout_time = $failed_attempts >= 5 ? date("Y-m-d H:i:s", strtotime("+15 minutes")) : NULL;
-
-                $sql_update = "UPDATE users SET failed_attempts = ?, lockout_time = ? WHERE username = ?";
-                $stmt_update = $conn->prepare($sql_update);
-                $stmt_update->bind_param("iss", $failed_attempts, $lockout_time, $username);
-                $stmt_update->execute();
-
-                $alert = '<div class="alert alert-danger">Wrong username or password</div>';
-            }
-        }
+        $alert = '<div class="alert alert-danger">Security token validation failed. Please try again.</div>';
     } else {
-        $alert = '<div class="alert alert-danger">No users found</div>';
-    }
-
-    $conn->close();
-} elseif (isset($_COOKIE['remember_me'])) {
-    $cookie_value = json_decode(base64_decode($_COOKIE['remember_me']), true);
-
-    if ($cookie_value) {
-        $username = $cookie_value['username'];
+        $username = trim(mysqli_real_escape_string($conn, $_POST['username']));
+        $last_username = htmlspecialchars($username); // Store the last entered username
+        $password = trim($_POST['password']); // Don't escape the password before verification
 
         $sql = "SELECT * FROM users WHERE username = ?";
         $stmt = $conn->prepare($sql);
@@ -85,64 +29,148 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
-            $_SESSION['role'] = $row['role'];
 
-            header("Location: home.php");
-            exit();
+            // Check if account is locked
+            if ($row['lockout_time'] && strtotime($row['lockout_time']) > time()) {
+                $remaining_time = ceil((strtotime($row['lockout_time']) - time()) / 60);
+                $alert = "<div class='alert alert-danger'>Account is temporarily locked. Please try again in {$remaining_time} minute(s).</div>";
+            } else {
+                // Verify the password
+                if (password_verify($password, $row['password'])) {
+                    // Reset failed attempts and lockout time
+                    $sql_reset = "UPDATE users SET failed_attempts = 0, lockout_time = NULL WHERE username = ?";
+                    $stmt_reset = $conn->prepare($sql_reset);
+                    $stmt_reset->bind_param("s", $username);
+                    $stmt_reset->execute();
+
+                    // Handle remember me functionality
+                    if (isset($_POST['remember_me'])) {
+                        $token = bin2hex(random_bytes(32));
+                        $expiry = date('Y-m-d H:i:s', strtotime('+30 days'));
+                        
+                        $sql_remember = "UPDATE users SET remember_token = ?, token_expiry = ? WHERE id = ?";
+                        $stmt_remember = $conn->prepare($sql_remember);
+                        $stmt_remember->bind_param("ssi", $token, $expiry, $row['id']);
+                        $stmt_remember->execute();
+
+                        // Set the remember token cookie
+                        setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', true, true);
+                    }
+
+                    // Set session variables
+                    $_SESSION['user_id'] = $row['id'];
+                    $_SESSION['username'] = $row['username'];
+                    $_SESSION['role'] = $row['role'];
+                    session_regenerate_id(true);
+
+                    // Redirect based on role
+                    if ($row['role'] === 'admin') {
+                        header("Location: admin/index.php");
+                    } else {
+                        header("Location: home.php");
+                    }
+                    exit();
+                } else {
+                    // Increment failed attempts
+                    $failed_attempts = $row['failed_attempts'] + 1;
+                    $lockout_time = $failed_attempts >= 5 ? date("Y-m-d H:i:s", strtotime("+15 minutes")) : NULL;
+
+                    $sql_update = "UPDATE users SET failed_attempts = ?, lockout_time = ? WHERE username = ?";
+                    $stmt_update = $conn->prepare($sql_update);
+                    $stmt_update->bind_param("iss", $failed_attempts, $lockout_time, $username);
+                    $stmt_update->execute();
+
+                    if ($failed_attempts >= 5) {
+                        $alert = '<div class="alert alert-danger">Too many failed attempts. Your account has been locked for 15 minutes.</div>';
+                    } else {
+                        $remaining_attempts = 5 - $failed_attempts;
+                        $alert = "<div class='alert alert-danger'>Incorrect password. You have {$remaining_attempts} attempt(s) remaining.</div>";
+                    }
+                }
+            }
+        } else {
+            $alert = '<div class="alert alert-danger">No account found with this username.</div>';
         }
 
         $conn->close();
     }
+} elseif (isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+
+    $sql = "SELECT * FROM users WHERE remember_token = ? AND token_expiry > NOW()";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $token);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $_SESSION['user_id'] = $row['id'];
+        $_SESSION['username'] = $row['username'];
+        $_SESSION['role'] = $row['role'];
+
+        // Refresh the token
+        $new_token = bin2hex(random_bytes(32));
+        $new_expiry = date('Y-m-d H:i:s', strtotime('+30 days'));
+        
+        $sql_refresh = "UPDATE users SET remember_token = ?, token_expiry = ? WHERE id = ?";
+        $stmt_refresh = $conn->prepare($sql_refresh);
+        $stmt_refresh->bind_param("ssi", $new_token, $new_expiry, $row['id']);
+        $stmt_refresh->execute();
+
+        setcookie('remember_token', $new_token, time() + (30 * 24 * 60 * 60), '/', '', true, true);
+
+        header("Location: home.php");
+        exit();
+    }
+
+    $conn->close();
 }
 ?>
+<?php
+$pageTitle = 'Login';
+$pageDescription = 'Secure login page for MESCO Attendance System. Access your account to manage attendance and view reports.';
+include("include/header.php");
+?>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MESCO | Login</title>
-    <?php include("include/header.php"); ?>
-</head>
-
-<body>
-    <div class="limiter">
-        <div class="container-login100" style="background-image: url('assest/images/bg-01.jpg');">
-            <div class="wrap-login100">
-                <?php if (!empty($alert)) echo $alert; ?>
-                <div class="date" id="date"></div>
-                <div class="clock" id="clock"></div>
-                <form method="post" action="" class="login100-form validate-form">
+    <div class="login-container">
+        <div class="login-header">
+            <img src="assest/images/MESCO.png" alt="MESCO LOGO">
+            <h2>Login</h2>
+        </div>
+        <div class="login-form">
+            <?php if (!empty($alert)) echo $alert; ?>
+            <form method="post" action="">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                    <span class="login100-form-logo">
-                        <img src="assest/images/MESCO.png" alt="MESCO LOGO" width="100px">
-                    </span>
-                    <span class="login100-form-title p-b-34 p-t-27">Log in</span>
-
-                    <div class="wrap-input100 validate-input" data-validate="Enter username">
-                        <input class="input100" type="text" name="username" placeholder="Username" required>
-                        <span class="focus-input100" data-placeholder="&#xf207;"></span>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="<?php echo $last_username; ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input">
+                        <input type="password" id="password" name="password" required>
+                        <span toggle="#password" class="fa fa-fw fa-eye toggle-password"></span>
                     </div>
-
-                    <div class="wrap-input100 validate-input" data-validate="Enter password">
-                        <input class="input100" type="password" name="password" id="password" placeholder="Password" required>
-                        <span class="focus-input100" data-placeholder="&#xf191;"></span>
-                        <span toggle="#password" class="eye-toggle fa fa-fw fa-eye field-icon toggle-password"></span>
-                    </div>
-
-                    <div class="contact100-form-checkbox">
-                        <input class="input-checkbox100" type="checkbox" id="remember_me" name="remember_me">
-                        <label class="label-checkbox100" for="remember_me">Remember me</label>
-                    </div>
-
-                    <div class="container-login100-form-btn">
-                        <button type="submit" value="Login" class="login100-form-btn">Login</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="remember-me">
+                    <input type="checkbox" id="remember_me" name="remember_me">
+                    <label for="remember_me">Remember me</label>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
         </div>
     </div>
 
@@ -150,12 +178,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <!-- Bootstrap JS -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script>
-        window.onload = function() {
-            document.querySelector(".preloader").style.display = "none";
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.form-group input');
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.style.borderColor = 'black';
+                    this.classList.add('focused');
+                });
+                
+                input.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.style.borderColor = '#4caf50';
+                        this.classList.remove('focused');
+                    }
+                });
+            });
+        });
     </script>
 </body>
 
