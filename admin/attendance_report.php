@@ -328,7 +328,7 @@ include("include/sidebar.php");
                                         <!-- Delete Selfies Form -->
                                         <form id="deleteSelfiesForm" method="POST" action="">
                                             <input type="hidden" name="delete_selfies" value="true">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 24 hours?')">Delete Selfies</button>
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 45 days?')">Delete Selfies</button>
                                         </form>
                                     </div>
                                     <div class="col-auto">

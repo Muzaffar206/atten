@@ -64,13 +64,6 @@ include("include/header.php");
                                             <label for="department">Department</label>
                                             <input type="text" class="form-control" id="department" value="<?php echo htmlspecialchars($user['department']); ?>" readonly>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="new_password">New Password</label>
-                                            <input type="password" class="form-control" id="new_password" placeholder="Enter new password">
-                                        </div>
-                                        <div class="form-group">
-                                            <button type="button" class="btn btn-success btn-block" onclick="sendPasswordChangeRequest()">Request Password Change</button>
-                                        </div>
                                     </form>
                                 </div>
                                 <div class="tab-pane" id="attendance">
@@ -142,15 +135,6 @@ include("include/header.php");
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        function sendPasswordChangeRequest() {
-            var newPassword = document.getElementById('new_password').value;
-            var subject = "Password Change Request";
-            var body = "Hello Admin,\n\nI would like to request a password change for my account. My new password should be: " + newPassword + "\n\nThank you.";
-            var mailtoLink = "mailto:adminmesco@mescotrust.org?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
-            window.location.href = mailtoLink;
-        }
-    </script>
 </body>
 </html>
 

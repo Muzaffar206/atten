@@ -29,7 +29,7 @@ $sql = "SELECT DATE(first_in) as date, first_mode as mode, 'In' as type, TIME(fi
         FROM final_attendance
         WHERE user_id = ? AND last_out IS NOT NULL
         ORDER BY date DESC, time DESC
-        LIMIT 4";
+        LIMIT 2";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $user_id, $user_id);
@@ -42,6 +42,22 @@ while ($row = $result->fetch_assoc()) {
 }
 
 $stmt->close();
+
+// Fetch upcoming holidays (next 3 holidays)
+$sql_holidays = "SELECT holiday_date, holiday_name FROM holidays 
+                 WHERE holiday_date >= CURDATE()
+                 ORDER BY holiday_date ASC
+                 LIMIT 2";
+$stmt_holidays = $conn->prepare($sql_holidays);
+$stmt_holidays->execute();
+$result_holidays = $stmt_holidays->get_result();
+
+$holidays = array();
+while ($row = $result_holidays->fetch_assoc()) {
+    $holidays[] = $row;
+}
+$stmt_holidays->close();
+
 $conn->close();
 $pageTitle = 'Home';
 $pageDescription = 'MESCO Attendance System home page. Mark your attendance and view recent activity.';
@@ -111,6 +127,24 @@ include("include/header.php");
                         </li>
                     <?php endforeach; ?>
                 </ul>
+            </div>
+
+            <div id="upcomingHolidays">
+                <h3>Upcoming Holidays</h3>
+                <div class="holidays-container">
+                    <?php foreach ($holidays as $holiday): ?>
+                        <div class="holiday-card">
+                            <div class="holiday-date">
+                                <span class="date-number"><?php echo date('d', strtotime($holiday['holiday_date'])); ?></span>
+                                <span class="date-month"><?php echo date('M', strtotime($holiday['holiday_date'])); ?></span>
+                            </div>
+                            <div class="holiday-info">
+                                <div class="holiday-name"><?php echo htmlspecialchars($holiday['holiday_name']); ?></div>
+                                <div class="holiday-day"><?php echo date('l', strtotime($holiday['holiday_date'])); ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
         <nav class="bottom-navbar">
@@ -230,6 +264,27 @@ include("include/header.php");
                 });
             });
         });
+    </script>
+    <script>
+        function updateCountdowns() {
+            const countdowns = document.querySelectorAll('.holiday-countdown');
+            const now = new Date();
+
+            countdowns.forEach(countdown => {
+                const holidayDate = new Date(countdown.dataset.date);
+                const difference = holidayDate - now;
+                const days = Math.ceil(difference / (1000 * 60 * 60 * 24));
+
+                if (days > 0) {
+                    countdown.textContent = `${days} day${days > 1 ? 's' : ''} left`;
+                } else {
+                    countdown.textContent = 'Today!';
+                }
+            });
+        }
+
+        updateCountdowns();
+        setInterval(updateCountdowns, 60000); // Update every minute
     </script>
     <?php include("include/footer.php"); ?>
 </body>

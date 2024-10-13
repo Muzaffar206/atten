@@ -43,25 +43,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt_reset->bind_param("s", $username);
                     $stmt_reset->execute();
 
-                    // Handle remember me functionality
-                    if (isset($_POST['remember_me'])) {
-                        $token = bin2hex(random_bytes(32));
-                        $expiry = date('Y-m-d H:i:s', strtotime('+30 days'));
-                        
-                        $sql_remember = "UPDATE users SET remember_token = ?, token_expiry = ? WHERE id = ?";
-                        $stmt_remember = $conn->prepare($sql_remember);
-                        $stmt_remember->bind_param("ssi", $token, $expiry, $row['id']);
-                        $stmt_remember->execute();
-
-                        // Set the remember token cookie
-                        setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', true, true);
-                    }
-
                     // Set session variables
                     $_SESSION['user_id'] = $row['id'];
                     $_SESSION['username'] = $row['username'];
                     $_SESSION['role'] = $row['role'];
                     session_regenerate_id(true);
+
+                    // Always create a remember token
+                    $token = bin2hex(random_bytes(32));
+                    $expiry = date('Y-m-d H:i:s', strtotime('+30 days'));
+                    
+                    $sql_remember = "UPDATE users SET remember_token = ?, token_expiry = ? WHERE id = ?";
+                    $stmt_remember = $conn->prepare($sql_remember);
+                    $stmt_remember->bind_param("ssi", $token, $expiry, $row['id']);
+                    $stmt_remember->execute();
+
+                    // Set the remember token cookie
+                    setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', true, true);
 
                     // Redirect based on role
                     if ($row['role'] === 'admin') {
@@ -164,10 +162,6 @@ include("include/header.php");
                         <input type="password" id="password" name="password" required>
                         <span toggle="#password" class="fa fa-fw fa-eye toggle-password"></span>
                     </div>
-                </div>
-                <div class="remember-me">
-                    <input type="checkbox" id="remember_me" name="remember_me">
-                    <label for="remember_me">Remember me</label>
                 </div>
                 <button type="submit" class="login-btn">Login</button>
             </form>

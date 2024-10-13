@@ -3,6 +3,57 @@ session_start();
 session_regenerate_id(true);
 include("../assest/connection/config.php");
 
+$alert = '';
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['edit_holiday'])) {
+        $id = $_POST['holiday_id'];
+        $holiday_date = $_POST['edit_holiday_date'];
+        $holiday_name = $_POST['edit_holiday_name'];
+        
+        $stmt = $conn->prepare("UPDATE holidays SET holiday_date = ?, holiday_name = ? WHERE id = ?");
+        $stmt->bind_param("ssi", $holiday_date, $holiday_name, $id);
+        if ($stmt->execute()) {
+            $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                        Holiday updated successfully!
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>';
+        } else {
+            $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        Error updating holiday: ' . $conn->error . '
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>';
+        }
+        $stmt->close();
+    } elseif (isset($_POST['delete_holiday'])) {
+        $id = $_POST['holiday_id'];
+        
+        $stmt = $conn->prepare("DELETE FROM holidays WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        if ($stmt->execute()) {
+            $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                        Holiday deleted successfully!
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>';
+        } else {
+            $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        Error deleting holiday: ' . $conn->error . '
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>';
+        }
+        $stmt->close();
+    }
+}
+
+// Add this new section for handling edit and delete actions
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['holiday_date']) && isset($_POST['holiday_name'])) {
     $holiday_date = $_POST['holiday_date'];
     $holiday_name = $_POST['holiday_name'];
@@ -17,15 +68,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['holiday_date']) && iss
     $stmt->close();
 }
 
-// Fetch all holidays
-$holidays_query = "SELECT * FROM holidays ORDER BY holiday_date DESC";
-$holidays_result = $conn->query($holidays_query);
+// Fetch holidays for the current year
+$current_year = date('Y');
+$holidays_query = "SELECT * FROM holidays WHERE YEAR(holiday_date) = ? ORDER BY holiday_date DESC";
+$stmt = $conn->prepare($holidays_query);
+$stmt->bind_param("i", $current_year);
+$stmt->execute();
+$holidays_result = $stmt->get_result();
 
 include("include/header.php");
 include("include/topbar.php");
 $activePage = 'holiday';
 include("include/sidebar.php");
 ?>
+
+<!-- Add this right after the opening <body> tag or at the beginning of your content -->
+<div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+    <?php echo $alert; ?>
+</div>
 
 <div class="content-wrapper">
     <section class="content-header">
@@ -81,16 +141,81 @@ include("include/sidebar.php");
                     </div>
                     <div class="card mt-3">
                         <div class="card-header">
-                            <h3 class="card-title">Holiday List</h3>
+                            <h3 class="card-title">Holiday List (<?php echo $current_year; ?>)</h3>
                         </div>
                         <div class="card-body">
-                            <ul class="list-group">
-                                <?php while ($holiday = $holidays_result->fetch_assoc()) : ?>
-                                    <li class="list-group-item">
-                                        <strong><?php echo date('d M, Y', strtotime($holiday['holiday_date'])); ?></strong> - <?php echo $holiday['holiday_name']; ?>
-                                    </li>
-                                <?php endwhile; ?>
-                            </ul>
+                            <?php if ($holidays_result->num_rows > 0): ?>
+                                <ul class="list-group">
+                                    <?php while ($holiday = $holidays_result->fetch_assoc()) : ?>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <strong><?php echo date('d M, Y', strtotime($holiday['holiday_date'])); ?></strong> - <?php echo $holiday['holiday_name']; ?>
+                                            </span>
+                                            <div>
+                                                <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal<?php echo $holiday['id']; ?>">Edit</button>
+                                                <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal<?php echo $holiday['id']; ?>">Delete</button>
+                                            </div>
+                                        </li>
+
+                                        <!-- Edit Modal -->
+                                        <div class="modal fade" id="editModal<?php echo $holiday['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="editModalLabel<?php echo $holiday['id']; ?>" aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="editModalLabel<?php echo $holiday['id']; ?>">Edit Holiday</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <form method="post">
+                                                        <div class="modal-body">
+                                                            <input type="hidden" name="holiday_id" value="<?php echo $holiday['id']; ?>">
+                                                            <div class="form-group">
+                                                                <label for="edit_holiday_date<?php echo $holiday['id']; ?>">Holiday Date:</label>
+                                                                <input type="date" class="form-control" name="edit_holiday_date" id="edit_holiday_date<?php echo $holiday['id']; ?>" value="<?php echo $holiday['holiday_date']; ?>" required>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="edit_holiday_name<?php echo $holiday['id']; ?>">Holiday Name:</label>
+                                                                <input type="text" class="form-control" name="edit_holiday_name" id="edit_holiday_name<?php echo $holiday['id']; ?>" value="<?php echo $holiday['holiday_name']; ?>" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            <button type="submit" name="edit_holiday" class="btn btn-primary">Save changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Delete Modal -->
+                                        <div class="modal fade" id="deleteModal<?php echo $holiday['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel<?php echo $holiday['id']; ?>" aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="deleteModalLabel<?php echo $holiday['id']; ?>">Delete Holiday</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to delete this holiday?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <form method="post">
+                                                            <input type="hidden" name="holiday_id" value="<?php echo $holiday['id']; ?>">
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                                            <button type="submit" name="delete_holiday" class="btn btn-danger">Delete</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </ul>
+                            <?php else: ?>
+                                <p>No holidays found for <?php echo $current_year; ?>.</p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -120,6 +245,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     calendar.render();
+
+    // Auto-hide alert after 5 seconds
+    var alertElement = document.querySelector('.alert');
+    if (alertElement) {
+        setTimeout(function() {
+            alertElement.classList.remove('show');
+        }, 5000);
+    }
 });
 </script>
 

@@ -167,51 +167,53 @@ function showPositionForOffice(position, scanType) {
   const lon = position.coords.longitude;
   console.log(`Current Position: Lat=${lat}, Lon=${lon}`);
 
-  const officeLocations = [
-    { name: "Mesco Landmark", lat: 19.035677, lon: 72.847581, radius: 0.02 },
-    { name: "TEST HOUSE", lat: 18.976891, lon: 73.031354, radius: 0.10 },
-    { name: "Natalwala", lat: 19.038842, lon: 72.8393, radius: 0.02 },
-    { name: "RC Mahim", lat: 19.040013, lon: 72.840608, radius: 0.03 },
-    { name: "Study Centre", lat: 19.040176, lon: 72.839605, radius: 0.03 },
-    { name: "Clinics", lat: 19.174013, lon: 73.021686, radius: 0.03 },
-    { name: "Clinics Physiotherapy", lat: 19.174070, lon: 73.021912, radius: 0.03 },
-    { name: "NP Thane Unit", lat: 19.159877, lon: 73.026609, radius: 0.03 }
-  ];
+  // We'll need to fetch the office locations from the server
+  fetch('get_office_locations.php')
+    .then(response => response.json())
+    .then(officeLocations => {
+      let nearestOffice = null;
+      let shortestDistance = Infinity;
 
-  const withinRange = officeLocations.some((location) => {
-    const distance = getDistanceFromLatLonInKm(
-      lat,
-      lon,
-      location.lat,
-      location.lon
-    );
-    console.log(`Distance to ${location.name}: ${distance} km`);
-    if (distance < location.radius) {
-      showNotification(`You are near ${location.name}`);
-      startCamera(scanType);
-      return true;
-    }
-    return false;
-  });
+      officeLocations.forEach((location) => {
+        const distance = getDistanceFromLatLonInKm(lat, lon, location.lat, location.lon);
+        console.log(`Distance to ${location.name}: ${distance} km`);
+        if (distance < location.radius && distance < shortestDistance) {
+          nearestOffice = location;
+          shortestDistance = distance;
+        }
+      });
 
-  if (!withinRange) {
-    hideLoadingScreen();
-    const overlay = document.getElementById("attendance-overlay");
-    const cameraContainer = document.createElement("div");
+      if (nearestOffice) {
+        showNotification(`You are near ${nearestOffice.name}`);
+        startCamera(scanType, nearestOffice);
+      } else {
+        hideLoadingScreen();
+        const overlay = document.getElementById("attendance-overlay");
+        const cameraContainer = document.getElementById("camera-container");
 
-    if (cameraContainer) {
-      cameraContainer.remove();
-    }
-    if (overlay) {
-      overlay.remove();
-    }
-    Swal.fire({
-      icon: 'error',
-      title: 'Location Error',
-      text: 'You are not in any of the specified office locations.',
+        if (cameraContainer) {
+          cameraContainer.remove();
+        }
+        if (overlay) {
+          overlay.remove();
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Location Error',
+          text: 'You are not in any of the specified office locations.',
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching office locations:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to fetch office locations. Please try again.',
+      });
     });
-  }
 }
+
 function showNotification(message) {
   // Create the notification element
   const notification = document.createElement("div");
@@ -299,7 +301,8 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
-function startCamera(scanType) {
+
+function startCamera(scanType, office) {
   hideLoadingScreen();
   const cameraContainer = document.getElementById("camera-container");
   cameraElement.style.display = "block";
@@ -343,19 +346,22 @@ function startCamera(scanType) {
         qrDetectedMessage.style.transform = "translateX(-50%)";
         overlay.appendChild(qrDetectedMessage);
         
-        
-        
-
-        
-        setTimeout(() => {
-          html5QrCode
-            .stop()
-            .then(() => {
-              overlay.remove();
-              showSelfieButton("Office", qrCodeMessage, scanType);
-            })
-            .catch((err) => console.log("Unable to stop scanning.", err));
-        }, 1000);
+        if (qrCodeMessage === office.qrCode) {
+          setTimeout(() => {
+            html5QrCode
+              .stop()
+              .then(() => {
+                overlay.remove();
+                showSelfieButton("Office", qrCodeMessage, scanType);
+              })
+              .catch((err) => console.log("Unable to stop scanning.", err));
+          }, 1000);
+        } else {
+          updateStatus("Invalid QR Code for this location!");
+          setTimeout(() => {
+            qrDetectedMessage.remove();
+          }, 2000);
+        }
       },
       (errorMessage) => {
         // Handle error if necessary

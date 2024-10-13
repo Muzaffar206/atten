@@ -1,6 +1,5 @@
 <?php
-session_regenerate_id(true); // Regenerate session ID to prevent session fixation
-
+session_regenerate_id(true); 
 include("../assest/connection/config.php");
 
 date_default_timezone_set('Asia/Kolkata');
@@ -16,13 +15,45 @@ $fortyFiveDaysAgo = date('Y-m-d H:i:s', strtotime('-45 days'));
 
 // Display alert for old selfies
 function displayAlert() {
-    if (isset($_SESSION['old_selfies']) && $_SESSION['old_selfies']) {
-        echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Reminder!</strong> Please delete selfies older than 45 days.
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>';
+    global $conn;
+    
+    // Check the last deletion date
+    $sqlLastDeletion = "SELECT MAX(last_deletion) as last_deletion FROM deletion_log";
+    $resultLastDeletion = $conn->query($sqlLastDeletion);
+    $rowLastDeletion = $resultLastDeletion->fetch_assoc();
+    $lastDeletion = $rowLastDeletion['last_deletion'];
+    
+    // If there's no last deletion or it's been more than 45 days since the last deletion
+    if (!$lastDeletion || strtotime($lastDeletion) < strtotime('-45 days')) {
+        // Check for old selfies in the database
+        $sql = "SELECT COUNT(*) as old_selfie_count 
+                FROM attendance 
+                WHERE (selfie_in IS NOT NULL OR selfie_out IS NOT NULL) 
+                AND (in_time < ? OR out_time < ?)";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            echo "An error occurred. Please try again later.";
+            exit();
+        }
+        $stmt->bind_param('ss', $fortyFiveDaysAgo, $fortyFiveDaysAgo);
+        if (!$stmt->execute()) {
+            echo "An error occurred. Please try again later.";
+            exit();
+        }
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        $oldSelfiesExist = ($row['old_selfie_count'] > 0);
+        $stmt->close();
+
+        if ($oldSelfiesExist) {
+            echo '<div id="deleteSelfieAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Reminder!</strong> Please delete selfies older than 45 days.
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>';
+        }
     }
 }
 
