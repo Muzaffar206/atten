@@ -41,7 +41,6 @@ $attendance_query = "SELECT
                         MAX(final_attendance.last_mode) as last_mode, 
                         COUNT(attendance.id) AS total_entries,
                         GROUP_CONCAT(attendance.data SEPARATOR ', ') AS data,
-                        CASE WHEN MAX(attendance.is_present) = 1 THEN 'Present' ELSE 'Absent' END AS attendance_status,
                         users.department,
                         final_attendance.total_hours
                     FROM final_attendance 
@@ -99,7 +98,6 @@ $result = $stmt_attendance->get_result();
                             <th>From Where</th>
                             <th>First In</th>
                             <th>Last Out</th>
-                            <th>Attendance Status</th>
                             <th>Total Hours Worked</th>
                         </tr>
                     </thead>
@@ -113,7 +111,6 @@ $result = $stmt_attendance->get_result();
                             echo "<td>" . htmlspecialchars($row['data']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['first_in']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['last_out']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['attendance_status']) . "</td>";
                             echo "<td>" . htmlspecialchars($row['total_hours']) . "</td>";
                             echo "</tr>";
                         }

@@ -6,7 +6,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 include("assest/connection/config.php");
-include("office_locations.php");  // Add this line to include the office locations
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -151,10 +150,15 @@ try {
     if ($mode === 'Office') {
         $data1 = isset($_POST['data1']) ? htmlspecialchars($_POST['data1'], ENT_QUOTES, 'UTF-8') : '';
 
+        // Fetch office locations from the database
+        $officeLocationsQuery = "SELECT name, qr_code FROM office_locations";
+        $officeLocationsResult = $conn->query($officeLocationsQuery);
+        $officeLocations = $officeLocationsResult->fetch_all(MYSQLI_ASSOC);
+
         // Validate QR code data
         $validQRCode = false;
         foreach ($officeLocations as $location) {
-            if ($location['qrCode'] === $data1) {
+            if ($location['qr_code'] === $data1) {
                 $validQRCode = true;
                 break;
             }

@@ -325,13 +325,6 @@ include("include/sidebar.php");
                                 <?php displayAlert(); ?>
                                 <div class="row">
                                     <div class="col-auto">
-                                        <!-- Delete Selfies Form -->
-                                        <form id="deleteSelfiesForm" method="POST" action="">
-                                            <input type="hidden" name="delete_selfies" value="true">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete selfies older than 45 days?')">Delete Selfies</button>
-                                        </form>
-                                    </div>
-                                    <div class="col-auto">
                                         <!-- Export CSV -->
                                         <form action="export_csv_atten.php" method="get">
                                             <input type="hidden" name="department" value="<?php echo $filterDepartment; ?>">

@@ -309,6 +309,32 @@ function startCamera(scanType, office) {
   cameraElement.style.width = "100%";
   cameraElement.style.height = "100%";
 
+  // Add a cross button to cancel the process
+  const cancelButton = document.createElement("button");
+  cancelButton.innerHTML = "&#10005;"; // Cross symbol
+  cancelButton.className = "cancel-button";
+  cancelButton.style.position = "absolute";
+  cancelButton.style.top = "10px";
+  cancelButton.style.right = "10px";
+  cancelButton.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+  cancelButton.style.border = "none";
+  cancelButton.style.borderRadius = "50%";
+  cancelButton.style.width = "30px";
+  cancelButton.style.height = "30px";
+  cancelButton.style.fontSize = "20px";
+  cancelButton.style.cursor = "pointer";
+  cancelButton.style.zIndex = "1001";
+  cameraContainer.appendChild(cancelButton);
+
+  cancelButton.onclick = () => {
+    html5QrCode.stop().then(() => {
+      const overlay = document.getElementById("attendance-overlay");
+      if (overlay) {
+        overlay.remove();
+      }
+    }).catch((err) => console.log("Error stopping camera:", err));
+  };
+
   // Add a status message element
   const statusMessage = document.createElement("div");
   statusMessage.style.position = "absolute";
@@ -384,18 +410,40 @@ function showSelfieButton(mode, data1, scanType) {
   const buttonContainer = document.createElement("div");
   buttonContainer.className = "button-container";
 
-  // Create button
-  const button = document.createElement("button");
-  button.className = "capture-button";
-  button.textContent = "Click here to Proceed";
-  button.onclick = () => {
+  // Create proceed button
+  const proceedButton = document.createElement("button");
+  proceedButton.className = "capture-button";
+  proceedButton.textContent = "Click here to Proceed";
+  proceedButton.onclick = () => {
     captureSelfieAndLogAttendance(mode, data1, scanType);
-    document.body.removeChild(overlay); // Remove overlay after capturing selfie
+    document.body.removeChild(overlay);
   };
 
-  // Append button to container and container to overlay
-  buttonContainer.appendChild(button);
+  // Create cancel button
+  const cancelButton = document.createElement("button");
+  cancelButton.className = "cancel-button";
+  cancelButton.innerHTML = "&#10005;"; // Cross symbol
+  cancelButton.style.position = "absolute";
+  cancelButton.style.top = "10px";
+  cancelButton.style.right = "10px";
+  cancelButton.style.backgroundColor = "rgba(255, 255, 255, 0.7)";
+  cancelButton.style.border = "none";
+  cancelButton.style.borderRadius = "50%";
+  cancelButton.style.width = "30px";
+  cancelButton.style.height = "30px";
+  cancelButton.style.fontSize = "20px";
+  cancelButton.style.cursor = "pointer";
+  cancelButton.style.display = "flex";
+  cancelButton.style.justifyContent = "center";
+  cancelButton.style.alignItems = "center";
+  cancelButton.onclick = () => {
+    document.body.removeChild(overlay);
+  };
+
+  // Append buttons to container and container to overlay
+  buttonContainer.appendChild(proceedButton);
   overlay.appendChild(buttonContainer);
+  overlay.appendChild(cancelButton);
 
   // Append overlay to body
   document.body.appendChild(overlay);

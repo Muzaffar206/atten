@@ -40,49 +40,61 @@
               </p>
             </a>
             <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="./index.php" class="nav-link <?php echo ($activePage === 'home') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Home</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="./registration.php" class="nav-link <?php echo ($activePage === 'registration') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Create a new user</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="./users.php" class="nav-link <?php echo ($activePage === 'employee') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Total Employee</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="./attendance_report.php" class="nav-link <?php echo ($activePage === 'attendance_report') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Attendance report</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="./get_atten.php" class="nav-link <?php echo ($activePage === 'monthly_attendance') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>M/Y Attendance</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="./get_atten_report.php" class="nav-link <?php echo ($activePage === 'Report') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Report</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="./add_holidays.php" class="nav-link <?php echo ($activePage === 'holiday') ? 'active' : ''; ?>">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Holidays</p>
-                            </a>
-                        </li>
-                    </ul>
+              <li class="nav-item">
+                <a href="./index.php" class="nav-link <?php echo ($activePage === 'home') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-home"></i>
+                  <p>Home</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./registration.php" class="nav-link <?php echo ($activePage === 'registration') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-user-plus"></i>
+                  <p>Create a new user</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./users.php" class="nav-link <?php echo ($activePage === 'employee') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-users"></i>
+                  <p>Total Employee</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./attendance_report.php" class="nav-link <?php echo ($activePage === 'attendance_report') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-clipboard-list"></i>
+                  <p>Attendance report</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./get_atten.php" class="nav-link <?php echo ($activePage === 'monthly_attendance') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-calendar-alt"></i>
+                  <p>M/Y Attendance</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./get_atten_report.php" class="nav-link <?php echo ($activePage === 'Report') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-file-alt"></i>
+                  <p>Report</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./add_holidays.php" class="nav-link <?php echo ($activePage === 'holiday') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-calendar-plus"></i>
+                  <p>Add Holidays</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="manual_attendance.php" class="nav-link <?php echo ($activePage == 'manual_attendance') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-user-clock"></i>
+                  <p>Manual Attendance</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./office_locations.php" class="nav-link <?php echo ($activePage === 'office_locations') ? 'active' : ''; ?>">
+                  <i class="nav-icon fas fa-map-marker-alt"></i>
+                  <p>Office Locations</p>
+                </a>
+              </li>
+            </ul>
           </li>
           
         </ul>

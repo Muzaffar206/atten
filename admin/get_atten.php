@@ -272,7 +272,7 @@ $stmt_users->close();
                                                 $total_full_days = 0;
                                                 $holiday = 0;
                                                 // Fetch all 'data' entries for this user within the date range
-                                                $data_query = "SELECT DATE(a.in_time) as date, a.data 
+                                                $data_query = "SELECT DATE(a.in_time) as date, a.data, a.reason_for_manual_entry 
 FROM attendance a 
 WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
                                                 $stmt_data = $conn->prepare($data_query);
@@ -282,7 +282,10 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
 
                                                 $user_data = [];
                                                 while ($data_row = $data_result->fetch_assoc()) {
-                                                    $user_data[date('d-m-Y', strtotime($data_row['date']))] = $data_row['data'];
+                                                    $user_data[date('d-m-Y', strtotime($data_row['date']))] = [
+                                                        'data' => $data_row['data'],
+                                                        'reason_for_manual_entry' => $data_row['reason_for_manual_entry']
+                                                    ];
                                                 }
 
                                                 foreach ($dates as $date) :
@@ -293,7 +296,10 @@ WHERE a.user_id = ? AND a.in_time >= ? AND a.in_time < ?";
                                                     <td <?php if ($day_of_week == 0) echo 'style="background-color: #f0f0f0;"'; ?>>
                                                         <?php
                                                         if (isset($user_data[$date])) {
-                                                            echo $user_data[$date] . "<br>";
+                                                            echo $user_data[$date]['data'] . "<br>";
+                                                            if (!empty($user_data[$date]['reason_for_manual_entry'])) {
+                                                                echo "<span style='color: red;'>Manual Entry: " . htmlspecialchars($user_data[$date]['reason_for_manual_entry']) . "</span><br>";
+                                                            }
                                                         }
 
                                                         $attendance_query = "SELECT fa.first_in, fa.last_out, fa.first_mode, fa.last_mode, fa.total_hours, a.is_present, h.holiday_name
