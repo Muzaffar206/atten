@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $last_username = htmlspecialchars($username); // Store the last entered username
         $password = trim($_POST['password']); // Don't escape the password before verification
 
-        $sql = "SELECT * FROM users WHERE username = ?";
+        $sql = "SELECT * FROM users WHERE username = ? AND deleted_at IS NULL";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $username);
         $stmt->execute();
@@ -87,7 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
         } else {
-            $alert = '<div class="alert alert-danger">No account found with this username.</div>';
+            $alert = '<div class="alert alert-danger">Invalid username or password.</div>';
         }
 
         $conn->close();
@@ -95,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 } elseif (isset($_COOKIE['remember_token'])) {
     $token = $_COOKIE['remember_token'];
 
-    $sql = "SELECT * FROM users WHERE remember_token = ? AND token_expiry > NOW()";
+    $sql = "SELECT * FROM users WHERE remember_token = ? AND token_expiry > NOW() AND deleted_at IS NULL";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $token);
     $stmt->execute();
