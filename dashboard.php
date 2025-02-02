@@ -54,7 +54,8 @@ $attendance_query = "SELECT
                         users.full_name, 
                         DATE(final_attendance.first_in), 
                         users.department,
-                        final_attendance.total_hours";
+                        final_attendance.total_hours
+                    ORDER BY DATE(final_attendance.first_in) DESC";
 
 $stmt_attendance = $conn->prepare($attendance_query);
 $stmt_attendance->bind_param("iss", $user_id, $from_date, $to_date);
