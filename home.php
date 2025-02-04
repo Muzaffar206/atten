@@ -1,140 +1,292 @@
 <?php
 session_start();
+session_regenerate_id(true);
+date_default_timezone_set('Asia/Kolkata'); // Set timezone to IST
+
+include("assest/connection/config.php");
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+if ($_SESSION['role'] === 'admin') {
+    header("Location: admin/index.php"); // Redirect to home.php
+    exit(); // Ensure no further code is executed
+}
+$user_id = $_SESSION['user_id'];
+$sql = "SELECT username FROM users WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$stmt->bind_result($username);
+$stmt->fetch();
+$stmt->close();
+
+$sql = "SELECT DATE(first_in) as date, first_mode as mode, 'In' as type, TIME(first_in) as time
+        FROM final_attendance
+        WHERE user_id = ?
+        UNION ALL
+        SELECT DATE(last_out) as date, last_mode as mode, 'Out' as type, TIME(last_out) as time
+        FROM final_attendance
+        WHERE user_id = ? AND last_out IS NOT NULL
+        ORDER BY date DESC, time DESC
+        LIMIT 2";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $user_id, $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$recent_activity = array();
+while ($row = $result->fetch_assoc()) {
+    $recent_activity[] = $row;
+}
+
+$stmt->close();
+
+// Fetch upcoming holidays (next 3 holidays)
+$sql_holidays = "SELECT holiday_date, holiday_name FROM holidays 
+                 WHERE holiday_date >= CURDATE()
+                 ORDER BY holiday_date ASC
+                 LIMIT 2";
+$stmt_holidays = $conn->prepare($sql_holidays);
+$stmt_holidays->execute();
+$result_holidays = $stmt_holidays->get_result();
+
+$holidays = array();
+while ($row = $result_holidays->fetch_assoc()) {
+    $holidays[] = $row;
+}
+$stmt_holidays->close();
+
+$conn->close();
+$pageTitle = 'Home';
+$pageDescription = 'MESCO Attendance System home page. Mark your attendance and view recent activity.';
+include("include/header.php");
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Home</title>
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
-</head>
-<body>
-    <h1>Welcome to the Attendance System</h1>
-    <button onclick="getLocation()">Enable Camera</button>
-    <div id="camera" style="width: 500px; height: 400px;"></div>
 
+    <div class="app-container">
+        <div class="top-bar">
+            <div id="clock" class="clock"></div>
+            <div id="date" class="date"></div>
+        </div>
+        <div class="user-info">
+            Welcome, <?php echo htmlspecialchars($username); ?>
+        </div>
+        <div class="main-content">
+            <div class="attendance-options">
+                <div class="attendance-option">
+                    <div class="custom-radio active" data-value="In">
+                        <input type="radio" id="in" name="scheme" value="In" class="custom-control-input" checked>
+                        <label class="custom-control-label" for="in">In</label>
+                    </div>
+                </div>
+                <div class="attendance-option">
+                    <div class="custom-radio" data-value="Out">
+                        <input type="radio" id="out" name="scheme" value="Out" class="custom-control-input">
+                        <label class="custom-control-label" for="out">Out</label>
+                    </div>
+                </div>
+            </div>
+            <div class="attendance-options">
+                <div class="attendance-option">
+                    <div class="custom-radio active" data-value="office">
+                        <input type="radio" id="office" name="attendance_mode" value="office" class="custom-control-input" checked>
+                        <label class="custom-control-label" for="office">Office</label>
+                    </div>
+                </div>
+                <div class="attendance-option">
+                    <div class="custom-radio" data-value="outdoor">
+                        <input type="radio" id="outdoor" name="attendance_mode" value="outdoor" class="custom-control-input">
+                        <label class="custom-control-label" for="outdoor">Outdoor</label>
+                    </div>
+                </div>
+            </div>
+            <button class="submit-btn" onclick="enableAttendance()">
+                Give attendance
+            </button>
+            
+            <div id="recentActivity">
+                <div class="activity-header">
+                    <h3>Recent Activity</h3>
+                    <a href="dashboard.php" class="see-more">See more</a>
+                </div>
+                <ul class="activity-list">
+                    <?php foreach ($recent_activity as $activity): ?>
+                        <li class="activity-item">
+                            <div class="activity-icon" style="background-color: <?php echo $activity['type'] == 'In' ? '#E8F5E9' : '#FBE9E7'; ?>; color: <?php echo $activity['type'] == 'In' ? '#4CAF50' : '#FF5722'; ?>;">
+                                <i class="fas fa-<?php echo $activity['type'] == 'In' ? 'sign-in-alt' : 'sign-out-alt'; ?>"></i>
+                            </div>
+                            <div class="activity-details">
+                                <div class="activity-type"><?php echo htmlspecialchars($activity['type'] == 'In' ? 'Check In' : 'Check Out'); ?></div>
+                                <div class="activity-date"><?php echo date('d M Y', strtotime($activity['date'])); ?></div>
+                            </div>
+                            <div class="activity-time">
+                                <div><?php echo date('h:i a', strtotime($activity['time'])); ?></div>
+                                <div class="activity-status"><?php echo $activity['mode']; ?></div>
+                            </div>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <div id="upcomingHolidays">
+                <h3>Upcoming Holidays</h3>
+                <div class="holidays-container">
+                    <?php foreach ($holidays as $holiday): ?>
+                        <div class="holiday-card">
+                            <div class="holiday-date">
+                                <span class="date-number"><?php echo date('d', strtotime($holiday['holiday_date'])); ?></span>
+                                <span class="date-month"><?php echo date('M', strtotime($holiday['holiday_date'])); ?></span>
+                            </div>
+                            <div class="holiday-info">
+                                <div class="holiday-name"><?php echo htmlspecialchars($holiday['holiday_name']); ?></div>
+                                <div class="holiday-day"><?php echo date('l', strtotime($holiday['holiday_date'])); ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <nav class="bottom-navbar">
+            <ul class="nav nav-justified">
+                <li class="nav-item">
+                    <a class="nav-link active" href="home.php">
+                        <i class="fas fa-home"></i>
+                        <span class="d-block">Home</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="dashboard.php">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span class="d-block">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="profile.php">
+                        <i class="fas fa-user"></i>
+                        <span class="d-block">Profile</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="logout.php">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="d-block">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Camera Section -->
+    <div id="camera" style="display:none;"></div>
+    <div class="camera-container" style="display:none;">
+        <video id="video" width="320" height="240" autoplay></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+    <div id="successOverlay" style="display: none;">
+        <div class="overlay"></div>
+        <div class="icon-container">
+            <div class="checkmark-circle">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+            </div>
+        </div>
+    </div>
+    <audio id="successSound" src="assest/sounds/success.mp3"></audio>
+
+    <div id="errorOverlay" style="display: none;">
+        <div class="overlay"></div>
+        <div class="icon-container">
+            <div class="cross-circle">
+                <svg class="cross" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="cross-circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="cross-line" fill="none" d="M16 16l20 20m-20 0l20-20" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script src="assest/js/home.js"></script>
     <script>
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                alert("Geolocation is not supported by this browser.");
-            }
-        }
-
-        function showPosition(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-        //     var parisLat = 19.07454352059129;
-        //     var parisLon = 72.88698322125363;
-        //     var distance = getDistanceFromLatLonInKm(lat, lon, parisLat, parisLon);
-        //     if (distance < 10) { // 10 km radius
-        //         startCamera();
-        //     } else {
-        //         alert("You are not in MESCO");
-        //     }
-        // }
-        var locations = [
-                { name: "MESCO", lat: 19.134100, lon:  72.896900 },
-                { name: "RC Mahim", lat: 19.07554352059129, lon: 72.88798322125363 },
-                { name: "Mumbra", lat: 19.07654352059129, lon: 72.88898322125363 }
-            ];
-
-            // Check distance from each location
-            var withinRange = false;
-            locations.forEach(location => {
-                var distance = getDistanceFromLatLonInKm(lat, lon, location.lat, location.lon);
-                var radius = 0.1; // 100 meters in kilometers
-
-                if (distance < radius) {
-                    alert(`You are near ${location.name}`);
-                    withinRange = true;
-                }
+        function updateClock() {
+            const now = new Date();
+            const clock = document.getElementById('clock');
+            const date = document.getElementById('date');
+            
+            const newTime = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
             });
-
-            if (withinRange) {
-                startCamera();
+            
+            if (!clock.textContent) {
+                clock.innerHTML = newTime.split('').map(char => `<span>${char}</span>`).join('');
             } else {
-                alert("You are not near any of the specified locations.");
+                const currentChars = clock.children;
+                newTime.split('').forEach((char, i) => {
+                    if (char !== currentChars[i].textContent) {
+                        currentChars[i].classList.add('changing');
+                        setTimeout(() => {
+                            currentChars[i].textContent = char;
+                            currentChars[i].classList.remove('changing');
+                        }, 150);
+                    }
+                });
             }
-        }
-
-
-        function showError(error) {
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    alert("User denied the request for Geolocation.");
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    alert("Location information is unavailable.");
-                    break;
-                case error.TIMEOUT:
-                    alert("The request to get user location timed out.");
-                    break;
-                case error.UNKNOWN_ERROR:
-                    alert("An unknown error occurred.");
-                    break;
-            }
-        }
-
-        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-            var R = 6371; // Radius of the earth in km
-            var dLat = deg2rad(lat2 - lat1);
-            var dLon = deg2rad(lon2 - lon1);
-            var a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            var d = R * c; // Distance in km
-            return d;
-        }
-
-        function deg2rad(deg) {
-            return deg * (Math.PI / 180);
-        }
-
-        function startCamera() {
-            const html5QrCode = new Html5Qrcode("camera");
-            html5QrCode.start(
-                { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: 250
-                },
-                qrCodeMessage => {
-                    alert(`QR Code detected: ${qrCodeMessage}`);
-                    logAttendance(qrCodeMessage);
-                    html5QrCode.stop().then(ignore => {
-                        
-                        // QR Code scanning is stopped.
-                    }).catch(err => {
-                        console.log("Unable to stop scanning.");
-                    });
-                },
-                errorMessage => {
-                    console.log(`QR Code no longer in front of camera.`);
-                }
-            ).catch(err => {
-                console.log(`Unable to start scanning, error: ${err}`);
+            
+            date.textContent = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
             });
         }
 
-        function logAttendance(qrCodeMessage) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("POST", "log_attendance.php", true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    console.log(xhr.responseText);
-                }
-            };
-            xhr.send("qr_code=" + qrCodeMessage);
-        }
+        updateClock();
+        setInterval(updateClock, 1000);
     </script>
-     <button onclick="document.location='logout.php'">Logout</button>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const radioButtons = document.querySelectorAll('.custom-radio');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('click', function() {
+                    const name = this.querySelector('input').getAttribute('name');
+                    radioButtons.forEach(r => {
+                        if (r.querySelector('input').getAttribute('name') === name) {
+                            r.classList.remove('active');
+                        }
+                    });
+                    this.classList.add('active');
+                    this.querySelector('input').checked = true;
+                });
+            });
+        });
+    </script>
+    <script>
+        function updateCountdowns() {
+            const countdowns = document.querySelectorAll('.holiday-countdown');
+            const now = new Date();
+
+            countdowns.forEach(countdown => {
+                const holidayDate = new Date(countdown.dataset.date);
+                const difference = holidayDate - now;
+                const days = Math.ceil(difference / (1000 * 60 * 60 * 24));
+
+                if (days > 0) {
+                    countdown.textContent = `${days} day${days > 1 ? 's' : ''} left`;
+                } else {
+                    countdown.textContent = 'Today!';
+                }
+            });
+        }
+
+        updateCountdowns();
+        setInterval(updateCountdowns, 60000); // Update every minute
+    </script>
+    <?php include("include/footer.php"); ?>
 </body>
+
 </html>
